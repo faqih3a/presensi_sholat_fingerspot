@@ -28,7 +28,7 @@ class FingerspotService
     /**
      * Fetch user info from Fingerspot API and sync to local database.
      */
-    public function syncUsers()
+    public function syncUsers($pin = null)
     {
         try {
             $users = [];
@@ -65,17 +65,29 @@ class FingerspotService
                         'privilege' => 14,
                     ],
                 ];
+
+                $syncedCount = $this->syncUserList($users);
+                return [
+                    'success' => true,
+                    'message' => "Sinkronisasi MOCK berhasil! {$syncedCount['santri']} santri dan {$syncedCount['asatidz']} asatidz disinkronkan.",
+                ];
             } else {
                 $userinfoUrl = str_replace('get_attlog', 'get_userinfo', $this->apiUrl);
                 
-                // Perform real HTTP request to Fingerspot API
+                $postData = [
+                    'trans_id' => (string) time(),
+                    'cloud_id' => $this->cloudId,
+                ];
+
+                if ($pin !== null) {
+                    $postData['pin'] = (string) $pin;
+                }
+                
+                // Perform real HTTP request to Fingerspot API to trigger userinfo command
                 $response = Http::withHeaders([
                     'Content-Type' => 'application/json',
                     'Authorization' => 'Bearer ' . $this->apiToken,
-                ])->timeout(10)->post($userinfoUrl, [
-                    'trans_id' => (string) time(),
-                    'cloud_id' => $this->cloudId,
-                ]);
+                ])->timeout(10)->post($userinfoUrl, $postData);
 
                 if (!$response->successful()) {
                     Log::warning('Fingerspot Userinfo API request failed: ' . $response->body());
@@ -87,123 +99,28 @@ class FingerspotService
 
                 $result = $response->json();
                 
+                // In case fingerspot sends user data synchronously in the direct response
+                $directUsers = [];
                 if (isset($result['data']) && is_array($result['data'])) {
-                    $users = $result['data'];
+                    $directUsers = $result['data'];
                 } elseif (isset($result['users']) && is_array($result['users'])) {
-                    $users = $result['users'];
+                    $directUsers = $result['users'];
                 }
-            }
 
-            if (empty($users)) {
+                if (!empty($directUsers)) {
+                    $syncedCount = $this->syncUserList($directUsers);
+                    return [
+                        'success' => true,
+                        'message' => "Sinkronisasi berhasil! {$syncedCount['santri']} santri dan {$syncedCount['asatidz']} asatidz disinkronkan.",
+                    ];
+                }
+
+                // Standard asynchronous behavior: command is sent, data comes via Webhook
                 return [
-                    'success' => false,
-                    'message' => 'Tidak ada data pengguna ditemukan di Fingerspot API.',
+                    'success' => true,
+                    'message' => 'Perintah pengambilan data pengguna telah dikirim ke mesin absensi. Data akan disinkronkan melalui webhook beberapa saat lagi.',
                 ];
             }
-
-            $syncedSantriCount = 0;
-            $syncedAsatidzCount = 0;
-
-            foreach ($users as $user) {
-                $pin = $user['pin'] ?? $user['pin_number'] ?? $user['user_id'] ?? null;
-                $name = $user['name'] ?? $user['nama'] ?? $user['username'] ?? null;
-                $privilege = isset($user['privilege']) ? (int)$user['privilege'] : (isset($user['priv']) ? (int)$user['priv'] : 0);
-
-                if (!$pin || !$name) {
-                    continue;
-                }
-
-                // If privilege is 0, it's a normal user (santri)
-                if ($privilege === 0) {
-                    // Check if Santri with this fingerspot_pin already exists
-                    $santri = Santri::where('fingerspot_pin', $pin)->first();
-
-                    if ($santri) {
-                        // Update existing santri and user details
-                        $santri->update([
-                            'nama' => $name,
-                        ]);
-                        if ($santri->user) {
-                            $santri->user->update([
-                                'name' => $name,
-                                'fingerspot_pin' => $pin,
-                            ]);
-                        }
-                    } else {
-                        // Create a new User
-                        $email = 'santri.' . $pin . '@fingerspot.io';
-                        
-                        // Check if user with this email already exists
-                        $existingUser = User::where('email', $email)->first();
-                        if ($existingUser) {
-                            $userModel = $existingUser;
-                            $userModel->update([
-                                'name' => $name,
-                                'role' => 'santri',
-                                'fingerspot_pin' => $pin,
-                            ]);
-                        } else {
-                            $userModel = User::create([
-                                'name' => $name,
-                                'email' => $email,
-                                'password' => Hash::make($pin), // use PIN as default password
-                                'role' => 'santri',
-                                'fingerspot_pin' => $pin,
-                            ]);
-                        }
-
-                        // Create Santri record
-                        Santri::create([
-                            'user_id' => $userModel->id,
-                            'nama' => $name,
-                            'kelas' => 'Fingerspot', // Default class
-                            'foto_referensi' => '',
-                            'face_descriptor' => '[]',
-                            'fingerspot_pin' => $pin,
-                        ]);
-                    }
-                    $syncedSantriCount++;
-                } else {
-                    // If privilege is non-zero, it's an admin (asatidz)
-                    // Check if User with this fingerspot_pin already exists
-                    $asatidzUser = User::where('role', 'asatidz')
-                                       ->where('fingerspot_pin', $pin)
-                                       ->first();
-
-                    if ($asatidzUser) {
-                        $asatidzUser->update([
-                            'name' => $name,
-                        ]);
-                    } else {
-                        $email = 'asatidz.' . $pin . '@fingerspot.io';
-                        
-                        // Check if user with this email already exists
-                        $existingUser = User::where('email', $email)->first();
-                        if ($existingUser) {
-                            $existingUser->update([
-                                'name' => $name,
-                                'role' => 'asatidz',
-                                'fingerspot_pin' => $pin,
-                            ]);
-                        } else {
-                            User::create([
-                                'name' => $name,
-                                'email' => $email,
-                                'password' => Hash::make($pin), // use PIN as default password
-                                'role' => 'asatidz',
-                                'fingerspot_pin' => $pin,
-                            ]);
-                        }
-                    }
-                    $syncedAsatidzCount++;
-                }
-            }
-
-            return [
-                'success' => true,
-                'message' => "Sinkronisasi berhasil! {$syncedSantriCount} santri dan {$syncedAsatidzCount} asatidz disinkronkan.",
-            ];
-
         } catch (\Exception $e) {
             Log::error('Fingerspot users sync error: ' . $e->getMessage());
             return [
@@ -221,12 +138,6 @@ class FingerspotService
         $startDate = $startDate ?: Carbon::now('Asia/Jakarta')->format('Y-m-d');
         $endDate = $endDate ?: Carbon::now('Asia/Jakarta')->format('Y-m-d');
 
-        // Limit API requests frequency to prevent spamming
-        $cacheKey = "fingerspot_sync_{$startDate}_{$endDate}";
-        if (Cache::has($cacheKey)) {
-            return;
-        }
-
         try {
             $logs = [];
 
@@ -239,136 +150,369 @@ class FingerspotService
                                     ->where('fingerspot_pin', '!=', '')
                                     ->get();
                 
-                $now = Carbon::now('Asia/Jakarta');
-                $jadwal = $this->getJadwalSholat($now);
+                $start = Carbon::parse($startDate, 'Asia/Jakarta');
+                $end = Carbon::parse($endDate, 'Asia/Jakarta');
                 
-                foreach ($allSantris as $santri) {
-                    $fajr = $jadwal['Fajr'] ?? '04:30';
-                    $dhuhr = $jadwal['Dhuhr'] ?? '12:00';
-
-                    // Generate a scan log for Subuh
-                    $logs[] = [
-                        'pin' => $santri->fingerspot_pin,
-                        'scan_date' => $now->format('Y-m-d') . ' ' . $fajr,
-                    ];
-                    
-                    // Generate a scan log for Dzuhur
-                    $logs[] = [
-                        'pin' => $santri->fingerspot_pin,
-                        'scan_date' => $now->format('Y-m-d') . ' ' . $dhuhr,
-                    ];
+                while ($start->lte($end)) {
+                    $dateStr = $start->format('Y-m-d');
+                    $jadwal = $this->getJadwalSholat($start);
+                    if ($jadwal) {
+                        foreach ($allSantris as $santri) {
+                            // Generate mock logs for each sholat slot with some randomness
+                            // Subuh
+                            if (rand(0, 10) < 9) {
+                                $fajrTime = Carbon::createFromFormat('H:i', $jadwal['Fajr'] ?? '04:30')
+                                    ->addMinutes(rand(-15, 10))
+                                    ->format('H:i');
+                                $logs[] = [
+                                    'pin' => $santri->fingerspot_pin,
+                                    'scan_date' => "$dateStr $fajrTime",
+                                    'verify' => (string)rand(1, 4),
+                                    'status_scan' => '0',
+                                ];
+                            }
+                            // Dzuhur
+                            if (rand(0, 10) < 9) {
+                                $dhuhrTime = Carbon::createFromFormat('H:i', $jadwal['Dhuhr'] ?? '12:00')
+                                    ->addMinutes(rand(-15, 10))
+                                    ->format('H:i');
+                                $logs[] = [
+                                    'pin' => $santri->fingerspot_pin,
+                                    'scan_date' => "$dateStr $dhuhrTime",
+                                    'verify' => (string)rand(1, 4),
+                                    'status_scan' => '0',
+                                ];
+                            }
+                            // Ashar
+                            if (rand(0, 10) < 9) {
+                                $asrTime = Carbon::createFromFormat('H:i', $jadwal['Asr'] ?? '15:15')
+                                    ->addMinutes(rand(-15, 10))
+                                    ->format('H:i');
+                                $logs[] = [
+                                    'pin' => $santri->fingerspot_pin,
+                                    'scan_date' => "$dateStr $asrTime",
+                                    'verify' => (string)rand(1, 4),
+                                    'status_scan' => '0',
+                                ];
+                            }
+                            // Maghrib
+                            if (rand(0, 10) < 9) {
+                                $maghribTime = Carbon::createFromFormat('H:i', $jadwal['Maghrib'] ?? '18:00')
+                                    ->addMinutes(rand(-15, 7))
+                                    ->format('H:i');
+                                $logs[] = [
+                                    'pin' => $santri->fingerspot_pin,
+                                    'scan_date' => "$dateStr $maghribTime",
+                                    'verify' => (string)rand(1, 4),
+                                    'status_scan' => '0',
+                                ];
+                            }
+                            // Isya
+                            if (rand(0, 10) < 9) {
+                                $ishaTime = Carbon::createFromFormat('H:i', $jadwal['Isha'] ?? '19:15')
+                                    ->addMinutes(rand(-15, 10))
+                                    ->format('H:i');
+                                $logs[] = [
+                                    'pin' => $santri->fingerspot_pin,
+                                    'scan_date' => "$dateStr $ishaTime",
+                                    'verify' => (string)rand(1, 4),
+                                    'status_scan' => '0',
+                                ];
+                            }
+                        }
+                    }
+                    $start->addDay();
                 }
             } else {
-                // Perform real HTTP request to Fingerspot API
-                $response = Http::withHeaders([
-                    'Content-Type' => 'application/json',
-                    'Authorization' => 'Bearer ' . $this->apiToken,
-                ])->timeout(10)->post($this->apiUrl, [
-                    'trans_id' => (string) time(),
-                    'cloud_id' => $this->cloudId,
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                ]);
-
-                if (!$response->successful()) {
-                    Log::warning('Fingerspot API request failed: ' . $response->body());
-                    return;
-                }
-
-                $result = $response->json();
+                // Perform real HTTP request to Fingerspot API in chunks of max 2 days
+                $start = Carbon::parse($startDate, 'Asia/Jakarta')->startOfDay();
+                $end = Carbon::parse($endDate, 'Asia/Jakarta')->endOfDay();
                 
-                if (isset($result['data']) && is_array($result['data'])) {
-                    $logs = $result['data'];
-                } elseif (isset($result['logs']) && is_array($result['logs'])) {
-                    $logs = $result['logs'];
+                // Limit to the last 60 days
+                $limitDate = Carbon::now('Asia/Jakarta')->subDays(60)->startOfDay();
+                if ($start->lessThan($limitDate)) {
+                    $start = $limitDate->copy();
+                }
+                
+                if ($start->greaterThan($end)) {
+                    return [];
+                }
+                
+                $current = $start->copy();
+                while ($current->lte($end)) {
+                    $chunkStartStr = $current->format('Y-m-d');
+                    
+                    // End of the chunk is at most 1 day after start (so 2 days total: e.g. 2026-05-20 to 2026-05-21)
+                    $chunkEnd = $current->copy()->addDay();
+                    if ($chunkEnd->greaterThan($end)) {
+                        $chunkEnd = $end->copy();
+                    }
+                    $chunkEndStr = $chunkEnd->format('Y-m-d');
+                    
+                    // Cache chunk-specific sync call to prevent redundant API hits
+                    $chunkCacheKey = "fingerspot_sync_{$chunkStartStr}_{$chunkEndStr}";
+                    
+                    // Check if chunk is recent (today, yesterday, or tomorrow)
+                    $todayStr = Carbon::now('Asia/Jakarta')->format('Y-m-d');
+                    $yesterdayStr = Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
+                    $isRecent = ($chunkStartStr === $todayStr || $chunkEndStr === $todayStr || $chunkStartStr === $yesterdayStr || $chunkEndStr === $yesterdayStr);
+                    $cacheTime = $isRecent ? 10 : 3600; // 10 seconds for recent, 1 hour for past static data
+                    
+                    if (!Cache::has($chunkCacheKey)) {
+                        Log::info("Fingerspot: Fetching attlog chunk from {$chunkStartStr} to {$chunkEndStr}");
+                        
+                        $response = Http::withHeaders([
+                            'Content-Type' => 'application/json',
+                            'Authorization' => 'Bearer ' . $this->apiToken,
+                        ])->timeout(12)->post($this->apiUrl, [
+                            'trans_id' => (string) time(),
+                            'cloud_id' => $this->cloudId,
+                            'start_date' => $chunkStartStr,
+                            'end_date' => $chunkEndStr,
+                        ]);
+                        
+                        if ($response->successful()) {
+                            $result = $response->json();
+                            $chunkLogs = [];
+                            
+                            if (isset($result['data']) && is_array($result['data'])) {
+                                $chunkLogs = $result['data'];
+                            } elseif (isset($result['logs']) && is_array($result['logs'])) {
+                                $chunkLogs = $result['logs'];
+                            }
+                            
+                            if (!empty($chunkLogs)) {
+                                $logs = array_merge($logs, $chunkLogs);
+                            }
+                            
+                            Cache::put($chunkCacheKey, true, $cacheTime);
+                        } else {
+                            Log::warning("Fingerspot: API request failed for chunk {$chunkStartStr} - {$chunkEndStr}: " . $response->body());
+                            // Cache shortly on failure to avoid hitting the API immediately again
+                            Cache::put($chunkCacheKey, false, 5);
+                        }
+                    }
+                    
+                    // Move current to chunkEnd + 1 day
+                    $current = $chunkEnd->copy()->addDay();
                 }
             }
 
             if (empty($logs)) {
-                return;
+                return [];
             }
 
-            // Retrieve all santris indexed by fingerspot_pin
-            $santris = Santri::whereNotNull('fingerspot_pin')
-                            ->where('fingerspot_pin', '!=', '')
-                            ->get()
-                            ->keyBy('fingerspot_pin');
+            $this->processAttlogs($logs);
+            return $logs;
+        } catch (\Exception $e) {
+            Log::error('Fingerspot sync error: ' . $e->getMessage());
+            return [];
+        }
+    }
 
-            $prayerSchedules = [];
+    /**
+     * Process array of attlogs to database.
+     */
+    public function processAttlogs(array $logs)
+    {
+        // Retrieve all santris indexed by fingerspot_pin
+        $santris = Santri::whereNotNull('fingerspot_pin')
+                        ->where('fingerspot_pin', '!=', '')
+                        ->get()
+                        ->keyBy('fingerspot_pin');
 
-            foreach ($logs as $log) {
-                $pin = $log['pin'] ?? null;
-                $scanTimeStr = $log['scan_date'] ?? $log['datetime'] ?? $log['scan'] ?? null;
+        $prayerSchedules = [];
 
-                if (!$pin || !$scanTimeStr) {
-                    continue;
-                }
+        foreach ($logs as $log) {
+            $pin = $log['pin'] ?? null;
+            $scanTimeStr = $log['scan_date'] ?? $log['datetime'] ?? $log['scan'] ?? null;
 
-                $santri = $santris->get($pin);
-                if (!$santri) {
-                    continue; // Skip if student not registered with this PIN
-                }
+            if (!$pin || !$scanTimeStr) {
+                continue;
+            }
 
-                $scanDateTime = Carbon::parse($scanTimeStr, 'Asia/Jakarta');
-                $dateStr = $scanDateTime->format('Y-m-d');
-                $timeStr = $scanDateTime->format('H:i');
+            $santri = $santris->get($pin);
+            if (!$santri) {
+                continue; // Skip if student not registered with this PIN
+            }
 
-                // Fetch or retrieve cached prayer times for the log date
-                if (!isset($prayerSchedules[$dateStr])) {
-                    $prayerSchedules[$dateStr] = $this->getJadwalSholat($scanDateTime);
-                }
+            $scanDateTime = Carbon::parse($scanTimeStr, 'Asia/Jakarta');
+            $dateStr = $scanDateTime->format('Y-m-d');
+            $timeStr = $scanDateTime->format('H:i');
 
-                $jadwal = $prayerSchedules[$dateStr];
-                if (!$jadwal) {
-                    continue;
-                }
+            // Fetch or retrieve cached prayer times for the log date
+            if (!isset($prayerSchedules[$dateStr])) {
+                $prayerSchedules[$dateStr] = $this->getJadwalSholat($scanDateTime);
+            }
 
-                // Determine matching prayer session
-                $waktuSholat = $this->determinePrayerTime($timeStr, $jadwal);
-                if (!$waktuSholat) {
-                    continue; // Not within active prayer windows
-                }
+            $jadwal = $prayerSchedules[$dateStr];
+            if (!$jadwal) {
+                continue;
+            }
 
-                // Check for approved permit
-                $hasIzin = Izin::where('user_id', $santri->user_id)
-                                ->where('status', 'Disetujui')
-                                ->whereDate('tanggal_mulai', '<=', $dateStr)
-                                ->whereDate('tanggal_selesai', '>=', $dateStr)
-                                ->exists();
+            // Determine matching prayer session
+            $waktuSholat = $this->determinePrayerTime($timeStr, $jadwal);
+            if (!$waktuSholat) {
+                continue; // Not within active prayer windows
+            }
 
-                $status = $hasIzin ? 'Izin' : 'Hadir';
+            // Check for approved permit
+            $hasIzin = Izin::where('user_id', $santri->user_id)
+                            ->where('status', 'Disetujui')
+                            ->whereDate('tanggal_mulai', '<=', $dateStr)
+                            ->whereDate('tanggal_selesai', '>=', $dateStr)
+                            ->exists();
 
-                // Look for existing presensi record
-                $existing = Presensi::where('santri_id', $santri->id)
-                                    ->where('tanggal', $dateStr)
-                                    ->where('waktu_sholat', $waktuSholat)
-                                    ->first();
+            $status = $hasIzin ? 'Izin' : 'Hadir';
 
-                if ($existing) {
-                    // Update only if status is Alfa, or update the time if Hadir scan is newer/earlier
-                    if ($existing->status === 'Alfa') {
-                        $existing->update([
-                            'waktu_hadir' => $timeStr,
-                            'status' => $status
-                        ]);
-                    }
-                } else {
-                    Presensi::create([
-                        'santri_id' => $santri->id,
-                        'waktu_sholat' => $waktuSholat,
-                        'tanggal' => $dateStr,
+            // Look for existing presensi record
+            $existing = Presensi::where('santri_id', $santri->id)
+                                ->where('tanggal', $dateStr)
+                                ->where('waktu_sholat', $waktuSholat)
+                                ->first();
+
+            if ($existing) {
+                // Update only if status is Alfa, or update the time if Hadir scan is newer/earlier
+                if ($existing->status === 'Alfa') {
+                    $existing->update([
                         'waktu_hadir' => $timeStr,
                         'status' => $status
                     ]);
                 }
+            } else {
+                Presensi::create([
+                    'santri_id' => $santri->id,
+                    'waktu_sholat' => $waktuSholat,
+                    'tanggal' => $dateStr,
+                    'waktu_hadir' => $timeStr,
+                    'status' => $status
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Sync user list array to database.
+     * Returns array of synced counts.
+     */
+    public function syncUserList(array $users)
+    {
+        $syncedSantriCount = 0;
+        $syncedAsatidzCount = 0;
+
+        foreach ($users as $user) {
+            $pin = $user['pin'] ?? $user['pin_number'] ?? $user['user_id'] ?? null;
+            $name = $user['name'] ?? $user['nama'] ?? $user['username'] ?? null;
+            
+            $privRaw = $user['privilege'] ?? $user['priv'] ?? $user['hak_akses'] ?? 0;
+            $isAdmin = false;
+            
+            if (is_numeric($privRaw)) {
+                $privInt = (int)$privRaw;
+                if ($privInt > 0) {
+                    $isAdmin = true;
+                }
+            } else {
+                $privStr = strtolower(trim((string)$privRaw));
+                if ($privStr === 'admin' || $privStr === 'asatidz' || $privStr === 'administrator') {
+                    $isAdmin = true;
+                }
             }
 
-            // Cache for 10 seconds to avoid repeating API calls on quick consecutive page reloads
-            Cache::put($cacheKey, true, 10);
+            if (!$pin || !$name) {
+                continue;
+            }
 
-        } catch (\Exception $e) {
-            Log::error('Fingerspot sync error: ' . $e->getMessage());
+            // If not admin, it's a normal user (santri)
+            if (!$isAdmin) {
+                // Check if Santri with this fingerspot_pin already exists
+                $santri = Santri::where('fingerspot_pin', $pin)->first();
+
+                if ($santri) {
+                    // Update existing santri and user details
+                    $santri->update([
+                        'nama' => $name,
+                    ]);
+                    if ($santri->user) {
+                        $santri->user->update([
+                            'name' => $name,
+                            'fingerspot_pin' => $pin,
+                        ]);
+                    }
+                } else {
+                    // Create a new User
+                    $email = 'santri.' . $pin . '@fingerspot.io';
+                    
+                    // Check if user with this email already exists
+                    $existingUser = User::where('email', $email)->first();
+                    if ($existingUser) {
+                        $userModel = $existingUser;
+                        $userModel->update([
+                            'name' => $name,
+                            'role' => 'santri',
+                            'fingerspot_pin' => $pin,
+                        ]);
+                    } else {
+                        $userModel = User::create([
+                            'name' => $name,
+                            'email' => $email,
+                            'password' => Hash::make($pin), // use PIN as default password
+                            'role' => 'santri',
+                            'fingerspot_pin' => $pin,
+                        ]);
+                    }
+
+                    // Create Santri record
+                    Santri::create([
+                        'user_id' => $userModel->id,
+                        'nama' => $name,
+                        'kelas' => 'Fingerspot', // Default class
+                        'foto_referensi' => '',
+                        'face_descriptor' => '[]',
+                        'fingerspot_pin' => $pin,
+                    ]);
+                }
+                $syncedSantriCount++;
+            } else {
+                // If privilege is non-zero, it's an admin (asatidz)
+                // Check if User with this fingerspot_pin already exists
+                $asatidzUser = User::where('role', 'asatidz')
+                                   ->where('fingerspot_pin', $pin)
+                                   ->first();
+
+                if ($asatidzUser) {
+                    $asatidzUser->update([
+                        'name' => $name,
+                    ]);
+                } else {
+                    $email = 'asatidz.' . $pin . '@fingerspot.io';
+                    
+                    // Check if user with this email already exists
+                    $existingUser = User::where('email', $email)->first();
+                    if ($existingUser) {
+                        $existingUser->update([
+                            'name' => $name,
+                            'role' => 'asatidz',
+                            'fingerspot_pin' => $pin,
+                        ]);
+                    } else {
+                        User::create([
+                            'name' => $name,
+                            'email' => $email,
+                            'password' => Hash::make($pin), // use PIN as default password
+                            'role' => 'asatidz',
+                            'fingerspot_pin' => $pin,
+                        ]);
+                    }
+                }
+                $syncedAsatidzCount++;
+            }
         }
+
+        return [
+            'santri' => $syncedSantriCount,
+            'asatidz' => $syncedAsatidzCount
+        ];
     }
 
     /**

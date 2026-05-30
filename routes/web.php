@@ -14,6 +14,9 @@ Route::get('/', [AuthController::class, 'showLoginForm'])->name('login')->middle
 Route::post('/', [AuthController::class, 'login'])->middleware('guest');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Webhook route for Fingerspot
+Route::post('/webhook/fingerspot', [\App\Http\Controllers\FingerspotWebhookController::class, 'handle'])->name('webhook.fingerspot');
+
 // Protected routes
 Route::middleware(['auth'])->group(function () {
     // Shared routes (Available to all logged-in users)

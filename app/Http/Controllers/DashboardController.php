@@ -42,8 +42,126 @@ class DashboardController extends Controller
             $display_date = $this->formatIndonesianDate($tanggal_mulai);
         }
 
-        $this->fingerspotService->syncAttendance($tanggal_mulai, $tanggal_akhir);
+        $rawLogs = $this->fingerspotService->syncAttendance($tanggal_mulai, $tanggal_akhir);
         $this->syncAlfas();
+
+        $recentActivities = collect($rawLogs)->map(function ($log) {
+            $pin = $log['pin'] ?? null;
+            $scanTimeStr = $log['scan_date'] ?? $log['datetime'] ?? $log['scan'] ?? null;
+            
+            if (!$pin || !$scanTimeStr) {
+                return null;
+            }
+            
+            $name = 'PIN ' . $pin;
+            $role = 'unknown';
+            $detail = 'Belum terdaftar';
+            $avatar = null;
+            
+            $santri = \App\Models\Santri::where('fingerspot_pin', $pin)->first();
+            if ($santri) {
+                $name = $santri->nama;
+                $role = 'santri';
+                $detail = 'Kelas ' . $santri->kelas;
+                $avatar = $santri->foto_referensi ? asset('storage/santri_fotos/' . $santri->foto_referensi) : null;
+            } else {
+                $user = \App\Models\User::where('fingerspot_pin', $pin)->first();
+                if ($user) {
+                    $name = $user->name;
+                    $role = $user->role;
+                    $detail = ucfirst($user->role);
+                    $avatar = $user->avatar ? asset('storage/avatars/' . $user->avatar) : null;
+                }
+            }
+            
+            $verifyVal = $log['verify'] ?? null;
+            $verifyMethod = 'Unknown';
+            $verifyIcon = 'bi-question-circle';
+            switch ($verifyVal) {
+                case '1':
+                    $verifyMethod = 'Fingerprint';
+                    $verifyIcon = 'bi-fingerprint';
+                    break;
+                case '2':
+                    $verifyMethod = 'Password';
+                    $verifyIcon = 'bi-key-fill';
+                    break;
+                case '3':
+                    $verifyMethod = 'Card';
+                    $verifyIcon = 'bi-card-list';
+                    break;
+                case '4':
+                    $verifyMethod = 'Face';
+                    $verifyIcon = 'bi-person-bounding-box';
+                    break;
+                case '6':
+                    $verifyMethod = 'Vein';
+                    $verifyIcon = 'bi-hand-index-thumb';
+                    break;
+                case '7':
+                    $verifyMethod = 'QR Code';
+                    $verifyIcon = 'bi-qr-code-scan';
+                    break;
+            }
+            
+            $statusScanVal = $log['status_scan'] ?? null;
+            $statusScanLabel = 'Scan';
+            switch ($statusScanVal) {
+                case '0':
+                    $statusScanLabel = 'Scan Masuk';
+                    break;
+                case '1':
+                    $statusScanLabel = 'Scan Keluar';
+                    break;
+                case '2':
+                    $statusScanLabel = 'Break In';
+                    break;
+                case '3':
+                    $statusScanLabel = 'Break Out';
+                    break;
+                case '4':
+                    $statusScanLabel = 'Overtime In';
+                    break;
+                case '5':
+                    $statusScanLabel = 'Overtime Out';
+                    break;
+                case '6':
+                    $statusScanLabel = 'Rapat In';
+                    break;
+                case '7':
+                    $statusScanLabel = 'Rapat Out';
+                    break;
+                case '8':
+                    $statusScanLabel = 'Custom 1';
+                    break;
+                case '9':
+                    $statusScanLabel = 'Custom 2';
+                    break;
+            }
+
+            try {
+                $carbonScan = \Carbon\Carbon::parse($scanTimeStr, 'Asia/Jakarta');
+            } catch (\Exception $e) {
+                $carbonScan = \Carbon\Carbon::now('Asia/Jakarta');
+            }
+
+            return (object) [
+                'pin' => $pin,
+                'name' => $name,
+                'role' => $role,
+                'detail' => $detail,
+                'avatar' => $avatar,
+                'scan_time' => $carbonScan,
+                'verify_method' => $verifyMethod,
+                'verify_icon' => $verifyIcon,
+                'status_scan_label' => $statusScanLabel,
+                'photo_url' => $log['photo_url'] ?? null,
+            ];
+        })
+        ->filter()
+        ->sortByDesc('scan_time')
+        ->take(5);
+
         
         // Hitung total santri
         $totalSantri = \App\Models\Santri::count();
@@ -169,7 +287,8 @@ class DashboardController extends Controller
             'jadwal', 'chartLabels', 'chartData', 'waktuSholat', 
             'absentSantris', 'izinTodayRecords', 'alfaTodayRecords', 'fullDayIzinSantriIds',
             'statusData', 'tanggal_mulai', 'tanggal_akhir',
-            'mode', 'ref_date', 'prev_date', 'next_date', 'display_date'
+            'mode', 'ref_date', 'prev_date', 'next_date', 'display_date',
+            'recentActivities'
         ));
     }
 

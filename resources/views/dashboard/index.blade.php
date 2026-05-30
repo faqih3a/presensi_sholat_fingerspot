@@ -573,32 +573,49 @@
             <div class="card-body p-0">
                 <h5 class="card-title fw-bold text-dark mb-4">Aktivitas Terbaru</h5>
                 
-                <div class="d-flex mb-4">
-                    <div class="mt-1"><span class="activity-indicator"></span></div>
-                    <div>
-                        <div class="fw-semibold text-dark">Santri baru didaftarkan</div>
-                        <div class="small text-muted">Ahmad dari Kelas 10A</div>
-                        <div class="small text-black-50">2 jam yang lalu</div>
+                @forelse($recentActivities as $activity)
+                <div class="d-flex align-items-center {{ $loop->last ? '' : 'mb-4' }}">
+                    <div class="position-relative me-3">
+                        @if($activity->avatar)
+                            <img src="{{ $activity->avatar }}" alt="Avatar" class="rounded-circle object-fit-cover" style="width: 45px; height: 45px;">
+                        @else
+                            <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 45px; height: 45px;">
+                                <i class="bi bi-person fs-4"></i>
+                            </div>
+                        @endif
+                        @if($activity->photo_url)
+                            <a href="{{ $activity->photo_url }}" target="_blank" class="position-absolute bottom-0 end-0 bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 20px; height: 20px; font-size: 0.7rem;" title="Lihat Foto Absensi">
+                                <i class="bi bi-camera-fill"></i>
+                            </a>
+                        @endif
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="fw-bold text-dark small">{{ $activity->name }}</span>
+                                <span class="badge bg-light text-muted border ms-1" style="font-size: 0.65rem;">{{ $activity->detail }}</span>
+                            </div>
+                            <span class="text-muted" style="font-size: 0.75rem;">
+                                {{ $activity->scan_time->locale('id')->diffForHumans() }}
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-1" style="font-size: 0.75rem;">
+                            <span class="badge-soft badge-soft-success py-0 px-2 d-inline-flex align-items-center gap-1" style="font-size: 0.75rem; line-height: 1.5;">
+                                <i class="bi {{ $activity->verify_icon }}"></i> {{ $activity->verify_method }}
+                            </span>
+                            <span class="text-secondary">•</span>
+                            <span class="fw-semibold text-success">{{ $activity->status_scan_label }}</span>
+                            <span class="text-secondary">•</span>
+                            <span class="text-black-50" style="font-size: 0.7rem;">{{ $activity->scan_time->format('H:i') }} WIB</span>
+                        </div>
                     </div>
                 </div>
-
-                <div class="d-flex mb-4">
-                    <div class="mt-1"><span class="activity-indicator"></span></div>
-                    <div>
-                        <div class="fw-semibold text-dark">Presensi Subuh selesai</div>
-                        <div class="small text-muted">450 santri hadir tepat waktu</div>
-                        <div class="small text-black-50">5 jam yang lalu</div>
-                    </div>
+                @empty
+                <div class="text-center py-4 bg-light rounded-4">
+                    <i class="bi bi-activity fs-3 text-muted d-block mb-2"></i>
+                    <p class="text-muted small mb-0">Belum ada aktivitas scan log dari Fingerspot Cloud hari ini.</p>
                 </div>
-
-                <div class="d-flex">
-                    <div class="mt-1"><span class="activity-indicator"></span></div>
-                    <div>
-                        <div class="fw-semibold text-dark">Laporan mingguan diunduh</div>
-                        <div class="small text-muted">Oleh Ust. Budi</div>
-                        <div class="small text-black-50">1 hari yang lalu</div>
-                    </div>
-                </div>
+                @endforelse
 
             </div>
         </div>
