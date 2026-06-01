@@ -5,9 +5,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SantriController;
 use App\Http\Controllers\PresensiController;
-use App\Http\Controllers\SantriDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\IzinController;
+use App\Http\Controllers\PengurusController;
+use App\Http\Controllers\SantriDashboardController;
 
 // Auth routes (Login is now the root page)
 Route::get('/', [AuthController::class, 'showLoginForm'])->name('login')->middleware('guest');
@@ -23,11 +24,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-    
 
+    // Santri routes
+    Route::middleware(['role:santri'])->group(function () {
+        Route::get('/santri/dashboard', [SantriDashboardController::class, 'index'])->name('santri.dashboard');
+        Route::get('/santri/dashboard/export', [SantriDashboardController::class, 'export'])->name('santri.dashboard.export');
+        Route::get('/izin', [IzinController::class, 'index'])->name('izin.index');
+        Route::get('/izin/create', [IzinController::class, 'create'])->name('izin.create');
+        Route::post('/izin', [IzinController::class, 'store'])->name('izin.store');
+    });
 
-    // Admin & Asatidz Routes
-    Route::middleware(['role:asatidz,super_admin'])->group(function () {
+    // Admin & Asatidz Routes (Mosque Staff)
+    Route::middleware(['role:admin,asatidz'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/kehadiran-sholat', [DashboardController::class, 'kehadiran'])->name('dashboard.kehadiran');
         Route::get('/kehadiran-sholat/export', [DashboardController::class, 'exportKehadiran'])->name('dashboard.kehadiran.export');
@@ -48,24 +56,14 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/presensi/{presensi}', [PresensiController::class, 'destroy'])->name('presensi.destroy');
     });
 
-    // Santri Routes
-    Route::middleware(['role:santri'])->group(function () {
-        Route::get('/santri/dashboard', [SantriDashboardController::class, 'index'])->name('santri.dashboard');
-        Route::get('/santri/dashboard/export', [SantriDashboardController::class, 'export'])->name('santri.dashboard.export');
-        Route::get('/izin', [IzinController::class, 'index'])->name('izin.index');
-        Route::get('/izin/create', [IzinController::class, 'create'])->name('izin.create');
-        Route::post('/izin', [IzinController::class, 'store'])->name('izin.store');
-    });
-
-    // Super Admin routes
-    Route::middleware(['role:super_admin'])->group(function () {
-        Route::get('/super-admin/dashboard', [\App\Http\Controllers\SuperAdminDashboardController::class, 'index'])->name('superadmin.dashboard');
-        Route::get('/super-admin/asatidz', [\App\Http\Controllers\AsatidzController::class, 'index'])->name('asatidz.index');
-        Route::post('/super-admin/asatidz/sync', [\App\Http\Controllers\AsatidzController::class, 'sync'])->name('asatidz.sync');
-        Route::get('/super-admin/asatidz/create', [\App\Http\Controllers\AsatidzController::class, 'create'])->name('asatidz.create');
-        Route::post('/super-admin/asatidz', [\App\Http\Controllers\AsatidzController::class, 'store'])->name('asatidz.store');
-        Route::get('/super-admin/asatidz/{asatidz}/edit', [\App\Http\Controllers\AsatidzController::class, 'edit'])->name('asatidz.edit');
-        Route::put('/super-admin/asatidz/{asatidz}', [\App\Http\Controllers\AsatidzController::class, 'update'])->name('asatidz.update');
-        Route::delete('/super-admin/asatidz/{asatidz}', [\App\Http\Controllers\AsatidzController::class, 'destroy'])->name('asatidz.destroy');
+    // Admin-only routes (Mosque Staff Management)
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/pengurus', [PengurusController::class, 'index'])->name('pengurus.index');
+        Route::post('/pengurus/sync', [PengurusController::class, 'sync'])->name('pengurus.sync');
+        Route::get('/pengurus/create', [PengurusController::class, 'create'])->name('pengurus.create');
+        Route::post('/pengurus', [PengurusController::class, 'store'])->name('pengurus.store');
+        Route::get('/pengurus/{pengurus}/edit', [PengurusController::class, 'edit'])->name('pengurus.edit');
+        Route::put('/pengurus/{pengurus}', [PengurusController::class, 'update'])->name('pengurus.update');
+        Route::delete('/pengurus/{pengurus}', [PengurusController::class, 'destroy'])->name('pengurus.destroy');
     });
 });

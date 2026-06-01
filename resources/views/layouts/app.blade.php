@@ -392,46 +392,43 @@
             </div>
             <div class="list-group list-group-flush flex-grow-1">
                 @auth
-                    @if(auth()->user()->role === 'super_admin')
-                        <a class="list-group-item list-group-item-action {{ request()->is('super-admin/dashboard') ? 'active' : '' }}" href="{{ route('superadmin.dashboard') }}">
-                            <i class="bi bi-speedometer2"></i>
-                            <span class="sidebar-text">Dashboard Super Admin</span>
+                    @if(auth()->user()->role === 'santri')
+                        <a class="list-group-item list-group-item-action {{ request()->is('santri/dashboard') ? 'active' : '' }}" href="/santri/dashboard">
+                            <i class="bi bi-grid-fill"></i>
+                            <span class="sidebar-text">Dashboard Santri</span>
                         </a>
-                        <a class="list-group-item list-group-item-action {{ request()->is('super-admin/asatidz*') ? 'active' : '' }}" href="{{ route('asatidz.index') }}">
-                            <i class="bi bi-person-workspace"></i>
-                            <span class="sidebar-text">Kelola Asatidz</span>
-                        </a>
-                        <a class="list-group-item list-group-item-action {{ request()->is('santri*') ? 'active' : '' }}" href="{{ route('santri.index') }}">
-                            <i class="bi bi-people-fill"></i>
-                            <span class="sidebar-text">Kelola Santri</span>
+                        <a class="list-group-item list-group-item-action {{ request()->is('izin') || request()->is('izin/create') ? 'active' : '' }}" href="{{ route('izin.index') }}">
+                            <i class="bi bi-file-earmark-text-fill"></i>
+                            <span class="sidebar-text">Permohonan Izin</span>
                         </a>
                     @endif
-                    @if(auth()->user()->role === 'asatidz')
+
+                    @if(in_array(auth()->user()->role, ['admin', 'asatidz']))
                         <a class="list-group-item list-group-item-action {{ request()->is('dashboard') ? 'active' : '' }}" href="/dashboard">
                             <i class="bi bi-grid-fill"></i>
                             <span class="sidebar-text">Dashboard Admin</span>
                         </a>
-                        <a class="list-group-item list-group-item-action {{ request()->is('santri') ? 'active' : '' }}" href="/santri">
+                        
+                        @if(auth()->user()->role === 'admin')
+                            <a class="list-group-item list-group-item-action {{ request()->is('pengurus*') ? 'active' : '' }}" href="{{ route('pengurus.index') }}">
+                                <i class="bi bi-person-workspace"></i>
+                                <span class="sidebar-text">Kelola Pengurus</span>
+                            </a>
+                        @endif
+
+                        <a class="list-group-item list-group-item-action {{ request()->is('santri*') ? 'active' : '' }}" href="{{ route('santri.index') }}">
                             <i class="bi bi-people-fill"></i>
-                            <span class="sidebar-text">Data Santri</span>
+                            <span class="sidebar-text">Kelola Santri</span>
                         </a>
+                        
                         <a class="list-group-item list-group-item-action {{ request()->is('kehadiran-sholat') ? 'active' : '' }}" href="/kehadiran-sholat">
                             <i class="bi bi-clipboard2-check-fill"></i>
                             <span class="sidebar-text">Kehadiran Sholat</span>
                         </a>
+                        
                         <a class="list-group-item list-group-item-action {{ request()->is('izin/manage') ? 'active' : '' }}" href="{{ route('izin.manage') }}">
                             <i class="bi bi-file-earmark-check-fill"></i>
                             <span class="sidebar-text">Kelola Izin</span>
-                        </a>
-                    @endif
-                    @if(auth()->user()->role === 'santri')
-                        <a class="list-group-item list-group-item-action {{ request()->is('santri/dashboard') ? 'active' : '' }}" href="/santri/dashboard">
-                            <i class="bi bi-person-vcard-fill"></i>
-                            <span class="sidebar-text">Presensi Saya</span>
-                        </a>
-                        <a class="list-group-item list-group-item-action {{ request()->is('izin') ? 'active' : '' }}" href="{{ route('izin.index') }}">
-                            <i class="bi bi-file-earmark-text-fill"></i>
-                            <span class="sidebar-text">Izin Saya</span>
                         </a>
                     @endif
                 @endauth
@@ -451,9 +448,6 @@
             <!-- Top navigation-->
             <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
                 <div class="container-fluid">
-                    <button class="btn btn-link text-muted p-0 me-2" id="sidebarToggle">
-                        <i class="bi bi-list fs-4"></i>
-                    </button>
                     <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>

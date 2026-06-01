@@ -28,6 +28,27 @@ class SantriSeeder extends Seeder
                 'kelas' => '10A',
                 'foto_referensi' => 'default.jpg',
                 'face_descriptor' => '[]',
+                'fingerspot_pin' => '888',
+            ]
+        );
+
+        $tempUser = \App\Models\User::firstOrCreate(
+            ['email' => 'santri_temp@thursina.id'],
+            [
+                'name' => 'Santri Sementara',
+                'password' => \Illuminate\Support\Facades\Hash::make('santri'),
+                'role' => 'santri',
+            ]
+        );
+
+        \App\Models\Santri::firstOrCreate(
+            ['user_id' => $tempUser->id],
+            [
+                'nama' => 'Santri Sementara',
+                'kelas' => '10A',
+                'foto_referensi' => 'default.jpg',
+                'face_descriptor' => '[]',
+                'fingerspot_pin' => '999',
             ]
         );
     }

@@ -350,6 +350,7 @@
                 <thead class="bg-light">
                     <tr>
                         <th>Nama Santri</th>
+                        <th class="text-center" width="100">Foto Scan</th>
                         <th>Kelas</th>
                         <th>Waktu Sholat</th>
                         <th>Waktu Presensi</th>
@@ -362,6 +363,16 @@
                     <tr>
                         <td>
                             <div class="fw-bold text-dark">{{ $presensi->santri->nama }}</div>
+                        </td>
+                        <td class="text-center">
+                            @if($presensi->photo_url)
+                                <a href="{{ $presensi->photo_url }}" target="_blank" title="Buka foto asli">
+                                    <img src="{{ $presensi->photo_url }}" alt="Scan" class="rounded border shadow-sm" style="width: 45px; height: 45px; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <div class="small text-muted" style="display: none;"><i class="bi bi-image"></i> Lihat</div>
+                                </a>
+                            @else
+                                <span class="text-muted small">-</span>
+                            @endif
                         </td>
                         <td>{{ $presensi->santri->kelas }}</td>
                         <td>

@@ -4,19 +4,19 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class AuthController extends Controller
 {
     public function showLoginForm()
     {
         if (Auth::check()) {
-            if (Auth::user()->role === 'super_admin') {
-                return redirect()->intended('/super-admin/dashboard');
-            } elseif (Auth::user()->role === 'asatidz') {
+            if (in_array(Auth::user()->role, ['admin', 'asatidz'])) {
                 return redirect()->intended('/dashboard');
             } elseif (Auth::user()->role === 'santri') {
                 return redirect()->intended('/santri/dashboard');
             }
+            Auth::logout();
         }
         return view('auth.login');
     }
@@ -28,19 +28,25 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
+        // Find user by email
+        $user = User::where('email', $credentials['email'])->first();
+
+        // Check if user is registered and has valid roles
+        if (!$user || !in_array($user->role, ['admin', 'asatidz', 'santri'])) {
+            return back()->withErrors([
+                'email' => 'Anda belum terdaftar sebagai pengurus masjid.',
+            ])->onlyInput('email');
+        }
+
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             
-            // Role-based redirection
-            if (Auth::user()->role === 'super_admin') {
-                return redirect()->intended('/super-admin/dashboard');
-            } elseif (Auth::user()->role === 'asatidz') {
-                return redirect()->intended('/dashboard');
-            } elseif (Auth::user()->role === 'santri') {
+            if (Auth::user()->role === 'santri') {
                 return redirect()->intended('/santri/dashboard');
             }
             
-            return redirect('/');
+            // Both roles redirect to unified dashboard
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([

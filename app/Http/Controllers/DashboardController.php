@@ -42,7 +42,10 @@ class DashboardController extends Controller
             $display_date = $this->formatIndonesianDate($tanggal_mulai);
         }
 
-        $rawLogs = $this->fingerspotService->syncAttendance($tanggal_mulai, $tanggal_akhir);
+        // Only sync today and yesterday to prevent API latency during dashboard loads
+        $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
+        $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+        $rawLogs = $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
         $this->syncAlfas();
 
         $recentActivities = collect($rawLogs)->map(function ($log) {
@@ -315,7 +318,10 @@ class DashboardController extends Controller
             $display_date = $this->formatIndonesianDate($tanggal_mulai);
         }
 
-        $this->fingerspotService->syncAttendance($tanggal_mulai, $tanggal_akhir);
+        // Only sync today and yesterday to prevent API latency during dashboard loads
+        $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
+        $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+        $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
         $this->syncAlfas();
 
         $waktuSholat = $request->get('waktu_sholat');
@@ -412,7 +418,10 @@ class DashboardController extends Controller
         $tanggal_mulai = $resolvedDates['tanggal_mulai'];
         $tanggal_akhir = $resolvedDates['tanggal_akhir'];
 
-        $this->fingerspotService->syncAttendance($tanggal_mulai, $tanggal_akhir);
+        // Only sync today and yesterday to prevent API latency during dashboard loads
+        $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
+        $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+        $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
 
         $waktuSholat = $request->get('waktu_sholat');
         $status = $request->get('status');

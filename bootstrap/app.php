@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhook/fingerspot',
             'api/fingerspot-webhook',
         ]);
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) {

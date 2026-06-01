@@ -1,22 +1,22 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Asatidz')
+@section('title', 'Tambah Pengurus')
 
 @section('content')
 <div class="row">
     <div class="col-12 mb-4">
-        <a href="{{ route('asatidz.index') }}" class="text-decoration-none text-muted mb-2 d-inline-block">
+        <a href="{{ route('pengurus.index') }}" class="text-decoration-none text-muted mb-2 d-inline-block">
             <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar
         </a>
-        <h4 class="fw-800 text-dark mb-1">Tambah Asatidz Baru</h4>
-        <p class="text-muted small">Buat akun untuk pengajar baru di sistem.</p>
+        <h4 class="fw-800 text-dark mb-1">Tambah Pengurus Masjid Baru</h4>
+        <p class="text-muted small">Buat akun untuk pengurus baru (Admin atau Asatidz) di sistem.</p>
     </div>
 </div>
 
 <div class="row">
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm rounded-4 p-4">
-            <form action="{{ route('asatidz.store') }}" method="POST">
+            <form action="{{ route('pengurus.store') }}" method="POST">
                 @csrf
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">NAMA LENGKAP</label>
@@ -28,6 +28,15 @@
                     <label class="form-label small fw-bold text-muted">ALAMAT EMAIL</label>
                     <input type="email" name="email" class="form-control rounded-3 @error('email') is-invalid @enderror" value="{{ old('email') }}" required placeholder="email@example.com">
                     @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">ROLE / PERAN</label>
+                    <select name="role" class="form-select rounded-3 @error('role') is-invalid @enderror" required>
+                        <option value="asatidz" {{ old('role') === 'asatidz' ? 'selected' : '' }}>Asatidz (Pengajar/Staff)</option>
+                        <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin (Pengelola Sistem)</option>
+                    </select>
+                    @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 
                 <div class="mb-3">
@@ -50,8 +59,8 @@
                 </div>
                 
                 <div class="mt-4">
-                    <button type="submit" class="btn btn-primary rounded-3 px-5 py-2 w-100 fw-bold">
-                        BUAT AKUN ASATIDZ
+                    <button type="submit" class="btn btn-success rounded-3 px-5 py-2 w-100 fw-bold">
+                        BUAT AKUN PENGURUS
                     </button>
                 </div>
             </form>

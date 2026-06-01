@@ -61,8 +61,8 @@ class IzinController extends Controller
 
     public function manage(Request $request)
     {
-        // Only for Asatidz
-        if (auth()->user()->role !== 'asatidz') {
+        // Allowed for both Admin and Asatidz (pengurus masjid)
+        if (!in_array(auth()->user()->role, ['admin', 'asatidz'])) {
             abort(403);
         }
 
@@ -87,7 +87,7 @@ class IzinController extends Controller
 
     public function updateStatus(Request $request, Izin $izin)
     {
-        if (auth()->user()->role !== 'asatidz') {
+        if (!in_array(auth()->user()->role, ['admin', 'asatidz'])) {
             abort(403);
         }
 

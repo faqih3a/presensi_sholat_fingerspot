@@ -1,39 +1,48 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Asatidz')
+@section('title', 'Edit Pengurus')
 
 @section('content')
 <div class="row">
     <div class="col-12 mb-4">
-        <a href="{{ route('asatidz.index') }}" class="text-decoration-none text-muted mb-2 d-inline-block">
+        <a href="{{ route('pengurus.index') }}" class="text-decoration-none text-muted mb-2 d-inline-block">
             <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar
         </a>
-        <h4 class="fw-800 text-dark mb-1">Edit Data Asatidz</h4>
-        <p class="text-muted small">Perbarui informasi akun pengajar.</p>
+        <h4 class="fw-800 text-dark mb-1">Edit Data Pengurus Masjid</h4>
+        <p class="text-muted small">Perbarui informasi akun pengurus.</p>
     </div>
 </div>
 
 <div class="row">
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm rounded-4 p-4">
-            <form action="{{ route('asatidz.update', $asatidz->id) }}" method="POST">
+            <form action="{{ route('pengurus.update', $pengurus->id) }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">NAMA LENGKAP</label>
-                    <input type="text" name="name" class="form-control rounded-3 @error('name') is-invalid @enderror" value="{{ old('name', $asatidz->name) }}" required>
+                    <input type="text" name="name" class="form-control rounded-3 @error('name') is-invalid @enderror" value="{{ old('name', $pengurus->name) }}" required>
                     @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">ALAMAT EMAIL</label>
-                    <input type="email" name="email" class="form-control rounded-3 @error('email') is-invalid @enderror" value="{{ old('email', $asatidz->email) }}" required>
+                    <input type="email" name="email" class="form-control rounded-3 @error('email') is-invalid @enderror" value="{{ old('email', $pengurus->email) }}" required>
                     @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">ROLE / PERAN</label>
+                    <select name="role" class="form-select rounded-3 @error('role') is-invalid @enderror" required>
+                        <option value="asatidz" {{ old('role', $pengurus->role) === 'asatidz' ? 'selected' : '' }}>Asatidz (Pengajar/Staff)</option>
+                        <option value="admin" {{ old('role', $pengurus->role) === 'admin' ? 'selected' : '' }}>Admin (Pengelola Sistem)</option>
+                    </select>
+                    @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">NOMOR WHATSAPP</label>
-                    <input type="text" name="wa_number" class="form-control rounded-3 @error('wa_number') is-invalid @enderror" value="{{ old('wa_number', $asatidz->wa_number) }}" placeholder="Contoh: 628123456789">
+                    <input type="text" name="wa_number" class="form-control rounded-3 @error('wa_number') is-invalid @enderror" value="{{ old('wa_number', $pengurus->wa_number) }}" placeholder="Contoh: 628123456789">
                     <small class="text-muted mt-1 d-block">Gunakan format internasional tanpa tanda + (Contoh: 628123456789)</small>
                     @error('wa_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
@@ -55,7 +64,7 @@
                 </div>
                 
                 <div class="mt-4">
-                    <button type="submit" class="btn btn-primary rounded-3 px-5 py-2 w-100 fw-bold">
+                    <button type="submit" class="btn btn-success rounded-3 px-5 py-2 w-100 fw-bold">
                         SIMPAN PERUBAHAN
                     </button>
                 </div>

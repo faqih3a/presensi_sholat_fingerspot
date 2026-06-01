@@ -12,6 +12,7 @@ class Presensi extends Model
         'tanggal',
         'waktu_hadir',
         'status',
+        'photo_url',
     ];
 
     public function santri()

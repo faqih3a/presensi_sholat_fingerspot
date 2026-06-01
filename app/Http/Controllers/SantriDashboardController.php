@@ -38,7 +38,10 @@ class SantriDashboardController extends Controller
             $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(29)->format('Y-m-d');
         }
 
-        $this->fingerspotService->syncAttendance($startDate, $endDate);
+        // Only sync today and yesterday to prevent API latency during dashboard loads
+        $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
+        $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+        $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
 
         // Sync alfas before getting data
         $this->syncAlfas();
@@ -83,7 +86,10 @@ class SantriDashboardController extends Controller
             $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(29)->format('Y-m-d');
         }
 
-        $this->fingerspotService->syncAttendance($startDate, $endDate);
+        // Only sync today and yesterday to prevent API latency during dashboard loads
+        $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
+        $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+        $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
 
         $query = Presensi::where('santri_id', $user->santri->id)
             ->whereBetween('tanggal', [$startDate, $endDate])

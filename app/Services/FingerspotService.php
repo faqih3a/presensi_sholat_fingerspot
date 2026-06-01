@@ -333,7 +333,31 @@ class FingerspotService
 
             $santri = $santris->get($pin);
             if (!$santri) {
-                continue; // Skip if student not registered with this PIN
+                // Auto-register student if PIN does not exist
+                $name = $log['name'] ?? $log['username'] ?? 'Santri ' . $pin;
+                $email = 'santri.' . $pin . '@fingerspot.io';
+                
+                $userModel = User::updateOrCreate(
+                    ['email' => $email],
+                    [
+                        'name' => $name,
+                        'password' => Hash::make($pin),
+                        'role' => 'santri',
+                        'fingerspot_pin' => $pin,
+                    ]
+                );
+                
+                $santri = Santri::create([
+                    'user_id' => $userModel->id,
+                    'nama' => $name,
+                    'kelas' => 'Fingerspot',
+                    'foto_referensi' => '',
+                    'face_descriptor' => '[]',
+                    'fingerspot_pin' => $pin,
+                ]);
+                
+                // Add to our runtime map to prevent duplicate creates
+                $santris->put($pin, $santri);
             }
 
             $scanDateTime = Carbon::parse($scanTimeStr, 'Asia/Jakarta');
@@ -364,6 +388,9 @@ class FingerspotService
                             ->exists();
 
             $status = $hasIzin ? 'Izin' : 'Hadir';
+            
+            // Extract the AWS photo URL or other image URL
+            $photoUrl = $log['image_url'] ?? $log['photo_url'] ?? $log['photo'] ?? $log['image'] ?? $log['photo_link'] ?? null;
 
             // Look for existing presensi record
             $existing = Presensi::where('santri_id', $santri->id)
@@ -376,7 +403,8 @@ class FingerspotService
                 if ($existing->status === 'Alfa') {
                     $existing->update([
                         'waktu_hadir' => $timeStr,
-                        'status' => $status
+                        'status' => $status,
+                        'photo_url' => $photoUrl
                     ]);
                 }
             } else {
@@ -385,7 +413,8 @@ class FingerspotService
                     'waktu_sholat' => $waktuSholat,
                     'tanggal' => $dateStr,
                     'waktu_hadir' => $timeStr,
-                    'status' => $status
+                    'status' => $status,
+                    'photo_url' => $photoUrl
                 ]);
             }
         }
