@@ -17,5 +17,3 @@ curl_close($ch);
 print_r ($result);
 
 ?>
-
-// 2026-05-30 07:45:25
