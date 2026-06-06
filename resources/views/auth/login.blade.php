@@ -6,12 +6,20 @@
 <style>
     .login-container {
         min-height: 100vh;
-        background-color: #fff;
+        background-color: #f8f9fa;
+    }
+    .left-panel {
+        background-color: #f8f9fa;
     }
     .login-card {
-        max-width: 450px;
+        max-width: 460px;
         width: 100%;
         margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+        border: 1px solid #edf2f9;
+        padding: 3rem 2.5rem;
     }
     .text-success-gradient {
         background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
@@ -79,92 +87,94 @@
 <div class="container-fluid p-0 overflow-hidden">
     <div class="row g-0 login-container">
         <!-- Left Panel: Form -->
-        <div class="col-lg-5 d-flex flex-column justify-content-center px-4 py-5 bg-white">
-            <div class="login-card">
-                <div class="text-center mb-5">
-                    <div class="bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 64px; height: 64px;">
-                        <i class="bi bi-shield-check fs-1 text-success"></i>
+        <div class="col-lg-6 d-flex flex-column justify-content-center px-4 py-5 left-panel">
+            <div class="login-card-wrapper" style="max-width: 460px; width: 100%; margin: 0 auto;">
+                <div class="login-card">
+                    <div class="text-center mb-4">
+                        <div class="bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 64px; height: 64px;">
+                            <i class="bi bi-shield-check fs-1 text-success"></i>
+                        </div>
+                        <h2 class="fw-800 text-dark mb-1" style="letter-spacing: -1px;">PRESENSI THURSINA</h2>
+                        <p class="text-muted">Masuk untuk mengelola kehadiran santri.</p>
                     </div>
-                    <h2 class="fw-800 text-dark mb-1" style="letter-spacing: -1px;">PRESENSI THURSINA</h2>
-                    <p class="text-muted">Masuk untuk mengelola kehadiran santri.</p>
+
+                    @if (session('error'))
+                        <div class="alert alert-danger border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <div>{{ session('error') }}</div>
+                        </div>
+                    @endif
+
+                    @if (session('success'))
+                        <div class="alert alert-success border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <div>{{ session('success') }}</div>
+                        </div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="alert alert-danger border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <div class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <span>{{ $error }}</span>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('login') }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0 ps-3 pe-2 text-muted" style="border-radius: 0.75rem 0 0 0.75rem;">
+                                    <i class="bi bi-envelope"></i>
+                                </span>
+                                <input type="email" class="form-control border-0 bg-light py-2" style="border-radius: 0 0.75rem 0.75rem 0;" name="email" placeholder="Masukkan Email Anda" required autofocus>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0 ps-3 pe-2 text-muted" style="border-radius: 0.75rem 0 0 0.75rem;">
+                                    <i class="bi bi-lock"></i>
+                                </span>
+                                <input type="password" class="form-control border-0 bg-light py-2" style="border-radius: 0;" id="password" name="password" placeholder="Masukkan Password Anda" required>
+                                <span class="input-group-text bg-light border-0 pe-3 ps-2 text-muted" id="togglePassword" style="cursor: pointer; border-radius: 0 0.75rem 0.75rem 0;">
+                                    <i class="bi bi-eye-slash"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="rememberMe" style="cursor: pointer;">
+                                <label class="form-check-label text-muted small" for="rememberMe" style="cursor: pointer;">Ingat Saya</label>
+                            </div>
+                            <a href="#" class="text-success small fw-bold text-decoration-none">Lupa Password?</a>
+                        </div>
+                        
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn btn-gradient-success py-2 fs-6">Masuk Ke Sistem</button>
+                            <div class="text-center position-relative my-2">
+                                <hr class="text-muted opacity-25">
+                                <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">ATAU</span>
+                            </div>
+                            <a href="{{ route('santri.create') }}" class="btn btn-outline-soft py-2 fs-6">Daftar Akun Santri</a>
+                        </div>
+                    </form>
                 </div>
 
-                @if (session('error'))
-                    <div class="alert alert-danger border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <div>{{ session('error') }}</div>
-                    </div>
-                @endif
-
-                @if (session('success'))
-                    <div class="alert alert-success border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
-                        <i class="bi bi-check-circle-fill me-2"></i>
-                        <div>{{ session('success') }}</div>
-                    </div>
-                @endif
-
-                @if ($errors->any())
-                    <div class="alert alert-danger border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <div class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <span>{{ $error }}</span>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-
-                <form action="{{ route('login') }}" method="POST">
-                    @csrf
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Email Address</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-0 ps-3 pe-2 text-muted" style="border-radius: 0.75rem 0 0 0.75rem;">
-                                <i class="bi bi-envelope"></i>
-                            </span>
-                            <input type="email" class="form-control border-0 bg-light py-2" style="border-radius: 0 0.75rem 0.75rem 0;" name="email" placeholder="Masukkan Email Anda" required autofocus>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-0 ps-3 pe-2 text-muted" style="border-radius: 0.75rem 0 0 0.75rem;">
-                                <i class="bi bi-lock"></i>
-                            </span>
-                            <input type="password" class="form-control border-0 bg-light py-2" style="border-radius: 0;" id="password" name="password" placeholder="Masukkan Password Anda" required>
-                            <span class="input-group-text bg-light border-0 pe-3 ps-2 text-muted" id="togglePassword" style="cursor: pointer; border-radius: 0 0.75rem 0.75rem 0;">
-                                <i class="bi bi-eye-slash"></i>
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="rememberMe" style="cursor: pointer;">
-                            <label class="form-check-label text-muted small" for="rememberMe" style="cursor: pointer;">Ingat Saya</label>
-                        </div>
-                        <a href="#" class="text-success small fw-bold text-decoration-none">Lupa Password?</a>
-                    </div>
-                    
-                    <div class="d-grid gap-3">
-                        <button type="submit" class="btn btn-gradient-success py-2 fs-6">Masuk Ke Sistem</button>
-                        <div class="text-center position-relative my-2">
-                            <hr class="text-muted opacity-25">
-                            <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">ATAU</span>
-                        </div>
-                        <a href="{{ route('santri.create') }}" class="btn btn-outline-soft py-2 fs-6">Daftar Akun Santri</a>
-                    </div>
-                </form>
-
-                <div class="mt-5 text-center">
+                <div class="mt-4 text-center">
                     <p class="text-muted small mb-0">© 2026 Thursina IIBS. All rights reserved.</p>
                 </div>
             </div>
         </div>
         
         <!-- Right Panel: Visual -->
-        <div class="col-lg-7 d-none d-lg-flex right-panel">
+        <div class="col-lg-6 d-none d-lg-flex right-panel">
             <div class="glass-effect">
                 <h1 class="display-4 fw-800 mb-3" style="letter-spacing: -2px;">Digital Attendance System</h1>
                 <p class="lead mb-4 opacity-75">Sistem presensi berbasis AI Face Recognition untuk kemudahan pemantauan ibadah santri di lingkungan Thursina IIBS.</p>
