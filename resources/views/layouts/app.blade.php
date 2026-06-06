@@ -448,10 +448,11 @@
             <!-- Top navigation-->
             <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
                 <div class="container-fluid">
-                    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-link text-dark p-0 border-0 me-3 d-md-none" id="sidebarToggle" type="button">
+                            <i class="bi bi-list fs-3"></i>
+                        </button>
+                        
                         <!-- Search Bar -->
                         <form action="{{ route('dashboard.kehadiran') }}" method="GET" class="ms-md-3 me-auto d-none d-md-block no-loader" style="width: 250px;">
                             <div class="input-group input-group-sm bg-light rounded-3 border-0">
@@ -461,8 +462,10 @@
                                 <input type="text" name="search" class="form-control bg-transparent border-0 ps-1" placeholder="Cari santri..." aria-label="Search" value="{{ request('search') }}">
                             </div>
                         </form>
+                    </div>
 
-                        <ul class="navbar-nav ms-auto mt-2 mt-lg-0 align-items-center">
+                    <div class="d-flex align-items-center">
+                        <ul class="navbar-nav ms-auto align-items-center flex-row gap-2">
                             @auth
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 p-0" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
