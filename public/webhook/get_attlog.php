@@ -1,7 +1,7 @@
 <php
 
 $url = 'https://developer.fingerspot.io/api/get_attlog';
-$data = '{"trans_id":"1", "cloud_id":"S118001290", "start_date":"2026-05-30", "end_date":"2026-06-30"}';
+$data = '{"trans_id":"0", "cloud_id":"S118001290", "start_date":"2026-05-30", "end_date":"2026-06-30"}';
 $authorization = "Authorization: Bearer FLDYHON2Z9S53DQ9";
 
 $postdata = $data;
