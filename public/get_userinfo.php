@@ -1,7 +1,7 @@
 <?php
 
 $url = 'https://developer.fingerspot.io/api/get_userinfo';
-$data = '{"trans_id":"0", "cloud_id":"S118001290", "pin":"192"}';
+$data = '{"trans_id":"0", "cloud_id":"S118001290", "pin":"150818"}';
 $authorization = "Authorization: Bearer FLDYHON2Z9S53DQ9";
 
 $ch = curl_init($url);
