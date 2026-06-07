@@ -7,8 +7,6 @@ services:
     environment:
       MARIADB_ROOT_PASSWORD: Thurs1n@
       MARIADB_DATABASE: presensi_sholat
-    ports:
-      - "3306:3306"
     volumes:
       - ./db_data:/var/lib/mysql
 

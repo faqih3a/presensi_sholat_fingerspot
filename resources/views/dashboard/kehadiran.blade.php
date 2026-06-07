@@ -54,11 +54,6 @@
         color: #3ab0ff;
         border: 1px solid rgba(58, 176, 255, 0.2);
     }
-    .badge-soft-secondary {
-        background-color: rgba(108, 117, 125, 0.1);
-        color: #6c757d;
-        border: 1px solid rgba(108, 117, 125, 0.2);
-    }
     .filter-select {
         background-color: #f8f9fa;
         border: 1px solid #edf2f9;
@@ -354,14 +349,11 @@
             <table class="table table-hover align-middle mb-0 text-nowrap">
                 <thead class="bg-light">
                     <tr>
-                        <th>PIN</th>
                         <th>Nama Santri</th>
                         <th class="text-center" width="100">Foto Scan</th>
                         <th>Kelas</th>
                         <th>Waktu Sholat</th>
                         <th>Waktu Presensi</th>
-                        <th>Metode Verifikasi</th>
-                        <th>Status Scan</th>
                         <th class="text-center">Status</th>
                         <th class="text-center">Aksi</th>
                     </tr>
@@ -369,9 +361,6 @@
                 <tbody>
                     @forelse($presensis as $presensi)
                     <tr>
-                        <td>
-                            <span class="badge badge-soft badge-soft-secondary fw-bold">{{ $presensi->santri->fingerspot_pin ?? '-' }}</span>
-                        </td>
                         <td>
                             <div class="fw-bold text-dark">{{ $presensi->santri->nama }}</div>
                         </td>
@@ -406,25 +395,6 @@
                                 <div class="small text-muted border-start ps-2">{{ \Carbon\Carbon::parse($presensi->tanggal)->format('d M Y') }}</div>
                             </div>
                         </td>
-                        <td>
-                            @if($presensi instanceof \App\Models\Presensi && $presensi->verify !== null)
-                                <span class="badge badge-soft badge-soft-info d-inline-flex align-items-center">
-                                    <i class="bi {{ $presensi->verify_icon }} me-1"></i>
-                                    {{ $presensi->verify_method_label }}
-                                </span>
-                            @else
-                                <span class="text-muted small">-</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($presensi instanceof \App\Models\Presensi && $presensi->status_scan !== null)
-                                <span class="badge badge-soft badge-soft-secondary">
-                                    {{ $presensi->status_scan_label }}
-                                </span>
-                            @else
-                                <span class="text-muted small">-</span>
-                            @endif
-                        </td>
                         <td class="text-center">
                             @if($presensi->status == 'Alfa')
                                 <span class="badge badge-soft badge-soft-danger px-4">Alpha</span>
@@ -447,7 +417,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="10" class="text-center py-5">
+                        <td colspan="6" class="text-center py-5">
                             <div class="py-4 text-muted">
                                 <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
                                 <h6 class="fw-bold">Belum Ada Data Presensi</h6>
