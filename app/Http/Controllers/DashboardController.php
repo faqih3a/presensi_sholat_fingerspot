@@ -514,7 +514,7 @@ class DashboardController extends Controller
             "Expires"             => "0"
         ];
         
-        $columns = ['No', 'Nama Santri', 'Kelas', 'Waktu Sholat', 'Tanggal', 'Waktu Hadir', 'Status'];
+        $columns = ['No', 'PIN', 'Nama Santri', 'Kelas', 'Waktu Sholat', 'Tanggal', 'Waktu Hadir', 'Metode Verifikasi', 'Status Scan', 'Status'];
         
         $callback = function() use($presensis, $columns) {
             $file = fopen('php://output', 'w');
@@ -522,13 +522,19 @@ class DashboardController extends Controller
             fputcsv($file, $columns);
             $no = 1;
             foreach ($presensis as $presensi) {
+                $verifyMethod = ($presensi instanceof \App\Models\Presensi) ? $presensi->verify_method_label : '-';
+                $statusScan = ($presensi instanceof \App\Models\Presensi) ? $presensi->status_scan_label : '-';
+                
                 fputcsv($file, [
                     $no++,
+                    $presensi->santri->fingerspot_pin ?? '-',
                     $presensi->santri->nama,
                     $presensi->santri->kelas,
                     $presensi->waktu_sholat,
                     \Carbon\Carbon::parse($presensi->tanggal)->format('d M Y'),
                     $presensi->waktu_hadir ? \Carbon\Carbon::parse($presensi->waktu_hadir)->format('H:i:s') : '-',
+                    $verifyMethod,
+                    $statusScan,
                     $presensi->status
                 ]);
             }

@@ -391,6 +391,9 @@ class FingerspotService
             
             // Extract the AWS photo URL or other image URL
             $photoUrl = $log['image_url'] ?? $log['photo_url'] ?? $log['photo'] ?? $log['image'] ?? $log['photo_link'] ?? null;
+            
+            $verify = isset($log['verify']) ? (int)$log['verify'] : null;
+            $statusScan = isset($log['status_scan']) ? (int)$log['status_scan'] : null;
 
             // Look for existing presensi record
             $existing = Presensi::where('santri_id', $santri->id)
@@ -404,7 +407,9 @@ class FingerspotService
                     $existing->update([
                         'waktu_hadir' => $timeStr,
                         'status' => $status,
-                        'photo_url' => $photoUrl
+                        'photo_url' => $photoUrl,
+                        'verify' => $verify,
+                        'status_scan' => $statusScan,
                     ]);
                 }
             } else {
@@ -414,7 +419,9 @@ class FingerspotService
                     'tanggal' => $dateStr,
                     'waktu_hadir' => $timeStr,
                     'status' => $status,
-                    'photo_url' => $photoUrl
+                    'photo_url' => $photoUrl,
+                    'verify' => $verify,
+                    'status_scan' => $statusScan,
                 ]);
             }
         }
