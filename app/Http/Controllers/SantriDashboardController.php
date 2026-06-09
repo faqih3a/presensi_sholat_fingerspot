@@ -41,6 +41,8 @@ class SantriDashboardController extends Controller
         // Get personal presensi history
         $query = Presensi::where('santri_id', $user->santri->id)
             ->whereBetween('tanggal', [$startDate, $endDate])
+            ->where('waktu_sholat', '!=', 'Tes')
+            ->where('status', '!=', 'Tes')
             ->orderBy('tanggal', 'desc')
             ->orderBy('waktu_hadir', 'desc');
 
@@ -83,6 +85,8 @@ class SantriDashboardController extends Controller
 
         $query = Presensi::where('santri_id', $user->santri->id)
             ->whereBetween('tanggal', [$startDate, $endDate])
+            ->where('waktu_sholat', '!=', 'Tes')
+            ->where('status', '!=', 'Tes')
             ->orderBy('tanggal', 'desc')
             ->orderBy('waktu_hadir', 'desc');
             
