@@ -38,7 +38,8 @@ if (!$pin) {
 // ─── Helper: Kirim request ke API FingerSpot ────────────────────────
 function requestUserinfo(string $apiUrl, string $apiToken, string $cloudId, string $pin): array
 {
-    $transId = 'get_userinfo_' . $pin . '_' . time();
+    // Gunakan murni angka untuk trans_id agar tidak diubah menjadi 0 oleh server FingerSpot
+    $transId = time() . str_pad($pin, 4, '0', STR_PAD_LEFT);
     
     $payload = json_encode([
         'trans_id' => $transId,
