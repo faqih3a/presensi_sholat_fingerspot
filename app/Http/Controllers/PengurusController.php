@@ -28,9 +28,10 @@ class PengurusController extends Controller
             'wa_number' => 'nullable|string|max:20',
             'role' => 'required|in:admin,asatidz',
             'password' => 'required|string|min:5|confirmed',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'wa_number' => $request->wa_number,
@@ -38,7 +39,14 @@ class PengurusController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        return redirect()->route('pengurus.index')->with('success', 'Akun Pengurus Masjid berhasil dibuat.');
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $filename = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('storage/avatars'), $filename);
+            $user->update(['avatar' => $filename]);
+        }
+
+        return redirect()->route('pengurus.index')->with('success', 'Akun Asatidz Masjid berhasil dibuat.');
     }
 
     public function edit(User $pengurus)

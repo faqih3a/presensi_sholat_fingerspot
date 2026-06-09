@@ -87,6 +87,40 @@
     body.dark-mode .avatar-sm {
         border-color: #444;
     }
+    
+    /* Form & Preview Styles */
+    .form-control, .form-select {
+        border: 1px solid #edf2f9;
+        border-radius: 0.75rem;
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.1);
+    }
+    .preview-container {
+        max-width: 100%;
+        margin: 0 auto;
+        position: relative;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        background: #f8f9fa;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed #dee2e6;
+    }
+    #image-preview {
+        width: 100%;
+        display: none;
+        border-radius: 0.75rem;
+    }
+    body.dark-mode .preview-container {
+        background: #2c2c2c;
+        border-color: #444;
+    }
 </style>
 @endpush
 
@@ -295,61 +329,103 @@
 
 <!-- Modal Tambah Asatidz -->
 <div class="modal fade" id="tambahAsatidzModal" tabindex="-1" aria-labelledby="tambahAsatidzModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 1.25rem;">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark" id="tambahAsatidzModalLabel">Tambah Asatidz Masjid Baru</h5>
-                <button type="button" class="btn-close" data-bs-shadow="none" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-white border-bottom-0 pb-0 pt-4 px-4">
+                <div class="text-center w-100">
+                    <h4 class="fw-bold text-dark mb-1" id="tambahAsatidzModalLabel">
+                        <i class="bi bi-person-plus-fill text-success me-2"></i>Tambah Asatidz Masjid Baru
+                    </h4>
+                    <p class="text-muted small">Buat akun untuk asatidz baru (Admin atau Asatidz) di sistem.</p>
+                </div>
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p class="text-muted small mb-4">Buat akun untuk asatidz baru (Admin atau Asatidz) di sistem.</p>
-                
-                <form action="{{ route('pengurus.store') }}" method="POST">
+            <div class="modal-body p-4">
+                <form action="{{ route('pengurus.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">NAMA LENGKAP</label>
-                        <input type="text" name="name" class="form-control rounded-3 @error('name') is-invalid @enderror" value="{{ old('name') }}" required placeholder="Contoh: Ahmad Subagja">
-                        @error('name') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">ALAMAT EMAIL</label>
-                        <input type="email" name="email" class="form-control rounded-3 @error('email') is-invalid @enderror" value="{{ old('email') }}" required placeholder="email@example.com">
-                        @error('email') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">ROLE / PERAN</label>
-                        <select name="role" class="form-select rounded-3 @error('role') is-invalid @enderror" required>
-                            <option value="asatidz" {{ old('role') === 'asatidz' ? 'selected' : '' }}>Asatidz (Pengajar/Staff)</option>
-                            <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin (Pengelola Sistem)</option>
-                        </select>
-                        @error('role') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">NOMOR WHATSAPP</label>
-                        <input type="text" name="wa_number" class="form-control rounded-3 @error('wa_number') is-invalid @enderror" value="{{ old('wa_number') }}" placeholder="Contoh: 628123456789">
-                        <small class="text-muted mt-1 d-block" style="font-size: 0.7rem;">Gunakan format internasional tanpa tanda + (Contoh: 628123456789)</small>
-                        @error('wa_number') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <label class="form-label small fw-bold text-muted">PASSWORD</label>
-                            <input type="password" name="password" class="form-control rounded-3 @error('password') is-invalid @enderror" required placeholder="Minimal 5 karakter">
-                            @error('password') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-                        </div>
+                    <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted">KONFIRMASI PASSWORD</label>
-                            <input type="password" name="password_confirmation" class="form-control rounded-3" required placeholder="Ulangi password">
+                            <div class="mb-3">
+                                <label for="name" class="form-label fw-bold small text-muted text-uppercase">Nama Lengkap</label>
+                                <input type="text" name="name" id="name" class="form-control py-2 @error('name') is-invalid @enderror" value="{{ old('name') }}" required placeholder="Contoh: Ahmad Subagja">
+                                @error('name') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label fw-bold small text-muted text-uppercase">Alamat Email</label>
+                                <input type="email" name="email" id="email" class="form-control py-2 @error('email') is-invalid @enderror" value="{{ old('email') }}" required placeholder="email@example.com">
+                                @error('email') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Role / Peran</label>
+                                <div class="premium-select-wrapper">
+                                    <button class="premium-select-btn dropdown-toggle py-2" type="button" id="roleDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span id="selected-role-text">
+                                            @if(old('role') === 'admin')
+                                                Admin (Pengelola Sistem)
+                                            @elseif(old('role') === 'asatidz')
+                                                Asatidz (Pengajar/Staff)
+                                            @else
+                                                -- Pilih Role --
+                                            @endif
+                                        </span>
+                                        <i class="bi bi-chevron-down small text-muted"></i>
+                                    </button>
+                                    <ul class="dropdown-menu shadow border-0" aria-labelledby="roleDropdown">
+                                        <li><a class="dropdown-item py-2 {{ old('role') === 'asatidz' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectRole('asatidz', 'Asatidz (Pengajar/Staff)')">Asatidz (Pengajar/Staff)</a></li>
+                                        <li><a class="dropdown-item py-2 {{ old('role') === 'admin' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectRole('admin', 'Admin (Pengelola Sistem)')">Admin (Pengelola Sistem)</a></li>
+                                    </ul>
+                                    <input type="hidden" name="role" id="role_input" value="{{ old('role') }}" required>
+                                </div>
+                                @error('role') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="wa_number" class="form-label fw-bold small text-muted text-uppercase">Nomor WhatsApp</label>
+                                <input type="text" name="wa_number" id="wa_number" class="form-control py-2 @error('wa_number') is-invalid @enderror" value="{{ old('wa_number') }}" placeholder="Contoh: 628123456789">
+                                <small class="text-muted mt-1 d-block" style="font-size: 0.7rem;">Gunakan format internasional tanpa tanda + (Contoh: 628123456789)</small>
+                                @error('wa_number') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label fw-bold small text-muted text-uppercase">Password</label>
+                                <div class="input-group">
+                                    <input type="password" name="password" id="password" class="form-control py-2 @error('password') is-invalid @enderror" required placeholder="Minimal 5 karakter">
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                @error('password') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password_confirmation" class="form-label fw-bold small text-muted text-uppercase">Konfirmasi Password</label>
+                                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control py-2" required placeholder="Ulangi password">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="avatar" class="form-label fw-bold small text-muted text-uppercase">Foto Profil</label>
+                                <input type="file" class="form-control py-2" id="avatar" name="avatar" accept="image/jpeg, image/png, image/jpg">
+                            </div>
+                            <div class="preview-container mb-2" id="preview-wrapper">
+                                <img id="image-preview" src="#" alt="Preview" />
+                                <div id="preview-placeholder" class="text-center text-muted">
+                                    <i class="bi bi-camera fs-1 d-block mb-2"></i>
+                                    <span class="small">Belum ada foto dipilih</span>
+                                </div>
+                            </div>
+                            <div id="extraction-status" class="text-center mt-2 small d-none"></div>
                         </div>
                     </div>
                     
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-success rounded-3 w-100 fw-bold py-2">
-                            BUAT AKUN ASATIDZ
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" id="submit-btn" class="btn btn-gradient-success flex-grow-1 py-2 fw-bold">
+                            <i class="bi bi-check-circle-fill me-2"></i>Buat Akun Asatidz
                         </button>
+                        <button type="button" class="btn btn-light px-4 py-2 fw-bold text-muted" data-bs-dismiss="modal">Batal</button>
                     </div>
                 </form>
             </div>
@@ -359,11 +435,74 @@
 
 @push('scripts')
 <script>
+    function selectRole(val, text) {
+        document.getElementById('role_input').value = val;
+        document.getElementById('selected-role-text').innerText = text;
+        
+        // Update active state
+        const items = document.querySelectorAll('#roleDropdown + .dropdown-menu .dropdown-item');
+        items.forEach(item => {
+            if (item.innerText === text) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         @if ($errors->any())
             const myModal = new bootstrap.Modal(document.getElementById('tambahAsatidzModal'));
             myModal.show();
         @endif
+
+        const fotoInput = document.getElementById('avatar');
+        const imagePreview = document.getElementById('image-preview');
+        const previewPlaceholder = document.getElementById('preview-placeholder');
+        const extractionStatus = document.getElementById('extraction-status');
+        const modalForm = document.getElementById('tambahAsatidzModal').querySelector('form');
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const tambahAsatidzModal = document.getElementById('tambahAsatidzModal');
+
+        // Reset Modal on Close
+        tambahAsatidzModal.addEventListener('hidden.bs.modal', function () {
+            modalForm.reset();
+            imagePreview.style.display = 'none';
+            imagePreview.src = '#';
+            previewPlaceholder.classList.remove('d-none');
+            extractionStatus.classList.add('d-none');
+            extractionStatus.innerHTML = '';
+            
+            // Reset role dropdown select text
+            document.getElementById('selected-role-text').innerText = '-- Pilih Role --';
+            const items = document.querySelectorAll('#roleDropdown + .dropdown-menu .dropdown-item');
+            items.forEach(item => item.classList.remove('active'));
+            
+            passwordInput.setAttribute('type', 'password');
+            togglePassword.innerHTML = '<i class="bi bi-eye"></i>';
+        });
+
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+        });
+
+        fotoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Show image preview
+            const imgUrl = URL.createObjectURL(file);
+            imagePreview.src = imgUrl;
+            imagePreview.style.display = 'block';
+            previewPlaceholder.classList.add('d-none');
+            
+            extractionStatus.classList.remove('d-none');
+            extractionStatus.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> Foto profil terpilih!';
+            extractionStatus.className = 'text-success mt-2 small fw-bold';
+        });
     });
 </script>
 @endpush
