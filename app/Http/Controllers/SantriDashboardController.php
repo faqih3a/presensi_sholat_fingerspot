@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Presensi;
+use App\Traits\DateAndPrayerHelper;
 
 class SantriDashboardController extends Controller
 {
+    use DateAndPrayerHelper;
     public function __construct()
     {
     }
@@ -34,7 +36,7 @@ class SantriDashboardController extends Controller
             $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(29)->format('Y-m-d');
         }
 
-        $this->syncAlfas();
+        $this->syncAlfas($user->santri->id);
 
         // Get personal presensi history
         $query = Presensi::where('santri_id', $user->santri->id)
@@ -123,97 +125,4 @@ class SantriDashboardController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    private function syncAlfas()
-    {
-        $now = \Carbon\Carbon::now('Asia/Jakarta');
-        $today = $now->format('Y-m-d');
-        
-        $jadwal = $this->getJadwalSholat($now);
-        if (!$jadwal) return;
-
-        $mapping = [
-            'Fajr' => 'Subuh',
-            'Dhuhr' => 'Dzuhur',
-            'Asr' => 'Ashar',
-            'Maghrib' => 'Maghrib',
-            'Isha' => 'Isya'
-        ];
-
-        $times = [
-            'Subuh' => \Carbon\Carbon::parse($today . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta'),
-            'Dzuhur' => \Carbon\Carbon::parse($today . ' ' . $jadwal['Asr'], 'Asia/Jakarta'),
-            'Ashar' => \Carbon\Carbon::parse($today . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta'),
-            'Maghrib' => \Carbon\Carbon::parse($today . ' ' . $jadwal['Isha'], 'Asia/Jakarta'),
-            'Isya' => \Carbon\Carbon::parse($today . ' 23:59:59', 'Asia/Jakarta'),
-        ];
-
-        $user = Auth::user();
-        if (!$user->santri) return;
-        $santriId = $user->santri->id;
-
-        foreach ($times as $sholat => $endTime) {
-            if ($now->greaterThan($endTime)) {
-                Presensi::firstOrCreate([
-                    'santri_id' => $santriId,
-                    'tanggal' => $today,
-                    'waktu_sholat' => $sholat,
-                ], [
-                    'status' => 'Alfa',
-                    'waktu_hadir' => null
-                ]);
-            }
-        }
-        
-        // Sync yesterday
-        $yesterday = $now->copy()->subDay()->format('Y-m-d');
-        $cacheKey = 'sync_alfa_' . $yesterday . '_santri_' . $santriId;
-        if (!\Illuminate\Support\Facades\Cache::get($cacheKey)) {
-            foreach ($mapping as $apiName => $sysName) {
-                Presensi::firstOrCreate([
-                    'santri_id' => $santriId,
-                    'tanggal' => $yesterday,
-                    'waktu_sholat' => $sysName,
-                ], [
-                    'status' => 'Alfa',
-                    'waktu_hadir' => null
-                ]);
-            }
-            \Illuminate\Support\Facades\Cache::put($cacheKey, true, 86400);
-        }
-    }
-
-    private function getJadwalSholat(\Carbon\Carbon $date)
-    {
-        $cacheKey = 'jadwal_sholat_' . $date->format('Y-m-d');
-
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 86400, function () use ($date) {
-            try {
-                $response = \Illuminate\Support\Facades\Http::timeout(5)->get('https://api.aladhan.com/v1/timingsByAddress', [
-                    'address' => 'Malang, Indonesia',
-                    'method' => 20, // Kemenag RI
-                    'date' => $date->format('d-m-Y')
-                ]);
-
-                if ($response->successful()) {
-                    $timings = $response->json('data.timings');
-                    foreach ($timings as $key => $time) {
-                        $timings[$key] = substr($time, 0, 5);
-                    }
-                    return $timings;
-                }
-            } catch (\Exception $e) {
-            }
-            return [
-                'Fajr' => '04:30',
-                'Dhuhr' => '12:00',
-                'Asr' => '15:15',
-                'Maghrib' => '18:00',
-                'Isha' => '19:15',
-                'Subuh' => '04:30',
-                'Dzuhur' => '12:00',
-                'Ashar' => '15:15',
-                'Isya' => '19:15'
-            ];
-        });
-    }
 }
