@@ -148,14 +148,28 @@ if (!$decoded || !isset($decoded['type']) || !isset($decoded['cloud_id'])) {
     exit;
 }
 
-// Hanya proses type = attlog
-if ($decoded['type'] !== 'attlog') {
-    logWebhook("SKIP: type={$decoded['type']} (bukan attlog)");
-    echo json_encode(['status' => 'ok', 'message' => 'Type ignored']);
+// ─── Route berdasarkan type ─────────────────────────────────────────
+$type = $decoded['type'];
+
+if ($type === 'attlog') {
+    handleAttlog($decoded);
+} elseif ($type === 'get_userinfo') {
+    handleGetUserinfo($decoded);
+} else {
+    logWebhook("SKIP: type=$type (tidak diproses)");
+    echo json_encode(['status' => 'ok', 'message' => "Type '$type' ignored"]);
     exit;
 }
 
-// Ambil data absensi
+// Terminate the kernel
+$kernel->terminate($request, new Illuminate\Http\Response());
+exit;
+
+// =====================================================================
+// HANDLER: attlog (data absensi realtime)
+// =====================================================================
+function handleAttlog(array $decoded): void
+{
 $data = $decoded['data'] ?? null;
 if (!$data || !isset($data['pin']) || !isset($data['scan'])) {
     logWebhook("ERROR: Missing data.pin or data.scan");
@@ -240,6 +254,68 @@ try {
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
 }
+}
 
-// Terminate the kernel
-$kernel->terminate($request, new Illuminate\Http\Response());
+// =====================================================================
+// HANDLER: get_userinfo (data user dari mesin)
+// =====================================================================
+function handleGetUserinfo(array $decoded): void
+{
+    $transId = $decoded['trans_id'] ?? 'unknown';
+    $cloudId = $decoded['cloud_id'] ?? 'unknown';
+    $data    = $decoded['data'] ?? null;
+
+    if (!$data || !isset($data['pin'])) {
+        logWebhook("USERINFO ERROR: Missing data or pin (trans_id=$transId)");
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Missing userinfo data']);
+        return;
+    }
+
+    $pin       = $data['pin'] ?? '-';
+    $name      = $data['name'] ?? '-';
+    $privilege = $data['privilege'] ?? '-';
+    $finger    = $data['finger'] ?? '0';
+    $face      = $data['face'] ?? '0';
+    $password  = $data['password'] ?? '';
+    $rfid      = $data['rfid'] ?? '';
+    $vein      = $data['vein'] ?? '0';
+    $template  = $data['template'] ?? '';
+
+    // Map privilege code to label
+    $privLabels = ['1' => 'User', '2' => 'Admin', '3' => 'Sub-admin'];
+    $privLabel = $privLabels[$privilege] ?? "Unknown($privilege)";
+
+    // Log detail lengkap
+    logWebhook("USERINFO: trans_id=$transId, cloud_id=$cloudId, pin=$pin, name=$name, privilege=$privLabel, finger=$finger, face=$face, rfid=" . ($rfid ?: '(kosong)') . ", vein=$vein, template_length=" . strlen($template));
+
+    // Cek apakah pin ini ada di database santri
+    $santri = \App\Models\Santri::find($pin);
+    $dbStatus = $santri
+        ? "MATCHED → santri_id={$santri->id}, db_name={$santri->nama}"
+        : "NOT FOUND in database";
+    
+    logWebhook("USERINFO MATCH: pin=$pin → $dbStatus");
+
+    echo json_encode([
+        'status'  => 'ok',
+        'message' => "Userinfo received for pin $pin ($name)",
+        'data'    => [
+            'trans_id'     => $transId,
+            'cloud_id'     => $cloudId,
+            'pin'          => $pin,
+            'name'         => $name,
+            'privilege'    => $privLabel,
+            'finger_count' => $finger,
+            'face_count'   => $face,
+            'has_rfid'     => !empty($rfid),
+            'has_password' => !empty($password),
+            'vein_count'   => $vein,
+            'matched_santri' => $santri ? [
+                'id'   => $santri->id,
+                'nama' => $santri->nama,
+                'kelas' => $santri->kelas,
+            ] : null,
+        ],
+    ]);
+}
