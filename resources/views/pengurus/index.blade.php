@@ -2,7 +2,7 @@
 
 @section('title', 'Kelola Pengurus')
 
-@section('push_styles')
+@push('styles')
 <style>
     .btn-gradient-success {
         background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
@@ -18,7 +18,11 @@
     .card-stats {
         border-radius: 1rem;
         border: none;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease;
+    }
+    .card-stats:hover {
+        transform: translateY(-2px);
     }
     .table th {
         font-weight: 700;
@@ -27,48 +31,55 @@
         letter-spacing: 0.05em;
         color: #67748e;
         padding: 1rem;
+        border-bottom: 2px solid #edf2f9;
     }
     .table td {
         padding: 1rem;
-        color: #67748e;
+        color: #495057;
         font-size: 0.875rem;
+        border-bottom: 1px solid #edf2f9;
     }
     .avatar-sm {
-        width: 48px;
-        height: 48px;
+        width: 42px;
+        height: 42px;
         border: 2px solid #fff;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
     .badge-soft-success {
         background-color: rgba(25, 135, 84, 0.1);
         color: #198754;
-        border: 1px solid rgba(25, 135, 84, 0.2);
+        border: 1px solid rgba(25, 135, 84, 0.15);
     }
     .badge-soft-primary {
         background-color: rgba(13, 110, 253, 0.1);
         color: #0d6efd;
-        border: 1px solid rgba(13, 110, 253, 0.2);
+        border: 1px solid rgba(13, 110, 253, 0.15);
     }
     .badge-soft-info {
         background-color: rgba(13, 202, 240, 0.1);
         color: #0dcaf0;
-        border: 1px solid rgba(13, 202, 240, 0.2);
+        border: 1px solid rgba(13, 202, 240, 0.15);
     }
     .action-btn {
-        width: 32px;
-        height: 32px;
+        width: 34px;
+        height: 34px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border-radius: 0.5rem;
-        transition: all 0.2s;
+        border-radius: 0.6rem;
+        transition: all 0.2s ease-in-out;
     }
     .action-btn:hover {
-        transform: translateY(-2px);
+        transform: scale(1.1);
     }
     
-    body.dark-mode .table td, body.dark-mode .table th {
+    body.dark-mode .table td {
         border-bottom-color: #333;
+        color: #c1c9d2;
+    }
+    body.dark-mode .table th {
+        border-bottom-color: #444;
+        color: #adb5bd;
     }
     body.dark-mode .table-light {
         background-color: #2c2c2c !important;
@@ -77,22 +88,30 @@
         border-color: #444;
     }
 </style>
-@endsection
+@endpush
 
 @section('content')
+@php
+    $totalPengurus = $pengurus->count();
+    $totalAdmin = $pengurus->filter(fn($u) => in_array(strtolower(trim($u->role)), ['admin', 'super_admin']))->count();
+    $totalAsatidz = $pengurus->filter(fn($u) => in_array(strtolower(trim($u->role)), ['asatidz', 'ustadz', 'guru']))->count();
+@endphp
+
 <div class="container-fluid px-0">
+    <!-- Header Section -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
             <h1 class="h3 mb-1 text-dark fw-bold">Kelola Pengurus Masjid</h1>
             <p class="text-muted small mb-0">Daftar semua akun pengurus masjid (Admin dan Asatidz) yang terdaftar di sistem.</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('pengurus.create') }}" class="btn btn-gradient-success px-4 py-2 fw-bold" style="border-radius: 0.5rem;">
-                <i class="bi bi-person-plus-fill me-2"></i> Tambah Pengurus
+            <a href="{{ route('pengurus.create') }}" class="btn btn-gradient-success px-4 py-2 fw-bold d-flex align-items-center gap-2" style="border-radius: 0.75rem;">
+                <i class="bi bi-person-plus-fill"></i> Tambah Pengurus
             </a>
         </div>
     </div>
 
+    <!-- Alerts -->
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert" style="border-radius: 0.75rem;">
         <div class="d-flex align-items-center">
@@ -113,10 +132,48 @@
     </div>
     @endif
 
-    <div class="card card-stats overflow-hidden">
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-4">
+            <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Pengurus</span>
+                    <span class="h3 fw-bold text-dark mb-0">{{ $totalPengurus }}</span>
+                </div>
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-success" style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1);">
+                    <i class="bi bi-people-fill fs-5"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-4">
+            <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Admin</span>
+                    <span class="h3 fw-bold text-dark mb-0">{{ $totalAdmin }}</span>
+                </div>
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-primary" style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1);">
+                    <i class="bi bi-shield-lock-fill fs-5"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-4">
+            <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Asatidz</span>
+                    <span class="h3 fw-bold text-dark mb-0">{{ $totalAsatidz }}</span>
+                </div>
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-success" style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1);">
+                    <i class="bi bi-person-workspace fs-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card card-stats overflow-hidden border-0">
         <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
             <h6 class="m-0 fw-bold text-dark"><i class="bi bi-person-badge-fill text-success me-2"></i>Daftar Pengurus</h6>
-            <div class="small text-muted">{{ count($pengurus) }} Pengurus Terdaftar</div>
+            <div class="small text-muted">{{ $totalPengurus }} Pengurus Terdaftar</div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -124,13 +181,13 @@
                     <thead class="bg-light">
                         <tr>
                             <th class="text-center" width="80">No</th>
-                            <th>Foto</th>
+                            <th width="80">Foto</th>
                             <th>Nama Lengkap</th>
                             <th>Email</th>
                             <th>No. WhatsApp</th>
                             <th>Role / Peran</th>
                             <th>Tanggal Daftar</th>
-                            <th class="text-center">Aksi</th>
+                            <th class="text-center" width="120">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -143,24 +200,51 @@
                                 @if($u->avatar)
                                     <img src="{{ asset('storage/avatars/' . $u->avatar) }}" alt="{{ $u->name }}" class="avatar-sm rounded-circle object-fit-cover">
                                 @else
-                                    <div class="avatar-sm bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center border">
-                                        <i class="bi bi-person fs-5"></i>
+                                    @php
+                                        $roleVal = strtolower(trim($u->role));
+                                        $isAsatidz = in_array($roleVal, ['asatidz', 'ustadz', 'guru']);
+                                        $gradient = $isAsatidz 
+                                            ? 'background: linear-gradient(310deg, #198754 0%, #2dc57b 100%)' 
+                                            : 'background: linear-gradient(310deg, #0d6efd 0%, #0dcaf0 100%)';
+                                        
+                                        // Create name initials
+                                        $words = explode(' ', trim($u->name));
+                                        $initials = '';
+                                        if (count($words) >= 2) {
+                                            $initials = strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+                                        } else {
+                                            $initials = strtoupper(substr($u->name, 0, 2));
+                                        }
+                                    @endphp
+                                    <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="{{ $gradient }}; font-size: 0.85rem;">
+                                        {{ $initials ?: 'P' }}
                                     </div>
                                 @endif
                             </td>
                             <td>
                                 <div class="fw-bold text-dark">{{ $u->name }}</div>
-                                <div class="small text-muted">PIN: {{ $u->fingerspot_pin ?? '-' }}</div>
+                                <div class="small text-muted" style="font-size: 0.75rem;">PIN: {{ $u->fingerspot_pin ?? '-' }}</div>
                             </td>
                             <td>{{ $u->email }}</td>
-                            <td>{{ $u->wa_number ?? '-' }}</td>
                             <td>
-                                @if($u->role === 'admin')
-                                    <span class="badge badge-soft-primary px-3 py-2 fw-semibold">Admin</span>
-                                @elseif($u->role === 'asatidz')
-                                    <span class="badge badge-soft-success px-3 py-2 fw-semibold">Asatidz</span>
+                                @if($u->wa_number)
+                                    <a href="https://wa.me/{{ $u->wa_number }}" target="_blank" class="text-decoration-none text-success fw-semibold d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-whatsapp"></i> {{ $u->wa_number }}
+                                    </a>
                                 @else
-                                    <span class="badge bg-secondary px-3 py-2 fw-semibold">{{ ucfirst($u->role) }}</span>
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @php
+                                    $roleVal = strtolower(trim($u->role));
+                                @endphp
+                                @if($roleVal === 'admin' || $roleVal === 'super_admin')
+                                    <span class="badge badge-soft-primary px-3 py-2 fw-semibold" style="font-size: 0.7rem; border-radius: 0.5rem;">Admin</span>
+                                @elseif($roleVal === 'asatidz' || $roleVal === 'ustadz' || $roleVal === 'guru')
+                                    <span class="badge badge-soft-success px-3 py-2 fw-semibold" style="font-size: 0.7rem; border-radius: 0.5rem;">Asatidz</span>
+                                @else
+                                    <span class="badge bg-secondary px-3 py-2 fw-semibold text-white" style="font-size: 0.7rem; border-radius: 0.5rem;">{{ ucfirst($u->role) ?: 'Pengurus' }}</span>
                                 @endif
                             </td>
                             <td>
@@ -199,10 +283,10 @@
                 </table>
             </div>
         </div>
-        @if(count($pengurus) > 0)
+        @if($totalPengurus > 0)
         <div class="card-footer bg-white border-top py-3">
             <div class="small text-muted">
-                Menampilkan 1 sampai {{ count($pengurus) }} dari {{ count($pengurus) }} data pengurus.
+                Menampilkan 1 sampai {{ $totalPengurus }} dari {{ $totalPengurus }} data pengurus.
             </div>
         </div>
         @endif
