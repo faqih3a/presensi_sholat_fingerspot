@@ -116,9 +116,13 @@ function determineWaktuSholat(Carbon $scanTime, array $jadwal): ?string
 // ─── Helper: Log data ke file ───────────────────────────────────────
 function logWebhook(string $message): void
 {
-    $logFile = __DIR__ . '/webhook_log.txt';
-    $timestamp = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
-    file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
+    try {
+        $logFile = __DIR__ . '/../storage/logs/webhook.log';
+        $timestamp = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
+    } catch (\Exception $e) {
+        // Jangan crash webhook hanya karena logging gagal
+    }
 }
 
 // ─── Main: Proses Webhook ───────────────────────────────────────────
