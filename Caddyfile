@@ -1,4 +1,4 @@
-:8080 {
+masjidnurulilmi.site {
     root * /var/www/public
     file_server
     php_fastcgi php:9000
