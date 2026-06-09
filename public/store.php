@@ -206,6 +206,13 @@ if (!$santri) {
     exit;
 }
 
+// AUTO-CAPTURE FOTO: Jika santri belum punya foto, ambil dari hasil scan presensi ini!
+if (!empty($photoUrl) && empty($santri->foto_referensi)) {
+    $santri->foto_referensi = $photoUrl;
+    $santri->save();
+    logWebhook("AUTO-PHOTO: Menyimpan foto profil otomatis untuk santri $pin dari hasil scan");
+}
+
 // ─── Tentukan Waktu Sholat ──────────────────────────────────────────
 $jadwal = getJadwalSholat($scanTime);
 $waktuSholat = determineWaktuSholat($scanTime, $jadwal);

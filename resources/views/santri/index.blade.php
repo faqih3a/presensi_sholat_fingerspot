@@ -162,7 +162,11 @@
                             </td>
                             <td>
                                 @if($santri->foto_referensi)
-                                    <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="{{ $santri->nama }}" class="avatar-sm rounded-circle object-fit-cover">
+                                    @if(str_starts_with($santri->foto_referensi, 'http'))
+                                        <img src="{{ $santri->foto_referensi }}" alt="{{ $santri->nama }}" class="avatar-sm rounded-circle object-fit-cover">
+                                    @else
+                                        <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="{{ $santri->nama }}" class="avatar-sm rounded-circle object-fit-cover">
+                                    @endif
                                 @else
                                     <div class="avatar-sm bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center border">
                                         <i class="bi bi-person fs-5"></i>
