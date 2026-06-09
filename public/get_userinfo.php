@@ -88,8 +88,8 @@ function requestUserinfo(string $apiUrl, string $apiToken, string $cloudId, stri
 $results = [];
 
 if ($pin === 'all') {
-    // Ambil semua user (pin 1 sampai 100)
-    $maxPin = (int)($pinEnd ?? 100);
+    // Ambil semua user (pin 1 sampai 10, tambahkan pin_end jika perlu lebih)
+    $maxPin = (int)($pinEnd ?? 10);
     for ($i = 1; $i <= $maxPin; $i++) {
         $results[] = requestUserinfo($apiUrl, $apiToken, $cloudId, (string)$i);
         usleep(200000); // 200ms delay antar request agar tidak overload
