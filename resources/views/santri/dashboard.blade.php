@@ -156,24 +156,23 @@
         <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center">
             <form id="sholatFilterForm" action="{{ route('santri.dashboard') }}" method="GET" class="d-flex align-items-center gap-2 m-0 no-loader">
                 <input type="hidden" name="period" value="{{ $period }}">
-                <input type="hidden" name="waktu_sholat" id="hidden_waktu_sholat" value="{{ $waktuSholat }}">
                 
-                <label class="small fw-bold text-muted text-uppercase" style="font-size: 0.65rem;">Filter Waktu</label>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-white border dropdown-toggle fw-semibold px-3 py-2 d-flex align-items-center gap-2" type="button" id="sholatDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0.75rem; min-width: 140px;">
-                        <span>{{ request('waktu_sholat') ?: 'Semua Waktu' }}</span>
-                        <i class="bi bi-chevron-down small ms-auto text-muted"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" aria-labelledby="sholatDropdown" style="border-radius: 1rem; padding: 0.5rem; margin-top: 10px;">
-                        <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == '' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', '')">Semua Waktu</a></li>
-                        <li><hr class="dropdown-divider mx-2"></li>
-                        <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == 'Subuh' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', 'Subuh')">Subuh</a></li>
-                        <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == 'Dzuhur' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', 'Dzuhur')">Dzuhur</a></li>
-                        <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == 'Ashar' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', 'Ashar')">Ashar</a></li>
-                        <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == 'Maghrib' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', 'Maghrib')">Maghrib</a></li>
-                        <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == 'Isya' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', 'Isya')">Isya</a></li>
-                    </ul>
-                </div>
+                <x-filter-dropdown 
+                    label="Filter Waktu" 
+                    name="waktu_sholat" 
+                    selected="{{ $waktuSholat }}" 
+                    :options="[
+                        '' => 'Semua Waktu',
+                        'Subuh' => 'Subuh',
+                        'Dzuhur' => 'Dzuhur',
+                        'Ashar' => 'Ashar',
+                        'Maghrib' => 'Maghrib',
+                        'Isya' => 'Isya'
+                    ]"
+                    form-id="sholatFilterForm"
+                    button-style="border-radius: 0.75rem; min-width: 140px; background: #fff;"
+                    dropdown-align="end"
+                />
             </form>
             <a href="{{ route('santri.dashboard.export', request()->query()) }}" class="btn btn-sm btn-gradient-success px-3 fw-bold" data-no-loader="true">
                 <i class="bi bi-file-earmark-excel me-1"></i> Download Laporan
@@ -239,12 +238,4 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-    function updateFilter(name, value) {
-        document.getElementById('hidden_' + name).value = value;
-        document.getElementById('sholatFilterForm').submit();
-    }
-</script>
-@endpush
 @endsection

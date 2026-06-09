@@ -296,22 +296,23 @@
                     <input type="hidden" name="ref_date" value="{{ $ref_date }}">
                     <input type="hidden" name="tanggal_mulai" value="{{ $tanggal_mulai }}">
                     <input type="hidden" name="tanggal_akhir" value="{{ $tanggal_akhir }}">
-                    <input type="hidden" name="waktu_sholat" id="hidden_waktu_sholat" value="{{ $waktuSholat }}">
                     
-                    <div class="dropdown">
-                        <button class="btn btn-sm bg-light text-muted fw-bold border-0 dropdown-toggle py-0 px-2 d-flex align-items-center gap-1" type="button" id="sholatDashboardDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.7rem; border-radius: 0.5rem; height: 24px;">
-                            {{ $waktuSholat ?: 'Semua Waktu ' }} <i class="bi bi-chevron-down" style="font-size: 0.6rem;"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="sholatDashboardDropdown" style="border-radius: 0.75rem; padding: 0.4rem; font-size: 0.8rem;">
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == '' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('')">Semua Waktu</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == 'Subuh' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('Subuh')">Subuh</a></li>
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == 'Dzuhur' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('Dzuhur')">Dzuhur</a></li>
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == 'Ashar' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('Ashar')">Ashar</a></li>
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == 'Maghrib' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('Maghrib')">Maghrib</a></li>
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == 'Isya' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('Isya')">Isya</a></li>
-                        </ul>
-                    </div>
+                    <x-filter-dropdown 
+                        name="waktu_sholat" 
+                        selected="{{ $waktuSholat }}" 
+                        :options="[
+                            '' => 'Semua Waktu',
+                            'Subuh' => 'Subuh',
+                            'Dzuhur' => 'Dzuhur',
+                            'Ashar' => 'Ashar',
+                            'Maghrib' => 'Maghrib',
+                            'Isya' => 'Isya'
+                        ]"
+                        form-id="sholatFilterForm"
+                        button-class="btn btn-sm bg-light text-muted fw-bold border-0 dropdown-toggle py-0 px-2 d-flex align-items-center gap-1"
+                        button-style="font-size: 0.7rem; border-radius: 0.5rem; height: 24px;"
+                        dropdown-align="end"
+                    />
                 </form>
             </div>
             <div class="h3 mb-1 fw-bold text-dark">{{ number_format($tidakHadir) }}</div>
@@ -323,13 +324,6 @@
                 </button>
                 @endif
             </div>
-
-            <script>
-                function submitSholatFilter(val) {
-                    document.getElementById('hidden_waktu_sholat').value = val;
-                    document.getElementById('sholatFilterForm').submit();
-                }
-            </script>
         </div>
     </div>
     <!-- Card 4 -->

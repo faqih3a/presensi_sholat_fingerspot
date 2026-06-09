@@ -289,61 +289,43 @@
                 <input type="hidden" name="ref_date" value="{{ $ref_date }}">
                 <input type="hidden" name="tanggal_mulai" value="{{ $tanggal_mulai }}">
                 <input type="hidden" name="tanggal_akhir" value="{{ $tanggal_akhir }}">
-                <input type="hidden" name="waktu_sholat" id="hidden_waktu_sholat" value="{{ request('waktu_sholat') }}">
-                <input type="hidden" name="status" id="hidden_status" value="{{ request('status') }}">
                 
                 <!-- Custom Dropdown Sholat -->
-                <div class="d-flex align-items-center gap-2">
-                    <label class="small fw-bold text-muted text-uppercase" style="font-size: 0.65rem;">Sholat</label>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-white border dropdown-toggle fw-semibold px-3 py-2 d-flex align-items-center gap-2" type="button" id="sholatDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0.75rem; min-width: 130px; background: #fff;">
-                            <span>{{ request('waktu_sholat') ?: 'Semua Waktu' }}</span>
-                            <i class="bi bi-chevron-down small ms-auto text-muted"></i>
-                        </button>
-                        <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="sholatDropdown" style="border-radius: 1rem; padding: 0.5rem; margin-top: 10px;">
-                            <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == '' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', '')">Semua Waktu</a></li>
-                            <li><hr class="dropdown-divider mx-2"></li>
-                            <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == 'Subuh' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', 'Subuh')">Subuh</a></li>
-                            <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == 'Dzuhur' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', 'Dzuhur')">Dzuhur</a></li>
-                            <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == 'Ashar' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', 'Ashar')">Ashar</a></li>
-                            <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == 'Maghrib' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', 'Maghrib')">Maghrib</a></li>
-                            <li><a class="dropdown-item py-2 {{ request('waktu_sholat') == 'Isya' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('waktu_sholat', 'Isya')">Isya</a></li>
-                        </ul>
-                    </div>
-                </div>
+                <x-filter-dropdown 
+                    label="Sholat" 
+                    name="waktu_sholat" 
+                    selected="{{ request('waktu_sholat') }}" 
+                    :options="[
+                        '' => 'Semua Waktu',
+                        'Subuh' => 'Subuh',
+                        'Dzuhur' => 'Dzuhur',
+                        'Ashar' => 'Ashar',
+                        'Maghrib' => 'Maghrib',
+                        'Isya' => 'Isya'
+                    ]"
+                    form-id="filterForm"
+                />
 
                 <!-- Custom Dropdown Status -->
-                <div class="d-flex align-items-center gap-2">
-                    <label class="small fw-bold text-muted text-uppercase" style="font-size: 0.65rem;">Status</label>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-white border dropdown-toggle fw-semibold px-3 py-2 d-flex align-items-center gap-2" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0.75rem; min-width: 120px; background: #fff;">
-                            <span>{{ request('status') ?: 'Semua Status' }}</span>
-                            <i class="bi bi-chevron-down small ms-auto text-muted"></i>
-                        </button>
-                        <ul class="dropdown-menu shadow-lg border-0" aria-labelledby="statusDropdown" style="border-radius: 1rem; padding: 0.5rem; margin-top: 10px;">
-                            <li><a class="dropdown-item py-2 {{ request('status') == '' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('status', '')">Semua Status</a></li>
-                            <li><hr class="dropdown-divider mx-2"></li>
-                            <li><a class="dropdown-item py-2 {{ request('status') == 'Hadir' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('status', 'Hadir')">Hadir</a></li>
-                            <li><a class="dropdown-item py-2 {{ request('status') == 'Alfa' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('status', 'Alfa')">Alpha</a></li>
-                            <li><a class="dropdown-item py-2 {{ request('status') == 'Izin' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('status', 'Izin')">Izin</a></li>
-                        </ul>
-                    </div>
-                </div>
+                <x-filter-dropdown 
+                    label="Status" 
+                    name="status" 
+                    selected="{{ request('status') }}" 
+                    :options="[
+                        '' => 'Semua Status',
+                        'Hadir' => 'Hadir',
+                        'Alfa' => 'Alpha',
+                        'Izin' => 'Izin'
+                    ]"
+                    form-id="filterForm"
+                    button-style="border-radius: 0.75rem; min-width: 120px; background: #fff;"
+                />
             </form>
             <a href="{{ route('dashboard.kehadiran.export', request()->query()) }}" class="btn btn-gradient-success btn-sm px-3 fw-bold" data-no-loader="true">
                 <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
             </a>
         </div>
     </div>
-    
-    @push('scripts')
-    <script>
-        function updateFilter(name, value) {
-            document.getElementById('hidden_' + name).value = value;
-            document.getElementById('filterForm').submit();
-        }
-    </script>
-    @endpush
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 text-nowrap">
