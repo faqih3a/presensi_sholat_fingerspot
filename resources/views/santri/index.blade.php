@@ -106,6 +106,9 @@
             <p class="text-muted small mb-0">Kelola daftar santri yang terdaftar dalam sistem presensi wajah.</p>
         </div>
         <div class="d-flex gap-2">
+            <button type="button" id="btn-sync-mesin" class="btn btn-light border shadow-sm px-4 py-2 fw-bold text-dark" onclick="syncMesin()">
+                <i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin
+            </button>
             <button type="button" class="btn btn-gradient-success px-4 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#registerModal">
                 <i class="bi bi-person-plus-fill me-2"></i> Tambah Santri
             </button>
@@ -451,6 +454,41 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         `;
+    }
+
+    // Fungsi Sinkronisasi Mesin
+    async function syncMesin() {
+        const btn = document.getElementById('btn-sync-mesin');
+        const originalHtml = btn.innerHTML;
+        
+        // Ubah tampilan tombol jadi loading
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Menarik Data...';
+        
+        try {
+            // Hit get_userinfo.php untuk pin 1 sampai 10 (karena baru ada 2 orang)
+            const response = await fetch('/get_userinfo.php?pin=all&pin_end=10');
+            const result = await response.json();
+            
+            if (result.status === 'ok') {
+                // Berhasil kirim perintah, tunjukkan notifikasi
+                alert('Perintah sinkronisasi berhasil dikirim ke mesin! Halaman akan dimuat ulang dalam 5 detik...');
+                
+                // Beri waktu mesin untuk memproses & mengirim webhook (sekitar 5 detik)
+                setTimeout(() => {
+                    location.reload();
+                }, 5000);
+            } else {
+                alert('Gagal mengirim perintah sinkronisasi: ' + (result.message || 'Unknown error'));
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        } catch (error) {
+            console.error('Sync Error:', error);
+            alert('Terjadi kesalahan jaringan saat menyinkronkan dengan mesin.');
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
     }
 </script>
 @endpush
