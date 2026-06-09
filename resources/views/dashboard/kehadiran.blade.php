@@ -235,42 +235,36 @@
             </a>
 
             <!-- Date Display Label -->
-            @if($mode === 'month')
-                <div class="dropdown d-inline-block">
-                    <button class="d-flex align-items-center justify-content-center date-display-pill dropdown-toggle border-0" 
-                            type="button" 
-                            data-bs-toggle="dropdown" 
-                            aria-expanded="false">
-                        {{ $display_date }}
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end p-3 border-0 shadow-lg month-grid-dropdown" style="width: 240px; border-radius: 1rem; margin-top: 5px;">
-                        <div class="row g-2 text-center m-0">
-                            @php
-                                $activeYear = \Carbon\Carbon::parse($ref_date)->format('Y');
-                                $activeMonthNum = \Carbon\Carbon::parse($ref_date)->month;
-                                $shortMonths = [
-                                    1 => 'Jan', 2 => 'Feb', 3 => 'Mar',
-                                    4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
-                                    7 => 'Jul', 8 => 'Agt', 9 => 'Sep',
-                                    10 => 'Okt', 11 => 'Nov', 12 => 'Des'
-                                ];
-                            @endphp
-                            @foreach($shortMonths as $mNum => $mLabel)
-                                <div class="col-4 p-1">
-                                    <a href="{{ request()->fullUrlWithQuery(['mode' => 'month', 'ref_date' => "$activeYear-" . sprintf('%02d', $mNum) . "-01"]) }}" 
-                                       class="d-block text-decoration-none fw-bold month-grid-item {{ $activeMonthNum == $mNum ? 'active-month' : 'text-secondary' }}">
-                                        {{ $mLabel }}
-                                    </a>
-                                </div>
-                            @endforeach
-                        </div>
+            <div class="dropdown d-inline-block">
+                <button class="d-flex align-items-center justify-content-center date-display-pill dropdown-toggle border-0" 
+                        type="button" 
+                        data-bs-toggle="dropdown" 
+                        aria-expanded="false">
+                    {{ $display_date }}
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3 border-0 shadow-lg month-grid-dropdown" style="width: 240px; border-radius: 1rem; margin-top: 5px;">
+                    <div class="row g-2 text-center m-0">
+                        @php
+                            $activeYear = \Carbon\Carbon::parse($ref_date)->format('Y');
+                            $activeMonthNum = \Carbon\Carbon::parse($ref_date)->month;
+                            $shortMonths = [
+                                1 => 'Jan', 2 => 'Feb', 3 => 'Mar',
+                                4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+                                7 => 'Jul', 8 => 'Agt', 9 => 'Sep',
+                                10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+                            ];
+                        @endphp
+                        @foreach($shortMonths as $mNum => $mLabel)
+                            <div class="col-4 p-1">
+                                <a href="{{ request()->fullUrlWithQuery(['mode' => $mode, 'ref_date' => "$activeYear-" . sprintf('%02d', $mNum) . "-01"]) }}" 
+                                   class="d-block text-decoration-none fw-bold month-grid-item {{ $activeMonthNum == $mNum ? 'active-month' : 'text-secondary' }}">
+                                    {{ $mLabel }}
+                                </a>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
-            @else
-                <div class="d-flex align-items-center justify-content-center date-display-pill">
-                    {{ $display_date }}
-                </div>
-            @endif
+            </div>
 
             <!-- Next Arrow -->
             <a href="{{ request()->fullUrlWithQuery(['ref_date' => $next_date]) }}" class="nav-arrow-btn">

@@ -27,7 +27,7 @@ class DashboardController extends Controller
         if ($mode === 'week') {
             $prev_date = $refDate->copy()->subWeek()->format('Y-m-d');
             $next_date = $refDate->copy()->addWeek()->format('Y-m-d');
-            $display_date = $this->formatIndonesianDate($tanggal_mulai) . ' - ' . $this->formatIndonesianDate($tanggal_akhir);
+            $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
         } elseif ($mode === 'month') {
             $prev_date = $refDate->copy()->subMonth()->format('Y-m-d');
             $next_date = $refDate->copy()->addMonth()->format('Y-m-d');
@@ -35,7 +35,7 @@ class DashboardController extends Controller
         } else {
             $prev_date = $refDate->copy()->subDay()->format('Y-m-d');
             $next_date = $refDate->copy()->addDay()->format('Y-m-d');
-            $display_date = $this->formatIndonesianDate($tanggal_mulai);
+            $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
         }
 
         $this->syncAlfas();
@@ -271,7 +271,7 @@ class DashboardController extends Controller
         if ($mode === 'week') {
             $prev_date = $refDate->copy()->subWeek()->format('Y-m-d');
             $next_date = $refDate->copy()->addWeek()->format('Y-m-d');
-            $display_date = $this->formatIndonesianDate($tanggal_mulai) . ' - ' . $this->formatIndonesianDate($tanggal_akhir);
+            $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
         } elseif ($mode === 'month') {
             $prev_date = $refDate->copy()->subMonth()->format('Y-m-d');
             $next_date = $refDate->copy()->addMonth()->format('Y-m-d');
@@ -279,7 +279,7 @@ class DashboardController extends Controller
         } else {
             $prev_date = $refDate->copy()->subDay()->format('Y-m-d');
             $next_date = $refDate->copy()->addDay()->format('Y-m-d');
-            $display_date = $this->formatIndonesianDate($tanggal_mulai);
+            $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
         }
 
         $this->syncAlfas();
