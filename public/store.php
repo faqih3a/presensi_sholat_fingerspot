@@ -297,9 +297,8 @@ function handleGetUserinfo(array $decoded): void
     $data    = $decoded['data'] ?? null;
 
     if (!$data || !isset($data['pin'])) {
-        logWebhook("USERINFO ERROR: Missing data or pin (trans_id=$transId)");
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Missing userinfo data']);
+        // PIN tidak ada di mesin — abaikan, tidak perlu log
+        echo json_encode(['status' => 'ok', 'message' => 'PIN not found on device — skipped']);
         return;
     }
 
@@ -353,20 +352,27 @@ function handleGetUserinfo(array $decoded): void
             $santri->template       = $template;
             $santri->save();
 
-            $dbStatus = "AUTO-CREATED → santri_id={$santri->id}, db_name={$santri->nama} (Biometrik Disimpan)";
+            $dbStatus = "AUTO-CREATED → santri_id={$santri->id}, db_name={$santri->nama}";
         } else {
-            // Simpan data biometrik ke database untuk santri yang sudah ada
-            $santri->update([
-                'nama'         => $name !== '-' ? $name : $santri->nama, // Update nama jika ada
-                'finger_count' => (int) $finger,
-                'face_count'   => (int) $face,
-                'template'     => $template,
-            ]);
-            $dbStatus = "MATCHED & UPDATED → santri_id={$santri->id}, db_name={$santri->nama} (Biometrik Disimpan)";
+            // Santri sudah terdaftar di web — abaikan, tidak perlu update
+            $dbStatus = "SUDAH TERDAFTAR → santri_id={$santri->id}, db_name={$santri->nama} (dilewati)";
         }
     } catch (\Exception $e) {
         logWebhook("USERINFO DB ERROR: pin=$pin - " . $e->getMessage());
         $dbStatus = "DB ERROR: " . $e->getMessage();
+    }
+
+    // AUTO-FOTO: Jika santri belum punya foto, ambil dari data presensi terakhir
+    if ($santri && (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg')) {
+        $latestPhoto = \App\Models\Presensi::where('santri_id', $santri->id)
+            ->whereNotNull('photo_url')
+            ->where('photo_url', '!=', '')
+            ->latest('updated_at')
+            ->first();
+        if ($latestPhoto) {
+            $santri->update(['foto_referensi' => $latestPhoto->photo_url]);
+            logWebhook("AUTO-PHOTO SYNC: Foto profil santri $pin diambil dari presensi terakhir");
+        }
     }
     
     logWebhook("USERINFO MATCH: pin=$pin → $dbStatus");
