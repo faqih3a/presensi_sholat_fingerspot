@@ -299,37 +299,49 @@ function handleGetUserinfo(array $decoded): void
     $santri = \App\Models\Santri::find($pin);
     $dbStatus = "NOT FOUND in database";
 
-    if (!$santri) {
-        // Buat user akun default
-        $user = \App\Models\User::create([
-            'name'     => $name,
-            'email'    => "santri_{$pin}@masjidnurulilmi.site",
-            'password' => \Illuminate\Support\Facades\Hash::make('123456'),
-            'role'     => 'santri',
-        ]);
+    try {
+        if (!$santri) {
+            // Buat email dari kata pertama nama (lowercase) + @thursina.id
+            $firstName = strtolower(explode(' ', trim($name))[0] ?? 'santri');
+            if ($firstName === '-' || $firstName === '') $firstName = 'santri' . $pin;
+            $email = $firstName . '@thursina.id';
 
-        // Buat santri baru (paksa ID sama dengan PIN dari mesin)
-        $santri = new \App\Models\Santri();
-        $santri->id             = $pin;
-        $santri->user_id        = $user->id;
-        $santri->nama           = $name;
-        $santri->kelas          = 'Belum Diatur';
-        $santri->foto_referensi = '';
-        $santri->finger_count   = (int) $finger;
-        $santri->face_count     = (int) $face;
-        $santri->template       = $template;
-        $santri->save();
+            // Buat user akun default (firstOrCreate untuk hindari duplikat email)
+            $user = \App\Models\User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name'     => $name,
+                    'password' => \Illuminate\Support\Facades\Hash::make('santri'),
+                    'role'     => 'santri',
+                ]
+            );
 
-        $dbStatus = "AUTO-CREATED → santri_id={$santri->id}, db_name={$santri->nama} (Biometrik Disimpan)";
-    } else {
-        // Simpan data biometrik ke database untuk santri yang sudah ada
-        $santri->update([
-            'nama'         => $name !== '-' ? $name : $santri->nama, // Update nama jika ada
-            'finger_count' => (int) $finger,
-            'face_count'   => (int) $face,
-            'template'     => $template,
-        ]);
-        $dbStatus = "MATCHED & UPDATED → santri_id={$santri->id}, db_name={$santri->nama} (Biometrik Disimpan)";
+            // Buat santri baru (paksa ID sama dengan PIN dari mesin)
+            $santri = new \App\Models\Santri();
+            $santri->id             = $pin;
+            $santri->user_id        = $user->id;
+            $santri->nama           = $name;
+            $santri->kelas          = 'Belum Diatur';
+            $santri->foto_referensi = '';
+            $santri->finger_count   = (int) $finger;
+            $santri->face_count     = (int) $face;
+            $santri->template       = $template;
+            $santri->save();
+
+            $dbStatus = "AUTO-CREATED → santri_id={$santri->id}, db_name={$santri->nama} (Biometrik Disimpan)";
+        } else {
+            // Simpan data biometrik ke database untuk santri yang sudah ada
+            $santri->update([
+                'nama'         => $name !== '-' ? $name : $santri->nama, // Update nama jika ada
+                'finger_count' => (int) $finger,
+                'face_count'   => (int) $face,
+                'template'     => $template,
+            ]);
+            $dbStatus = "MATCHED & UPDATED → santri_id={$santri->id}, db_name={$santri->nama} (Biometrik Disimpan)";
+        }
+    } catch (\Exception $e) {
+        logWebhook("USERINFO DB ERROR: pin=$pin - " . $e->getMessage());
+        $dbStatus = "DB ERROR: " . $e->getMessage();
     }
     
     logWebhook("USERINFO MATCH: pin=$pin → $dbStatus");
