@@ -17,7 +17,7 @@
 
 // ─── Config ─────────────────────────────────────────────────────────
 $apiUrl        = 'https://developer.fingerspot.io/api/get_userinfo';
-$apiToken      = 'FLDYHON2Z9S53DQ9';
+$apiToken      = 'DWJ7LY8ZJQ6CD5NN';
 $cloudId       = 'S118001290';
 
 // ─── Parse Parameters ───────────────────────────────────────────────
