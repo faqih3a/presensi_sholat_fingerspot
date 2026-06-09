@@ -57,7 +57,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Tes Presensi (diluar waktu sholat)
         Route::get('/tes', [TesController::class, 'index'])->name('tes.index');
-        Route::post('/tes', [TesController::class, 'store'])->name('tes.store');
+        Route::get('/tes/export', [TesController::class, 'exportTes'])->name('tes.export');
         Route::delete('/tes/{presensi}', [TesController::class, 'destroy'])->name('tes.destroy');
     });
 
