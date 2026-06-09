@@ -28,13 +28,14 @@ class Santri extends Model
 
     public function getDisplayPhotoAttribute()
     {
-        if (!empty($this->foto_referensi)) {
+        // Jika foto_referensi tidak kosong dan BUKAN default.jpg
+        if (!empty($this->foto_referensi) && $this->foto_referensi !== 'default.jpg') {
             return str_starts_with($this->foto_referensi, 'http') 
                 ? $this->foto_referensi 
                 : asset('storage/santri_fotos/' . $this->foto_referensi);
         }
 
-        // Jika kosong, coba ambil foto riwayat presensi terbaru
+        // Jika kosong atau default.jpg, coba ambil foto riwayat presensi terbaru dari mesin
         $latest = $this->presensis()->whereNotNull('photo_url')->orderBy('waktu_scan', 'desc')->first();
         return $latest ? $latest->photo_url : null;
     }

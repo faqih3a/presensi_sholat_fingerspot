@@ -206,8 +206,8 @@ if (!$santri) {
     exit;
 }
 
-// AUTO-CAPTURE FOTO: Jika santri belum punya foto, ambil dari hasil scan presensi ini!
-if (!empty($photoUrl) && empty($santri->foto_referensi)) {
+// AUTO-CAPTURE FOTO: Jika santri belum punya foto atau masih foto default, ambil dari hasil scan presensi ini!
+if (!empty($photoUrl) && (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg')) {
     $santri->foto_referensi = $photoUrl;
     $santri->save();
     logWebhook("AUTO-PHOTO: Menyimpan link foto profil otomatis untuk santri $pin");
