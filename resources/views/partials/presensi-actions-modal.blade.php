@@ -35,8 +35,6 @@
 
 @push('scripts')
 <script>
-    const CSRF_TOKEN = '{{ csrf_token() }}';
-
     function editStatus(santriId, tanggal, waktuSholat, currentStatus) {
         document.getElementById('edit_santri_id').value = santriId;
         document.getElementById('edit_tanggal').value = tanggal;
@@ -61,12 +59,10 @@
         const waktuSholat = document.getElementById('edit_waktu_sholat').value;
         const status = document.getElementById('edit_status').value;
 
-        fetch('/presensi/update-status', {
+        fetch('/api_presensi.php?action=update-status', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': CSRF_TOKEN,
-                'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
             },
             body: JSON.stringify({
@@ -82,11 +78,9 @@
             submitBtn.disabled = false;
 
             if (data.success) {
-                // Close modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editStatusModal'));
                 modal.hide();
 
-                // Update the table row
                 const row = document.querySelector(
                     `tr[data-santri-id="${santriId}"][data-tanggal="${tanggal}"][data-sholat="${waktuSholat}"]`
                 );
@@ -103,7 +97,7 @@
                         }
                     }
 
-                    // Update waktu hadir cell
+                    // Update waktu hadir
                     const waktuCell = row.querySelectorAll('td')[4];
                     if (waktuCell && data.data) {
                         const waktuHadir = data.data.waktu_hadir;
@@ -126,13 +120,12 @@
                         }
                     }
 
-                    // Update edit button's currentStatus parameter
+                    // Update edit button
                     const editBtn = row.querySelector('button[title="Edit Status"]');
                     if (editBtn) {
                         editBtn.setAttribute('onclick', `editStatus('${santriId}', '${tanggal}', '${waktuSholat}', '${status}')`);
                     }
 
-                    // Highlight row
                     row.classList.add('row-new-entry');
                     setTimeout(() => row.classList.remove('row-new-entry'), 2000);
                 }
@@ -167,12 +160,10 @@
             }
         }
 
-        fetch('/presensi/delete', {
+        fetch('/api_presensi.php?action=delete', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': CSRF_TOKEN,
-                'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
             },
             body: JSON.stringify({
@@ -185,13 +176,11 @@
         .then(data => {
             if (data.success) {
                 if (row) {
-                    // Fade out and remove the row
                     row.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
                     row.style.opacity = '0';
                     row.style.transform = 'translateX(30px)';
                     setTimeout(() => {
                         row.remove();
-                        // Update record count
                         const countEl = document.getElementById('recordCount');
                         const tbody = document.getElementById('kehadiranTbody');
                         if (countEl && tbody) {
@@ -199,7 +188,6 @@
                             if (totalRows > 0) {
                                 countEl.textContent = `Menampilkan ${totalRows} data rekaman kehadiran terbaru.`;
                             } else {
-                                // Show empty state
                                 tbody.innerHTML = `
                                     <tr id="emptyRow">
                                         <td colspan="7" class="text-center py-5">
@@ -240,7 +228,6 @@
         });
     }
 
-    // Reusable flash message
     function showFlashMessage(type, message) {
         const existing = document.getElementById('ajaxFlashMessage');
         if (existing) existing.remove();
