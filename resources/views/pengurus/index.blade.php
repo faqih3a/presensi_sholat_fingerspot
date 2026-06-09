@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Kelola Pengurus')
+@section('title', 'Kelola Asatidz')
 
 @push('styles')
 <style>
@@ -101,12 +101,12 @@
     <!-- Header Section -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
-            <h1 class="h3 mb-1 text-dark fw-bold">Kelola Pengurus Masjid</h1>
-            <p class="text-muted small mb-0">Daftar semua akun pengurus masjid (Admin dan Asatidz) yang terdaftar di sistem.</p>
+            <h1 class="h3 mb-1 text-dark fw-bold">Kelola Asatidz Masjid</h1>
+            <p class="text-muted small mb-0">Daftar semua akun asatidz masjid (Admin dan Asatidz) yang terdaftar di sistem.</p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('pengurus.create') }}" class="btn btn-gradient-success px-4 py-2 fw-bold d-flex align-items-center gap-2" style="border-radius: 0.75rem;">
-                <i class="bi bi-person-plus-fill"></i> Tambah Pengurus
+                <i class="bi bi-person-plus-fill"></i> Tambah Asatidz
             </a>
         </div>
     </div>
@@ -137,7 +137,7 @@
         <div class="col-12 col-sm-4">
             <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
                 <div>
-                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Pengurus</span>
+                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Asatidz & Admin</span>
                     <span class="h3 fw-bold text-dark mb-0">{{ $totalPengurus }}</span>
                 </div>
                 <div class="rounded-circle d-flex align-items-center justify-content-center text-success" style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1);">
@@ -172,8 +172,8 @@
     <!-- Table Card -->
     <div class="card card-stats overflow-hidden border-0">
         <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
-            <h6 class="m-0 fw-bold text-dark"><i class="bi bi-person-badge-fill text-success me-2"></i>Daftar Pengurus</h6>
-            <div class="small text-muted">{{ $totalPengurus }} Pengurus Terdaftar</div>
+            <h6 class="m-0 fw-bold text-dark"><i class="bi bi-person-badge-fill text-success me-2"></i>Daftar Asatidz & Admin</h6>
+            <div class="small text-muted">{{ $totalPengurus }} Terdaftar</div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -217,7 +217,7 @@
                                         }
                                     @endphp
                                     <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="{{ $gradient }}; font-size: 0.85rem;">
-                                        {{ $initials ?: 'P' }}
+                                        {{ $initials ?: 'A' }}
                                     </div>
                                 @endif
                             </td>
@@ -244,7 +244,7 @@
                                 @elseif($roleVal === 'asatidz' || $roleVal === 'ustadz' || $roleVal === 'guru')
                                     <span class="badge badge-soft-success px-3 py-2 fw-semibold" style="font-size: 0.7rem; border-radius: 0.5rem;">Asatidz</span>
                                 @else
-                                    <span class="badge bg-secondary px-3 py-2 fw-semibold text-white" style="font-size: 0.7rem; border-radius: 0.5rem;">{{ ucfirst($u->role) ?: 'Pengurus' }}</span>
+                                    <span class="badge bg-secondary px-3 py-2 fw-semibold text-white" style="font-size: 0.7rem; border-radius: 0.5rem;">{{ ucfirst($u->role) ?: 'Asatidz' }}</span>
                                 @endif
                             </td>
                             <td>
@@ -257,7 +257,7 @@
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
                                     @if($u->id !== auth()->id())
-                                        <form action="{{ route('pengurus.destroy', $u->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengurus ini?')">
+                                        <form action="{{ route('pengurus.destroy', $u->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus asatidz ini?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="action-btn bg-danger bg-opacity-10 text-danger border-0" title="Hapus">
@@ -274,7 +274,7 @@
                                 <div class="py-4">
                                     <i class="bi bi-person-exclamation text-muted" style="font-size: 4rem;"></i>
                                     <h5 class="mt-3 fw-bold text-dark">Belum Ada Data</h5>
-                                    <p class="text-muted mb-4">Silakan daftarkan pengurus baru untuk mulai mengelola.</p>
+                                    <p class="text-muted mb-4">Silakan daftarkan asatidz baru untuk mulai mengelola.</p>
                                 </div>
                             </td>
                         </tr>
@@ -286,7 +286,7 @@
         @if($totalPengurus > 0)
         <div class="card-footer bg-white border-top py-3">
             <div class="small text-muted">
-                Menampilkan 1 sampai {{ $totalPengurus }} dari {{ $totalPengurus }} data pengurus.
+                Menampilkan 1 sampai {{ $totalPengurus }} dari {{ $totalPengurus }} data Asatidz & Admin.
             </div>
         </div>
         @endif

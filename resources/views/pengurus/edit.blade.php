@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Pengurus')
+@section('title', 'Edit Asatidz')
 
 @section('content')
 <div class="row">
@@ -8,8 +8,8 @@
         <a href="{{ route('pengurus.index') }}" class="text-decoration-none text-muted mb-2 d-inline-block">
             <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar
         </a>
-        <h4 class="fw-800 text-dark mb-1">Edit Data Pengurus Masjid</h4>
-        <p class="text-muted small">Perbarui informasi akun pengurus.</p>
+        <h4 class="fw-800 text-dark mb-1">Edit Data Asatidz Masjid</h4>
+        <p class="text-muted small">Perbarui informasi akun asatidz.</p>
     </div>
 </div>
 

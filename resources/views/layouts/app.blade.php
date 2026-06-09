@@ -408,7 +408,7 @@
                         @if(auth()->user()->role === 'admin')
                             <a class="list-group-item list-group-item-action {{ request()->is('pengurus*') ? 'active' : '' }}" href="{{ route('pengurus.index') }}">
                                 <i class="bi bi-person-workspace"></i>
-                                <span class="sidebar-text">Kelola Pengurus</span>
+                                <span class="sidebar-text">Kelola Asatidz</span>
                             </a>
                         @endif
 

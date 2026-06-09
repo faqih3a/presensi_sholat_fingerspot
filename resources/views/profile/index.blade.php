@@ -182,13 +182,10 @@
                         }
                     @endphp
                     
-                    @if($avatarUrl)
-                        <img src="{{ $avatarUrl }}" alt="Avatar" class="profile-avatar-img" id="avatarPreview">
-                    @else
-                        <div class="profile-avatar-img d-flex align-items-center justify-content-center bg-success text-white fs-1 fw-bold">
-                            {{ substr($user->name, 0, 1) }}
-                        </div>
-                    @endif
+                    <div class="profile-avatar-img d-flex align-items-center justify-content-center bg-success text-white fs-1 fw-bold {{ $avatarUrl ? 'd-none' : '' }}" id="avatarPlaceholder">
+                        {{ substr($user->name, 0, 1) }}
+                    </div>
+                    <img src="{{ $avatarUrl ?: '#' }}" alt="Avatar" class="profile-avatar-img {{ $avatarUrl ? '' : 'd-none' }}" id="avatarPreview">
                     
                     <label for="avatarInput" class="avatar-edit-btn" title="Ganti Foto">
                         <i class="bi bi-camera-fill"></i>
@@ -326,6 +323,11 @@
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         avatarPreview.src = e.target.result;
+                        avatarPreview.classList.remove('d-none');
+                        const placeholder = document.getElementById('avatarPlaceholder');
+                        if (placeholder) {
+                            placeholder.classList.add('d-none');
+                        }
                     }
                     reader.readAsDataURL(file);
                 }

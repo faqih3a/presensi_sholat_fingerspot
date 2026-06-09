@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Pengurus')
+@section('title', 'Tambah Asatidz')
 
 @section('content')
 <div class="row">
@@ -8,8 +8,8 @@
         <a href="{{ route('pengurus.index') }}" class="text-decoration-none text-muted mb-2 d-inline-block">
             <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar
         </a>
-        <h4 class="fw-800 text-dark mb-1">Tambah Pengurus Masjid Baru</h4>
-        <p class="text-muted small">Buat akun untuk pengurus baru (Admin atau Asatidz) di sistem.</p>
+        <h4 class="fw-800 text-dark mb-1">Tambah Asatidz Masjid Baru</h4>
+        <p class="text-muted small">Buat akun untuk asatidz baru (Admin atau Asatidz) di sistem.</p>
     </div>
 </div>
 
@@ -60,7 +60,7 @@
                 
                 <div class="mt-4">
                     <button type="submit" class="btn btn-success rounded-3 px-5 py-2 w-100 fw-bold">
-                        BUAT AKUN PENGURUS
+                        BUAT AKUN ASATIDZ
                     </button>
                 </div>
             </form>
