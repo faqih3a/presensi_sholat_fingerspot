@@ -306,7 +306,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="foto_referensi" class="form-label fw-bold small text-muted text-uppercase">Foto Referensi Wajah</label>
+                                <label for="foto_referensi" class="form-label fw-bold small text-muted text-uppercase">Foto Profil</label>
                                 <input type="file" class="form-control py-2" id="foto_referensi" name="foto_referensi" accept="image/jpeg, image/png, image/jpg" required>
                             </div>
                             <div class="preview-container mb-2" id="preview-wrapper">
@@ -320,7 +320,7 @@
                         </div>
                     </div>
 
-                    <input type="hidden" id="face_descriptor" name="face_descriptor" required>
+                    <input type="hidden" id="face_descriptor" name="face_descriptor" value="[]">
 
                     <div class="d-flex gap-2 mt-4">
                         <button type="submit" id="submit-btn" class="btn btn-gradient-success flex-grow-1 py-2 fw-bold" disabled>
@@ -337,50 +337,17 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/face-api.min.js') }}"></script>
 <script>
     const fotoInput = document.getElementById('foto_referensi');
     const imagePreview = document.getElementById('image-preview');
-    const previewWrapper = document.getElementById('preview-wrapper');
     const previewPlaceholder = document.getElementById('preview-placeholder');
     const extractionStatus = document.getElementById('extraction-status');
     const submitBtn = document.getElementById('submit-btn');
-    const faceDescriptorInput = document.getElementById('face_descriptor');
     const form = document.getElementById('register-form');
     const alertContainer = document.getElementById('modal-alert-container');
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
     const registerModal = document.getElementById('registerModal');
-    
-    let isModelLoaded = false;
-    let currentCanvas = null;
-
-    // Load AI Models
-    async function loadModels() {
-        try {
-            await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
-                faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-                faceapi.nets.faceRecognitionNet.loadFromUri('/models')
-            ]);
-            isModelLoaded = true;
-            console.log('AI Models Loaded successfully');
-        } catch (error) {
-            console.error('Error loading models:', error);
-            showAlert('danger', 'Gagal memuat AI Model. Pastikan folder /models tersedia.');
-        }
-    }
-
-    loadModels();
-
-    function showAlert(type, message) {
-        alertContainer.innerHTML = `
-            <div class="alert alert-${type} alert-dismissible fade show border-0" role="alert" style="border-radius: 0.75rem;">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-    }
 
     // Reset Modal on Close
     registerModal.addEventListener('hidden.bs.modal', function () {
@@ -388,15 +355,9 @@
         imagePreview.style.display = 'none';
         imagePreview.src = '#';
         previewPlaceholder.classList.remove('d-none');
-        if (currentCanvas) {
-            currentCanvas.remove();
-            currentCanvas = null;
-        }
         extractionStatus.classList.add('d-none');
         extractionStatus.innerHTML = '';
-        faceDescriptorInput.value = '';
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Simpan Data Santri';
         alertContainer.innerHTML = '';
         passwordInput.setAttribute('type', 'password');
         togglePassword.innerHTML = '<i class="bi bi-eye"></i>';
@@ -408,22 +369,11 @@
         this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
     });
 
-    fotoInput.addEventListener('change', async (e) => {
-        if (!isModelLoaded) {
-            showAlert('warning', 'Model AI masih dalam proses pemuatan, silakan tunggu beberapa saat.');
-            fotoInput.value = '';
-            return;
-        }
-
+    fotoInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
-        if (!file) return;
-
-        // Reset state
-        submitBtn.disabled = true;
-        faceDescriptorInput.value = '';
-        if (currentCanvas) {
-            currentCanvas.remove();
-            currentCanvas = null;
+        if (!file) {
+            submitBtn.disabled = true;
+            return;
         }
 
         // Show image preview
@@ -433,45 +383,9 @@
         previewPlaceholder.classList.add('d-none');
         
         extractionStatus.classList.remove('d-none');
-        extractionStatus.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memproses wajah...';
-        extractionStatus.className = 'text-muted mt-2 small';
-
-        imagePreview.onload = async () => {
-            try {
-                const detection = await faceapi.detectSingleFace(imagePreview).withFaceLandmarks().withFaceDescriptor();
-
-                if (!detection) {
-                    throw new Error('Wajah tidak terdeteksi. Gunakan foto yang lebih jelas.');
-                }
-
-                const canvas = faceapi.createCanvasFromMedia(imagePreview);
-                currentCanvas = canvas;
-                previewWrapper.appendChild(canvas);
-                
-                const displaySize = { width: imagePreview.clientWidth, height: imagePreview.clientHeight };
-                faceapi.matchDimensions(canvas, displaySize);
-                const resizedDetections = faceapi.resizeResults(detection, displaySize);
-                
-                const box = resizedDetections.detection.box;
-                const drawBox = new faceapi.draw.DrawBox(box, { label: 'Terdeteksi', boxColor: '#198754' });
-                drawBox.draw(canvas);
-
-                const descriptorArray = Array.from(detection.descriptor);
-                faceDescriptorInput.value = JSON.stringify(descriptorArray);
-
-                extractionStatus.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> Wajah terdeteksi!';
-                extractionStatus.className = 'text-success mt-2 small fw-bold';
-                submitBtn.disabled = false;
-
-            } catch (error) {
-                console.error(error);
-                extractionStatus.innerHTML = `<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> ${error.message}`;
-                extractionStatus.className = 'text-danger mt-2 small fw-bold';
-                fotoInput.value = '';
-                previewPlaceholder.classList.remove('d-none');
-                imagePreview.style.display = 'none';
-            }
-        };
+        extractionStatus.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> Foto profil terpilih!';
+        extractionStatus.className = 'text-success mt-2 small fw-bold';
+        submitBtn.disabled = false;
     });
 
     form.addEventListener('submit', async (e) => {
@@ -496,7 +410,6 @@
             const result = await response.json();
 
             if (response.ok) {
-                // Success: Refresh page to see new data or close modal and update table
                 location.reload(); 
             } else {
                 let errorMsg = result.message || 'Gagal menyimpan data.';
@@ -518,5 +431,14 @@
             submitBtn.innerHTML = originalBtnText;
         }
     });
+
+    function showAlert(type, message) {
+        alertContainer.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show border-0" role="alert" style="border-radius: 0.75rem;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+    }
 </script>
 @endpush

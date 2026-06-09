@@ -24,7 +24,7 @@ class SantriController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:5',
             'foto_referensi' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'face_descriptor' => 'required|string',
+            'face_descriptor' => 'nullable|string',
             'fingerspot_pin' => 'nullable|string|max:50|unique:santris,fingerspot_pin',
         ]);
 
@@ -44,7 +44,7 @@ class SantriController extends Controller
             'nama' => $request->nama,
             'kelas' => $request->kelas,
             'foto_referensi' => $fileName,
-            'face_descriptor' => $request->face_descriptor,
+            'face_descriptor' => $request->face_descriptor ?? '[]',
             'fingerspot_pin' => $request->fingerspot_pin,
         ]);
 
@@ -87,13 +87,13 @@ class SantriController extends Controller
             'fingerspot_pin' => $request->fingerspot_pin,
         ];
 
-        if ($request->hasFile('foto_referensi') && $request->filled('face_descriptor')) {
+        if ($request->hasFile('foto_referensi')) {
             if ($santri->foto_referensi && Storage::disk('public')->exists('santri_fotos/' . $santri->foto_referensi)) {
                 Storage::disk('public')->delete('santri_fotos/' . $santri->foto_referensi);
             }
             $imagePath = $request->file('foto_referensi')->store('santri_fotos', 'public');
             $data['foto_referensi'] = basename($imagePath);
-            $data['face_descriptor'] = $request->face_descriptor;
+            $data['face_descriptor'] = $request->face_descriptor ?? '[]';
         }
 
         $santri->update($data);

@@ -130,12 +130,12 @@
                     </div>
 
                     <div class="mb-4">
-                        <label for="foto_referensi" class="form-label fw-bold small text-muted text-uppercase">Ganti Foto Wajah (Opsional)</label>
+                        <label for="foto_referensi" class="form-label fw-bold small text-muted text-uppercase">Ganti Foto Profil (Opsional)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0"><i class="bi bi-camera text-muted"></i></span>
                             <input type="file" class="form-control border-start-0" id="foto_referensi" name="foto_referensi" accept="image/jpeg, image/png, image/jpg">
                         </div>
-                        <div class="form-text small mt-2">Kosongkan jika tidak ingin mengubah foto. Jika diganti, sistem akan memproses ulang wajah.</div>
+                        <div class="form-text small mt-2">Kosongkan jika tidak ingin mengubah foto profil.</div>
                     </div>
 
                     <div class="mb-4">
@@ -144,13 +144,13 @@
                                 <img id="image-preview" src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="Foto Saat Ini" />
                             @else
                                 <img id="image-preview" src="#" alt="Preview" style="display: none;" />
-                                <div id="no-photo" class="text-center text-muted small">Belum ada foto referensi</div>
+                                <div id="no-photo" class="text-center text-muted small">Belum ada foto profil</div>
                             @endif
                         </div>
                         <div id="extraction-status" class="text-center mt-3 small d-none"></div>
                     </div>
 
-                    <input type="hidden" id="face_descriptor" name="face_descriptor">
+                    <input type="hidden" id="face_descriptor" name="face_descriptor" value="[]">
 
                     <div class="row g-2 mt-5">
                         <div class="col-sm-6 text-sm-end">
@@ -170,112 +170,27 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/face-api.min.js') }}"></script>
 <script>
     const fotoInput = document.getElementById('foto_referensi');
     const imagePreview = document.getElementById('image-preview');
-    const previewWrapper = document.getElementById('preview-wrapper');
     const extractionStatus = document.getElementById('extraction-status');
+    const noPhotoDiv = document.getElementById('no-photo');
     const submitBtn = document.getElementById('submit-btn');
-    const faceDescriptorInput = document.getElementById('face_descriptor');
-    const alertContainer = document.getElementById('alert-container');
-    const form = document.getElementById('edit-form');
-    
-    let isModelLoaded = false;
-    let currentCanvas = null;
 
-    async function loadModels() {
-        try {
-            await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
-                faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-                faceapi.nets.faceRecognitionNet.loadFromUri('/models')
-            ]);
-            isModelLoaded = true;
-        } catch (error) {
-            console.error('Error loading models:', error);
-            showAlert('danger', 'Gagal memuat sistem AI. Fitur deteksi wajah belum siap.');
-        }
-    }
-
-    loadModels();
-
-    function showAlert(type, message) {
-        alertContainer.innerHTML = `
-            <div class="alert alert-${type} alert-dismissible fade show border-0 shadow-sm" role="alert" style="border-radius: 0.75rem;">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-info-circle-fill me-2"></i>
-                    <div class="small fw-medium">${message}</div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-    }
-
-    fotoInput.addEventListener('change', async (e) => {
+    fotoInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        if (!isModelLoaded) {
-            showAlert('warning', 'Sistem AI sedang bersiap, harap tunggu sejenak.');
-            fotoInput.value = '';
-            return;
-        }
-
-        submitBtn.disabled = true;
-        faceDescriptorInput.value = '';
-        if (currentCanvas) currentCanvas.remove();
 
         const imgUrl = URL.createObjectURL(file);
         imagePreview.src = imgUrl;
         imagePreview.style.display = 'block';
+        if (noPhotoDiv) {
+            noPhotoDiv.style.display = 'none';
+        }
         
         extractionStatus.classList.remove('d-none');
-        extractionStatus.innerHTML = '<span class="spinner-border spinner-border-sm me-2 text-success"></span>Menganalisis wajah baru...';
-        extractionStatus.className = 'text-muted mt-2 small fw-medium';
-
-        imagePreview.onload = async () => {
-            if(imagePreview.src.startsWith('blob:')) {
-                try {
-                    const detection = await faceapi.detectSingleFace(imagePreview).withFaceLandmarks().withFaceDescriptor();
-
-                    if (!detection) {
-                        throw new Error('Wajah tidak ditemukan. Gunakan foto yang lebih jelas.');
-                    }
-
-                    const canvas = faceapi.createCanvasFromMedia(imagePreview);
-                    currentCanvas = canvas;
-                    previewWrapper.appendChild(canvas);
-                    
-                    const displaySize = { width: imagePreview.clientWidth, height: imagePreview.clientHeight };
-                    faceapi.matchDimensions(canvas, displaySize);
-                    const resizedDetections = faceapi.resizeResults(detection, displaySize);
-                    
-                    const box = resizedDetections.detection.box;
-                    const drawBox = new faceapi.draw.DrawBox(box, { label: 'Wajah Terdeteksi', boxColor: '#198754' });
-                    drawBox.draw(canvas);
-
-                    faceDescriptorInput.value = JSON.stringify(Array.from(detection.descriptor));
-
-                    extractionStatus.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> Wajah baru berhasil diverifikasi!';
-                    extractionStatus.className = 'text-success mt-2 small fw-bold';
-                    submitBtn.disabled = false;
-
-                } catch (error) {
-                    extractionStatus.innerHTML = `<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> ${error.message}`;
-                    extractionStatus.className = 'text-danger mt-2 small fw-bold';
-                    fotoInput.value = '';
-                    submitBtn.disabled = false; // allow submitting without photo change
-                }
-            }
-        };
-    });
-    
-    form.addEventListener('submit', function(e) {
-        if(fotoInput.files.length > 0 && !faceDescriptorInput.value) {
-            e.preventDefault();
-            showAlert('warning', 'Harap tunggu hingga proses deteksi wajah selesai.');
-        }
+        extractionStatus.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> Foto profil terpilih!';
+        extractionStatus.className = 'text-success mt-2 small fw-bold';
     });
 </script>
 @endpush
