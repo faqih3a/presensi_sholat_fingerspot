@@ -291,9 +291,17 @@ function handleGetUserinfo(array $decoded): void
 
     // Cek apakah pin ini ada di database santri
     $santri = \App\Models\Santri::find($pin);
-    $dbStatus = $santri
-        ? "MATCHED → santri_id={$santri->id}, db_name={$santri->nama}"
-        : "NOT FOUND in database";
+    $dbStatus = "NOT FOUND in database";
+
+    if ($santri) {
+        // Simpan data biometrik ke database
+        $santri->update([
+            'finger_count' => (int) $finger,
+            'face_count'   => (int) $face,
+            'template'     => $template,
+        ]);
+        $dbStatus = "MATCHED → santri_id={$santri->id}, db_name={$santri->nama} (Biometrik Disimpan)";
+    }
     
     logWebhook("USERINFO MATCH: pin=$pin → $dbStatus");
 

@@ -11,6 +11,9 @@ class Santri extends Model
         'nama',
         'kelas',
         'foto_referensi',
+        'finger_count',
+        'face_count',
+        'template',
     ];
 
     public function user()
