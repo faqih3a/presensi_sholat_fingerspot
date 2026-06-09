@@ -163,6 +163,46 @@ class DashboardController extends Controller
             $start->addDay();
         }
 
+        // === Weekly Chart Data (last 7 days) ===
+        $weeklyLabels = [];
+        $weeklyData = [];
+        $dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        $nowCarbon = \Carbon\Carbon::now('Asia/Jakarta');
+        for ($i = 6; $i >= 0; $i--) {
+            $d = $nowCarbon->copy()->subDays($i);
+            $weeklyLabels[] = $dayNames[$d->dayOfWeek];
+            $weeklyData[] = \App\Models\Presensi::where('tanggal', $d->format('Y-m-d'))
+                                                 ->where('status', 'Hadir')
+                                                 ->count();
+        }
+
+        // === Per-Prayer-Time Chart Data (today) ===
+        $today = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+        $prayerLabels = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+        $prayerData = [];
+        foreach ($prayerLabels as $p) {
+            $prayerData[] = \App\Models\Presensi::where('tanggal', $today)
+                                                 ->where('waktu_sholat', $p)
+                                                 ->where('status', 'Hadir')
+                                                 ->count();
+        }
+
+        // === Total Scan Hari Ini (all scans today, not just unique santri) ===
+        $totalScanHariIni = \App\Models\Presensi::where('tanggal', $today)
+                                                 ->whereNotNull('waktu_hadir')
+                                                 ->count();
+
+        // === Jamaah Hadir Hari Ini (unique santri who attended today) ===
+        $jamaahHadirHariIni = \App\Models\Presensi::where('tanggal', $today)
+                                                   ->where('status', 'Hadir')
+                                                   ->distinct('santri_id')
+                                                   ->count('santri_id');
+
+        // === Ketepatan Waktu (on-time percentage for today) ===
+        $hadirToday = \App\Models\Presensi::where('tanggal', $today)->where('status', 'Hadir')->count();
+        $totalExpectedToday = $totalSantri * 5; // 5 prayer times
+        $ketepatanWaktu = $totalExpectedToday > 0 ? round(($hadirToday / $totalExpectedToday) * 100, 0) : 0;
+
         // Ambil jadwal sholat untuk tanggal akhir range
         $jadwal = $this->getJadwalSholat(\Carbon\Carbon::parse($endDate, 'Asia/Jakarta'));
 
@@ -206,13 +246,38 @@ class DashboardController extends Controller
             (clone $distQuery)->where('status', 'Alfa')->count(),
         ];
 
+        // Determine next prayer time
+        $nextPrayer = null;
+        if ($jadwal) {
+            $prayerMap = [
+                'Subuh' => 'Fajr',
+                'Syuruq' => 'Sunrise',
+                'Dzuhur' => 'Dhuhr',
+                'Ashar' => 'Asr',
+                'Maghrib' => 'Maghrib',
+                'Isya' => 'Isha',
+            ];
+            $nowTime = \Carbon\Carbon::now('Asia/Jakarta');
+            foreach ($prayerMap as $label => $key) {
+                if (isset($jadwal[$key])) {
+                    $prayerTime = \Carbon\Carbon::parse($today . ' ' . $jadwal[$key], 'Asia/Jakarta');
+                    if ($nowTime->lessThan($prayerTime)) {
+                        $nextPrayer = $label;
+                        break;
+                    }
+                }
+            }
+        }
+
         return view('dashboard.index', compact(
             'totalSantri', 'hadirHariIni', 'tidakHadir', 'persentase', 
             'jadwal', 'chartLabels', 'chartData', 'waktuSholat', 
             'absentSantris', 'izinTodayRecords', 'alfaTodayRecords', 'fullDayIzinSantriIds',
             'statusData', 'tanggal_mulai', 'tanggal_akhir',
             'mode', 'ref_date', 'prev_date', 'next_date', 'display_date',
-            'recentActivities'
+            'recentActivities',
+            'weeklyLabels', 'weeklyData', 'prayerLabels', 'prayerData',
+            'totalScanHariIni', 'jamaahHadirHariIni', 'ketepatanWaktu', 'nextPrayer'
         ));
     }
 
