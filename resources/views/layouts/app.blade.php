@@ -406,7 +406,11 @@
                         </a>
                         
                         @if(auth()->user()->role === 'admin')
-                            <a class="list-group-item list-group-item-action {{ request()->is('pengurus*') ? 'active' : '' }}" href="{{ route('pengurus.index') }}">
+                            <a class="list-group-item list-group-item-action {{ request()->is('admin-manage*') ? 'active' : '' }}" href="{{ route('admin-manage.index') }}">
+                                <i class="bi bi-shield-lock-fill"></i>
+                                <span class="sidebar-text">Kelola Admin</span>
+                            </a>
+                            <a class="list-group-item list-group-item-action {{ request()->is('asatidz*') ? 'active' : '' }}" href="{{ route('asatidz.index') }}">
                                 <i class="bi bi-person-workspace"></i>
                                 <span class="sidebar-text">Kelola Asatidz</span>
                             </a>

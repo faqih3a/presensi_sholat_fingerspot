@@ -7,7 +7,8 @@ use App\Http\Controllers\SantriController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\IzinController;
-use App\Http\Controllers\PengurusController;
+use App\Http\Controllers\AsatidzController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SantriDashboardController;
 
 // Auth routes (Login is now the root page)
@@ -55,11 +56,20 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin-only routes (Mosque Staff Management)
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('/pengurus', [PengurusController::class, 'index'])->name('pengurus.index');
-        Route::get('/pengurus/create', [PengurusController::class, 'create'])->name('pengurus.create');
-        Route::post('/pengurus', [PengurusController::class, 'store'])->name('pengurus.store');
-        Route::get('/pengurus/{pengurus}/edit', [PengurusController::class, 'edit'])->name('pengurus.edit');
-        Route::put('/pengurus/{pengurus}', [PengurusController::class, 'update'])->name('pengurus.update');
-        Route::delete('/pengurus/{pengurus}', [PengurusController::class, 'destroy'])->name('pengurus.destroy');
+        // Kelola Asatidz
+        Route::get('/asatidz', [AsatidzController::class, 'index'])->name('asatidz.index');
+        Route::get('/asatidz/create', [AsatidzController::class, 'create'])->name('asatidz.create');
+        Route::post('/asatidz', [AsatidzController::class, 'store'])->name('asatidz.store');
+        Route::get('/asatidz/{asatidz}/edit', [AsatidzController::class, 'edit'])->name('asatidz.edit');
+        Route::put('/asatidz/{asatidz}', [AsatidzController::class, 'update'])->name('asatidz.update');
+        Route::delete('/asatidz/{asatidz}', [AsatidzController::class, 'destroy'])->name('asatidz.destroy');
+
+        // Kelola Admin
+        Route::get('/admin-manage', [AdminController::class, 'index'])->name('admin-manage.index');
+        Route::get('/admin-manage/create', [AdminController::class, 'create'])->name('admin-manage.create');
+        Route::post('/admin-manage', [AdminController::class, 'store'])->name('admin-manage.store');
+        Route::get('/admin-manage/{admin}/edit', [AdminController::class, 'edit'])->name('admin-manage.edit');
+        Route::put('/admin-manage/{admin}', [AdminController::class, 'update'])->name('admin-manage.update');
+        Route::delete('/admin-manage/{admin}', [AdminController::class, 'destroy'])->name('admin-manage.destroy');
     });
 });
