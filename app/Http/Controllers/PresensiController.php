@@ -101,39 +101,18 @@ class PresensiController extends Controller
             'waktu_sholat' => 'required|string',
         ]);
 
-        $presensi = Presensi::where('santri_id', $request->santri_id)
+        $deleted = Presensi::where('santri_id', $request->santri_id)
                 ->where('tanggal', $request->tanggal)
                 ->where('waktu_sholat', $request->waktu_sholat)
-                ->first();
-
-        if (!$presensi) {
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.'], 404);
-            }
-            return redirect()->back()->with('error', 'Data tidak ditemukan.');
-        }
-
-        $message = '';
-
-        // If it's a "Hadir" record (real scan), reset to Alfa instead of deleting.
-        // This prevents syncAlfas() from re-creating the record on next page load.
-        if ($presensi->status === 'Hadir' && $presensi->waktu_hadir) {
-            $presensi->update([
-                'status' => 'Alfa',
-                'waktu_hadir' => null,
-                'photo_url' => null,
-            ]);
-            $message = 'Data kehadiran berhasil dihapus (status diubah ke Alpha).';
-        } else {
-            // For Alfa/Izin records, actually delete them
-            $presensi->delete();
-            $message = 'Data presensi berhasil dihapus.';
-        }
+                ->delete();
 
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => $message]);
+            if ($deleted) {
+                return response()->json(['success' => true, 'message' => 'Data presensi berhasil dihapus.']);
+            }
+            return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.'], 404);
         }
 
-        return redirect()->back()->with('success', $message);
+        return redirect()->back()->with('success', 'Data presensi berhasil dihapus.');
     }
 }

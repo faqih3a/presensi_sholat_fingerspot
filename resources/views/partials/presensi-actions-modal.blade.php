@@ -62,7 +62,7 @@
         const status = document.getElementById('edit_status').value;
 
         fetch('/presensi/update-status', {
-            method: 'PUT',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': CSRF_TOKEN,
@@ -92,7 +92,7 @@
                 );
                 if (row) {
                     // Update status badge
-                    const statusCell = row.querySelectorAll('td')[5]; // 6th column (0-indexed)
+                    const statusCell = row.querySelectorAll('td')[5];
                     if (statusCell) {
                         if (status === 'Alfa') {
                             statusCell.innerHTML = '<span class="badge badge-soft badge-soft-danger px-4">Alpha</span>';
@@ -104,23 +104,20 @@
                     }
 
                     // Update waktu hadir cell
-                    const waktuCell = row.querySelectorAll('td')[4]; // 5th column
+                    const waktuCell = row.querySelectorAll('td')[4];
                     if (waktuCell && data.data) {
                         const waktuHadir = data.data.waktu_hadir;
+                        const d = new Date(tanggal + 'T00:00:00');
+                        const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                        const formattedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
                         if (waktuHadir) {
                             const displayTime = waktuHadir.substring(0, 5);
-                            const d = new Date(tanggal + 'T00:00:00');
-                            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-                            const formattedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
                             waktuCell.innerHTML = `
                                 <div class="d-flex align-items-center">
                                     <div class="fw-bold text-dark me-2">${displayTime}</div>
                                     <div class="small text-muted border-start ps-2">${formattedDate}</div>
                                 </div>`;
                         } else {
-                            const d = new Date(tanggal + 'T00:00:00');
-                            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-                            const formattedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
                             waktuCell.innerHTML = `
                                 <div class="d-flex align-items-center">
                                     <div class="fw-bold text-danger me-2">-</div>
@@ -154,11 +151,10 @@
     });
 
     function deletePresensi(santriId, tanggal, waktuSholat) {
-        if (!confirm('Hapus data presensi ini? Untuk data "Hadir", status akan diubah menjadi Alpha.')) {
+        if (!confirm('Apakah Anda yakin ingin menghapus data presensi ini?')) {
             return;
         }
 
-        // Find the row to disable buttons while processing
         const row = document.querySelector(
             `tr[data-santri-id="${santriId}"][data-tanggal="${tanggal}"][data-sholat="${waktuSholat}"]`
         );
@@ -172,7 +168,7 @@
         }
 
         fetch('/presensi/delete', {
-            method: 'DELETE',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': CSRF_TOKEN,
@@ -189,69 +185,38 @@
         .then(data => {
             if (data.success) {
                 if (row) {
-                    // Check if the message indicates the record was reset to Alpha
-                    if (data.message && data.message.includes('Alpha')) {
-                        // Record was reset to Alfa — update the row in-place
-                        const statusCell = row.querySelectorAll('td')[5];
-                        if (statusCell) {
-                            statusCell.innerHTML = '<span class="badge badge-soft badge-soft-danger px-4">Alpha</span>';
-                        }
-
-                        // Clear waktu hadir
-                        const waktuCell = row.querySelectorAll('td')[4];
-                        if (waktuCell) {
-                            const d = new Date(tanggal + 'T00:00:00');
-                            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-                            const formattedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-                            waktuCell.innerHTML = `
-                                <div class="d-flex align-items-center">
-                                    <div class="fw-bold text-danger me-2">-</div>
-                                    <div class="small text-muted border-start ps-2">${formattedDate}</div>
-                                </div>`;
-                        }
-
-                        // Clear foto scan
-                        const fotoCell = row.querySelectorAll('td')[1];
-                        if (fotoCell) {
-                            fotoCell.innerHTML = '<span class="text-muted small">-</span>';
-                        }
-
-                        // Update edit button status
-                        const editBtn = row.querySelector('button[title="Edit Status"]');
-                        if (editBtn) {
-                            editBtn.setAttribute('onclick', `editStatus('${santriId}', '${tanggal}', '${waktuSholat}', 'Alfa')`);
-                        }
-
-                        // Restore delete button
-                        const deleteBtn = row.querySelector('button[title="Hapus"]');
-                        if (deleteBtn) {
-                            deleteBtn.disabled = false;
-                            deleteBtn.innerHTML = '<i class="bi bi-trash text-danger"></i>';
-                        }
-
-                        // Highlight row
-                        row.classList.add('row-new-entry');
-                        setTimeout(() => row.classList.remove('row-new-entry'), 2000);
-                    } else {
-                        // Record was fully deleted — fade out and remove the row
-                        row.style.transition = 'opacity 0.4s ease-out';
-                        row.style.opacity = '0';
-                        setTimeout(() => {
-                            row.remove();
-                            // Update record count
-                            const countEl = document.getElementById('recordCount');
-                            const tbody = document.getElementById('kehadiranTbody');
-                            if (countEl && tbody) {
-                                const totalRows = tbody.querySelectorAll('tr[data-presensi-id], tr[data-santri-id]').length;
+                    // Fade out and remove the row
+                    row.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(30px)';
+                    setTimeout(() => {
+                        row.remove();
+                        // Update record count
+                        const countEl = document.getElementById('recordCount');
+                        const tbody = document.getElementById('kehadiranTbody');
+                        if (countEl && tbody) {
+                            const totalRows = tbody.querySelectorAll('tr[data-santri-id]').length;
+                            if (totalRows > 0) {
                                 countEl.textContent = `Menampilkan ${totalRows} data rekaman kehadiran terbaru.`;
+                            } else {
+                                // Show empty state
+                                tbody.innerHTML = `
+                                    <tr id="emptyRow">
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="py-4 text-muted">
+                                                <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                                                <h6 class="fw-bold">Belum Ada Data Presensi</h6>
+                                                <p class="small mb-0">Data kehadiran akan muncul di sini setelah santri melakukan scan.</p>
+                                            </div>
+                                        </td>
+                                    </tr>`;
+                                countEl.textContent = '';
                             }
-                        }, 400);
-                    }
+                        }
+                    }, 400);
                 }
-
                 showFlashMessage('success', data.message);
             } else {
-                // Restore delete button on failure
                 if (row) {
                     const deleteBtn = row.querySelector('button[title="Hapus"]');
                     if (deleteBtn) {
@@ -277,7 +242,6 @@
 
     // Reusable flash message
     function showFlashMessage(type, message) {
-        // Remove existing flash
         const existing = document.getElementById('ajaxFlashMessage');
         if (existing) existing.remove();
 
@@ -294,7 +258,6 @@
         `;
         document.body.appendChild(alertDiv);
 
-        // Auto-remove after 4 seconds
         setTimeout(() => {
             if (alertDiv.parentElement) {
                 alertDiv.style.transition = 'opacity 0.3s ease-out';
