@@ -429,12 +429,14 @@ class DashboardController extends Controller
                             }
 
                             $synthesized->push((object) [
+                                'id' => null,
                                 'santri' => $santri,
                                 'santri_id' => $santri->id,
                                 'waktu_sholat' => $s,
                                 'tanggal' => $dateStr,
                                 'waktu_hadir' => null,
-                                'status' => $virtualStatus
+                                'status' => $virtualStatus,
+                                'photo_url' => null,
                             ]);
                         }
                     }
