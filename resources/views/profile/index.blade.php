@@ -175,8 +175,8 @@
                 <div class="profile-avatar-wrapper">
                     @php
                         $avatarUrl = null;
-                        if($user->role === 'santri' && $user->santri && $user->santri->foto_referensi) {
-                            $avatarUrl = asset('storage/santri_fotos/' . $user->santri->foto_referensi);
+                        if($user->role === 'santri' && $user->santri && $user->santri->display_photo) {
+                            $avatarUrl = $user->santri->display_photo;
                         } elseif ($user->avatar) {
                             $avatarUrl = asset('storage/avatars/' . $user->avatar);
                         }

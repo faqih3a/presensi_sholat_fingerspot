@@ -502,8 +502,8 @@
                                     <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 p-0" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         @php
                                             $navAvatarUrl = null;
-                                            if(auth()->user()->role === 'santri' && auth()->user()->santri && auth()->user()->santri->foto_referensi) {
-                                                $navAvatarUrl = asset('storage/santri_fotos/' . auth()->user()->santri->foto_referensi);
+                                            if(auth()->user()->role === 'santri' && auth()->user()->santri && auth()->user()->santri->display_photo) {
+                                                $navAvatarUrl = auth()->user()->santri->display_photo;
                                             } elseif (auth()->user()->avatar) {
                                                 $navAvatarUrl = asset('storage/avatars/' . auth()->user()->avatar);
                                             }

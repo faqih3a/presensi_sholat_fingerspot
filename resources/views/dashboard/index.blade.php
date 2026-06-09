@@ -160,8 +160,8 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
                 <div class="avatar-group d-flex align-items-center">
                     @foreach($izinTodayRecords->take(6) as $santriId => $records)
                     @php $santri = $records->first()->santri; @endphp
-                    @if($santri->foto_referensi)
-                    <img src="{{ asset('storage/santri_fotos/'.$santri->foto_referensi) }}" class="rounded-circle" style="width:35px;height:35px;border:2px solid #fff;margin-left:-12px;object-fit:cover" title="{{ $santri->nama }}">
+                    @if($santri->display_photo)
+                    <img src="{{ $santri->display_photo }}" class="rounded-circle" style="width:35px;height:35px;border:2px solid #fff;margin-left:-12px;object-fit:cover" title="{{ $santri->nama }}">
                     @else
                     <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width:35px;height:35px;border:2px solid #fff;margin-left:-12px" title="{{ $santri->nama }}"><i class="bi bi-person" style="font-size:.8rem"></i></div>
                     @endif
@@ -185,8 +185,8 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
                 <div class="avatar-group d-flex align-items-center">
                     @foreach($alfaTodayRecords->take(6) as $santriId => $records)
                     @php $santri = $records->first()->santri; @endphp
-                    @if($santri->foto_referensi)
-                    <img src="{{ asset('storage/santri_fotos/'.$santri->foto_referensi) }}" class="rounded-circle" style="width:35px;height:35px;border:2px solid #fff;margin-left:-12px;object-fit:cover" title="{{ $santri->nama }}">
+                    @if($santri->display_photo)
+                    <img src="{{ $santri->display_photo }}" class="rounded-circle" style="width:35px;height:35px;border:2px solid #fff;margin-left:-12px;object-fit:cover" title="{{ $santri->nama }}">
                     @else
                     <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width:35px;height:35px;border:2px solid #fff;margin-left:-12px" title="{{ $santri->nama }}"><i class="bi bi-person" style="font-size:.8rem"></i></div>
                     @endif
