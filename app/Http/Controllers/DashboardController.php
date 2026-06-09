@@ -357,9 +357,10 @@ class DashboardController extends Controller
 
         $now = \Carbon\Carbon::now('Asia/Jakarta');
         
-        // Fetch real records
+        // Fetch real records (hanya data sholat, exclude Tes)
         $query = Presensi::with('santri')
-                         ->whereBetween('tanggal', [$tanggal_mulai, $tanggal_akhir]);
+                         ->whereBetween('tanggal', [$tanggal_mulai, $tanggal_akhir])
+                         ->where('waktu_sholat', '!=', 'Tes');
                          
         if ($waktuSholat) {
             $query->where('waktu_sholat', $waktuSholat);
