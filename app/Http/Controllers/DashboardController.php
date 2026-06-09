@@ -43,135 +43,61 @@ class DashboardController extends Controller
         }
 
         // Only sync today and yesterday to prevent API latency during dashboard loads
-        $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
-        $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-        $rawLogs = $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
-        $this->syncAlfas();
+        $lastSyncKey = 'fingerspot_sync_last_run';
+        $forceSync = $request->get('sync') === 'true';
+        
+        if ($forceSync || !\Illuminate\Support\Facades\Cache::has($lastSyncKey)) {
+            $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
+            $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+            $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
+            $this->syncAlfas();
+            // Cache for 10 minutes (600 seconds)
+            \Illuminate\Support\Facades\Cache::put($lastSyncKey, true, 600);
+        }
 
-        $recentActivities = collect($rawLogs)
-            ->filter(function ($log) {
-                $pin = $log['pin'] ?? null;
-                $scanTimeStr = $log['scan_date'] ?? $log['datetime'] ?? $log['scan'] ?? null;
-                return $pin && $scanTimeStr;
-            })
-            ->sortByDesc(function ($log) {
-                $scanTimeStr = $log['scan_date'] ?? $log['datetime'] ?? $log['scan'];
-                try {
-                    return \Carbon\Carbon::parse($scanTimeStr, 'Asia/Jakarta')->timestamp;
-                } catch (\Exception $e) {
-                    return 0;
-                }
-            })
+        $recentPresensis = Presensi::with('santri')
+            ->whereNotNull('waktu_hadir')
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('waktu_hadir', 'desc')
             ->take(5)
-            ->map(function ($log) {
-                $pin = $log['pin'];
-                $scanTimeStr = $log['scan_date'] ?? $log['datetime'] ?? $log['scan'];
-                
-                $name = 'PIN ' . $pin;
-                $role = 'unknown';
-                $detail = 'Belum terdaftar';
-                $avatar = null;
-                
-                $santri = \App\Models\Santri::where('fingerspot_pin', $pin)->first();
-                if ($santri) {
-                    $name = $santri->nama;
-                    $role = 'santri';
-                    $detail = 'Kelas ' . $santri->kelas;
-                    $avatar = $santri->foto_referensi ? asset('storage/santri_fotos/' . $santri->foto_referensi) : null;
-                } else {
-                    $user = \App\Models\User::where('fingerspot_pin', $pin)->first();
-                    if ($user) {
-                        $name = $user->name;
-                        $role = $user->role;
-                        $detail = ucfirst($user->role);
-                        $avatar = $user->avatar ? asset('storage/avatars/' . $user->avatar) : null;
-                    }
-                }
-                
-                $verifyVal = $log['verify'] ?? null;
-                $verifyMethod = 'Unknown';
-                $verifyIcon = 'bi-question-circle';
-                switch ($verifyVal) {
-                    case '1':
-                        $verifyMethod = 'Fingerprint';
-                        $verifyIcon = 'bi-fingerprint';
-                        break;
-                    case '2':
-                        $verifyMethod = 'Password';
-                        $verifyIcon = 'bi-key-fill';
-                        break;
-                    case '3':
-                        $verifyMethod = 'Card';
-                        $verifyIcon = 'bi-card-list';
-                        break;
-                    case '4':
-                        $verifyMethod = 'Face';
-                        $verifyIcon = 'bi-person-bounding-box';
-                        break;
-                    case '6':
-                        $verifyMethod = 'Vein';
-                        $verifyIcon = 'bi-hand-index-thumb';
-                        break;
-                    case '7':
-                        $verifyMethod = 'QR Code';
-                        $verifyIcon = 'bi-qr-code-scan';
-                        break;
-                }
-                
-                $statusScanVal = $log['status_scan'] ?? null;
-                $statusScanLabel = 'Scan';
-                switch ($statusScanVal) {
-                    case '0':
-                        $statusScanLabel = 'Scan Masuk';
-                        break;
-                    case '1':
-                        $statusScanLabel = 'Scan Keluar';
-                        break;
-                    case '2':
-                        $statusScanLabel = 'Break In';
-                        break;
-                    case '3':
-                        $statusScanLabel = 'Break Out';
-                        break;
-                    case '4':
-                        $statusScanLabel = 'Overtime In';
-                        break;
-                    case '5':
-                        $statusScanLabel = 'Overtime Out';
-                        break;
-                    case '6':
-                        $statusScanLabel = 'Rapat In';
-                        break;
-                    case '7':
-                        $statusScanLabel = 'Rapat Out';
-                        break;
-                    case '8':
-                        $statusScanLabel = 'Custom 1';
-                        break;
-                    case '9':
-                        $statusScanLabel = 'Custom 2';
-                        break;
-                }
+            ->get();
 
-                try {
-                    $carbonScan = \Carbon\Carbon::parse($scanTimeStr, 'Asia/Jakarta');
-                } catch (\Exception $e) {
-                    $carbonScan = \Carbon\Carbon::now('Asia/Jakarta');
-                }
+        $recentActivities = $recentPresensis->map(function ($presensi) {
+            $santri = $presensi->santri;
+            $name = $santri ? $santri->nama : 'PIN ' . $presensi->santri_id;
+            $role = 'santri';
+            $detail = $santri ? 'Kelas ' . $santri->kelas : 'Santri';
+            $avatar = ($santri && $santri->foto_referensi) ? asset('storage/santri_fotos/' . $santri->foto_referensi) : null;
+            
+            $verifyMethod = 'Fingerprint';
+            $verifyIcon = 'bi-fingerprint';
+            
+            if ($presensi->photo_url) {
+                $verifyMethod = 'Face';
+                $verifyIcon = 'bi-person-bounding-box';
+            }
+            
+            $statusScanLabel = 'Scan Masuk';
+            
+            try {
+                $carbonScan = \Carbon\Carbon::parse($presensi->tanggal . ' ' . $presensi->waktu_hadir, 'Asia/Jakarta');
+            } catch (\Exception $e) {
+                $carbonScan = \Carbon\Carbon::now('Asia/Jakarta');
+            }
 
-                return (object) [
-                    'pin' => $pin,
-                    'name' => $name,
-                    'role' => $role,
-                    'detail' => $detail,
-                    'avatar' => $avatar,
-                    'scan_time' => $carbonScan,
-                    'verify_method' => $verifyMethod,
-                    'verify_icon' => $verifyIcon,
-                    'status_scan_label' => $statusScanLabel,
-                    'photo_url' => $log['photo_url'] ?? null,
-                ];
-            });
+            return (object) [
+                'pin' => $santri ? $santri->fingerspot_pin : $presensi->santri_id,
+                'name' => $name,
+                'role' => $role,
+                'detail' => $detail,
+                'avatar' => $avatar,
+                'scan_time' => $carbonScan,
+                'verify_method' => $verifyMethod,
+                'verify_icon' => $verifyIcon,
+                'status_scan_label' => $statusScanLabel,
+                'photo_url' => $presensi->photo_url,
+            ];
+        });
 
         
         // Hitung total santri
@@ -372,10 +298,16 @@ class DashboardController extends Controller
         }
 
         // Only sync today and yesterday to prevent API latency during dashboard loads
-        $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
-        $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-        $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
-        $this->syncAlfas();
+        $lastSyncKey = 'fingerspot_sync_last_run';
+        $forceSync = $request->get('sync') === 'true';
+        
+        if ($forceSync || !\Illuminate\Support\Facades\Cache::has($lastSyncKey)) {
+            $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
+            $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+            $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
+            $this->syncAlfas();
+            \Illuminate\Support\Facades\Cache::put($lastSyncKey, true, 600);
+        }
 
         $waktuSholat = $request->get('waktu_sholat');
         $status = $request->get('status');
@@ -583,7 +515,17 @@ class DashboardController extends Controller
                 // Log error if needed
             }
             
-            return null;
+            return [
+                'Fajr' => '04:30',
+                'Dhuhr' => '12:00',
+                'Asr' => '15:15',
+                'Maghrib' => '18:00',
+                'Isha' => '19:15',
+                'Subuh' => '04:30',
+                'Dzuhur' => '12:00',
+                'Ashar' => '15:15',
+                'Isya' => '19:15'
+            ];
         });
     }
 

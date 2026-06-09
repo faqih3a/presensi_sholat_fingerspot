@@ -667,10 +667,17 @@ class FingerspotService
                     }
                     return $timings;
                 }
-            } catch (\Exception $e) {
-                // Log error
-            }
-            return null;
+            return [
+                'Fajr' => '04:30',
+                'Dhuhr' => '12:00',
+                'Asr' => '15:15',
+                'Maghrib' => '18:00',
+                'Isha' => '19:15',
+                'Subuh' => '04:30',
+                'Dzuhur' => '12:00',
+                'Ashar' => '15:15',
+                'Isya' => '19:15'
+            ];
         });
     }
 }

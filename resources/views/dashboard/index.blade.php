@@ -254,6 +254,11 @@
             <a href="{{ request()->fullUrlWithQuery(['ref_date' => $next_date]) }}" class="nav-arrow-btn">
                 <i class="bi bi-chevron-right" style="-webkit-text-stroke: 0.5px;"></i>
             </a>
+
+            <!-- Sync Button -->
+            <a href="{{ request()->fullUrlWithQuery(['sync' => 'true']) }}" class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2 fw-bold" style="border-radius: 0.5rem; height: 36px; font-size: 0.85rem;" title="Sinkronisasi manual dengan mesin Fingerspot">
+                <i class="bi bi-arrow-repeat"></i> Sync Fingerspot
+            </a>
         </div>
     </div>
 </div>

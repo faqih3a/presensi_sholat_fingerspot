@@ -93,14 +93,20 @@
         <h1 class="h3 mb-0 text-dark fw-bold">Dashboard Presensi Saya</h1>
         <p class="text-muted mb-0">Selamat datang kembali, mari pantau kehadiran ibadah Anda.</p>
     </div>
-    <form action="{{ route('santri.dashboard') }}" method="GET" class="no-loader">
-        <input type="hidden" name="waktu_sholat" value="{{ $waktuSholat }}">
-        <div class="bg-white p-1 rounded-3 shadow-sm d-flex border">
-            <button type="submit" name="period" value="today" class="btn btn-sm px-3 {{ $period == 'today' ? 'btn-success shadow-sm' : 'btn-link text-muted text-decoration-none' }} rounded-2 transition-all">Hari Ini</button>
-            <button type="submit" name="period" value="week" class="btn btn-sm px-3 {{ $period == 'week' ? 'btn-success shadow-sm' : 'btn-link text-muted text-decoration-none' }} rounded-2 transition-all">Minggu Ini</button>
-            <button type="submit" name="period" value="month" class="btn btn-sm px-3 {{ $period == 'month' ? 'btn-success shadow-sm' : 'btn-link text-muted text-decoration-none' }} rounded-2 transition-all">Bulan Ini</button>
-        </div>
-    </form>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <form action="{{ route('santri.dashboard') }}" method="GET" class="no-loader m-0">
+            <input type="hidden" name="waktu_sholat" value="{{ $waktuSholat }}">
+            <div class="bg-white p-1 rounded-3 shadow-sm d-flex border">
+                <button type="submit" name="period" value="today" class="btn btn-sm px-3 {{ $period == 'today' ? 'btn-success shadow-sm' : 'btn-link text-muted text-decoration-none' }} rounded-2 transition-all">Hari Ini</button>
+                <button type="submit" name="period" value="week" class="btn btn-sm px-3 {{ $period == 'week' ? 'btn-success shadow-sm' : 'btn-link text-muted text-decoration-none' }} rounded-2 transition-all">Minggu Ini</button>
+                <button type="submit" name="period" value="month" class="btn btn-sm px-3 {{ $period == 'month' ? 'btn-success shadow-sm' : 'btn-link text-muted text-decoration-none' }} rounded-2 transition-all">Bulan Ini</button>
+            </div>
+        </form>
+        
+        <a href="{{ request()->fullUrlWithQuery(['sync' => 'true']) }}" class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2 fw-bold" style="border-radius: 0.5rem; height: 36px; font-size: 0.85rem;" title="Sinkronisasi manual dengan mesin Fingerspot">
+            <i class="bi bi-arrow-repeat"></i> Sync Fingerspot
+        </a>
+    </div>
 </div>
 
 <div class="row g-3 mb-4">

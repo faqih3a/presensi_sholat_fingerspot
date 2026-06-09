@@ -39,12 +39,17 @@ class SantriDashboardController extends Controller
         }
 
         // Only sync today and yesterday to prevent API latency during dashboard loads
-        $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
-        $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-        $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
-
-        // Sync alfas before getting data
-        $this->syncAlfas();
+        $lastSyncKey = 'fingerspot_sync_last_run';
+        $forceSync = $request->get('sync') === 'true';
+        
+        if ($forceSync || !\Illuminate\Support\Facades\Cache::has($lastSyncKey)) {
+            $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
+            $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+            $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
+            // Sync alfas before getting data
+            $this->syncAlfas();
+            \Illuminate\Support\Facades\Cache::put($lastSyncKey, true, 600);
+        }
 
         // Get personal presensi history
         $query = Presensi::where('santri_id', $user->santri->id)
@@ -87,9 +92,15 @@ class SantriDashboardController extends Controller
         }
 
         // Only sync today and yesterday to prevent API latency during dashboard loads
-        $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
-        $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-        $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
+        $lastSyncKey = 'fingerspot_sync_last_run';
+        $forceSync = $request->get('sync') === 'true';
+        
+        if ($forceSync || !\Illuminate\Support\Facades\Cache::has($lastSyncKey)) {
+            $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
+            $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+            $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
+            \Illuminate\Support\Facades\Cache::put($lastSyncKey, true, 600);
+        }
 
         $query = Presensi::where('santri_id', $user->santri->id)
             ->whereBetween('tanggal', [$startDate, $endDate])
@@ -207,11 +218,25 @@ class SantriDashboardController extends Controller
                 ]);
 
                 if ($response->successful()) {
-                    return $response->json('data.timings');
+                    $timings = $response->json('data.timings');
+                    foreach ($timings as $key => $time) {
+                        $timings[$key] = substr($time, 0, 5);
+                    }
+                    return $timings;
                 }
             } catch (\Exception $e) {
             }
-            return null;
+            return [
+                'Fajr' => '04:30',
+                'Dhuhr' => '12:00',
+                'Asr' => '15:15',
+                'Maghrib' => '18:00',
+                'Isha' => '19:15',
+                'Subuh' => '04:30',
+                'Dzuhur' => '12:00',
+                'Ashar' => '15:15',
+                'Isya' => '19:15'
+            ];
         });
     }
 }
