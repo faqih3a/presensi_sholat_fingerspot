@@ -50,6 +50,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/izin/{izin}/status', [IzinController::class, 'updateStatus'])->name('izin.update-status');
         
         Route::put('/presensi/update-status', [PresensiController::class, 'updateStatus'])->name('presensi.update-status');
+        Route::get('/presensi/latest-scans', [PresensiController::class, 'latestScans'])->name('presensi.latest-scans');
         Route::delete('/presensi/delete', [PresensiController::class, 'deleteByParams'])->name('presensi.delete-by-params');
         Route::delete('/presensi/{presensi}', [PresensiController::class, 'destroy'])->name('presensi.destroy');
     });

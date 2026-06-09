@@ -8,6 +8,50 @@ use Carbon\Carbon;
 
 class PresensiController extends Controller
 {
+    /**
+     * API endpoint for polling: returns recent scan records.
+     * Used by the kehadiran page to auto-detect new webhook scans.
+     */
+    public function latestScans(Request $request)
+    {
+        $since = $request->get('since');
+        $today = Carbon::now('Asia/Jakarta')->format('Y-m-d');
+
+        $query = Presensi::with('santri')
+            ->where('tanggal', $today)
+            ->where('status', 'Hadir')
+            ->whereNotNull('waktu_hadir');
+
+        if ($since) {
+            $query->where('updated_at', '>', $since);
+        }
+
+        $records = $query->orderBy('updated_at', 'desc')
+            ->take(10)
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id'           => $p->id,
+                    'santri_id'    => $p->santri_id,
+                    'nama'         => $p->santri ? $p->santri->nama : 'PIN ' . $p->santri_id,
+                    'kelas'        => $p->santri ? $p->santri->kelas : '-',
+                    'foto'         => $p->santri && $p->santri->foto_referensi
+                        ? asset('storage/santri_fotos/' . $p->santri->foto_referensi) : null,
+                    'waktu_sholat' => $p->waktu_sholat,
+                    'waktu_hadir'  => $p->waktu_hadir,
+                    'tanggal'      => $p->tanggal,
+                    'status'       => $p->status,
+                    'photo_url'    => $p->photo_url,
+                    'updated_at'   => $p->updated_at->toISOString(),
+                ];
+            });
+
+        return response()->json([
+            'data'       => $records,
+            'server_time' => now()->toISOString(),
+        ]);
+    }
+
     public function updateStatus(Request $request)
     {
         $request->validate([
