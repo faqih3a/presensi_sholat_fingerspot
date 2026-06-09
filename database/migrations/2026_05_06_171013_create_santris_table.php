@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('nama');
             $table->string('kelas');
             $table->string('foto_referensi');
-            $table->longText('face_descriptor');
             $table->timestamps();
         });
     }

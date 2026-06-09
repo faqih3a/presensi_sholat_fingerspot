@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use App\Services\FingerspotService;
 
 class PengurusController extends Controller
 {
@@ -101,16 +100,5 @@ class PengurusController extends Controller
         $pengurus->delete();
 
         return redirect()->route('pengurus.index')->with('success', 'Akun Pengurus Masjid berhasil dihapus.');
-    }
-
-    public function sync(Request $request, FingerspotService $fingerspotService)
-    {
-        $result = $fingerspotService->syncUsers();
-
-        if ($result['success']) {
-            return redirect()->route('pengurus.index')->with('success', $result['message']);
-        }
-
-        return redirect()->route('pengurus.index')->with('error', $result['message']);
     }
 }

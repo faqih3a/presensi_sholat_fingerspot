@@ -121,13 +121,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label for="fingerspot_pin" class="form-label fw-bold small text-muted text-uppercase">Fingerspot PIN (Opsional)</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-0"><i class="bi bi-hash text-muted"></i></span>
-                            <input type="text" class="form-control border-start-0" id="fingerspot_pin" name="fingerspot_pin" value="{{ old('fingerspot_pin', $santri->fingerspot_pin) }}" placeholder="Contoh: 101">
-                        </div>
-                    </div>
+
 
                     <div class="mb-4">
                         <label for="foto_referensi" class="form-label fw-bold small text-muted text-uppercase">Ganti Foto Profil (Opsional)</label>
@@ -150,7 +144,7 @@
                         <div id="extraction-status" class="text-center mt-3 small d-none"></div>
                     </div>
 
-                    <input type="hidden" id="face_descriptor" name="face_descriptor" value="[]">
+
 
                     <div class="row g-2 mt-5">
                         <div class="col-sm-6 text-sm-end">

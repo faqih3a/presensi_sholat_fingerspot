@@ -27,8 +27,6 @@ class SantriSeeder extends Seeder
                 'nama' => 'User Santri',
                 'kelas' => '10A',
                 'foto_referensi' => 'default.jpg',
-                'face_descriptor' => '[]',
-                'fingerspot_pin' => '888',
             ]
         );
 
@@ -47,8 +45,6 @@ class SantriSeeder extends Seeder
                 'nama' => 'Santri Sementara',
                 'kelas' => '10A',
                 'foto_referensi' => 'default.jpg',
-                'face_descriptor' => '[]',
-                'fingerspot_pin' => '999',
             ]
         );
     }

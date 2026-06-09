@@ -5,15 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Presensi;
-use App\Services\FingerspotService;
 
 class SantriDashboardController extends Controller
 {
-    protected $fingerspotService;
-
-    public function __construct(FingerspotService $fingerspotService)
+    public function __construct()
     {
-        $this->fingerspotService = $fingerspotService;
     }
 
     public function index(Request $request)
@@ -38,18 +34,7 @@ class SantriDashboardController extends Controller
             $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(29)->format('Y-m-d');
         }
 
-        // Only sync today and yesterday to prevent API latency during dashboard loads
-        $lastSyncKey = 'fingerspot_sync_last_run';
-        $forceSync = $request->get('sync') === 'true';
-        
-        if ($forceSync || !\Illuminate\Support\Facades\Cache::has($lastSyncKey)) {
-            $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
-            $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-            $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
-            // Sync alfas before getting data
-            $this->syncAlfas();
-            \Illuminate\Support\Facades\Cache::put($lastSyncKey, true, 600);
-        }
+        $this->syncAlfas();
 
         // Get personal presensi history
         $query = Presensi::where('santri_id', $user->santri->id)
@@ -92,15 +77,7 @@ class SantriDashboardController extends Controller
         }
 
         // Only sync today and yesterday to prevent API latency during dashboard loads
-        $lastSyncKey = 'fingerspot_sync_last_run';
-        $forceSync = $request->get('sync') === 'true';
-        
-        if ($forceSync || !\Illuminate\Support\Facades\Cache::has($lastSyncKey)) {
-            $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
-            $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-            $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
-            \Illuminate\Support\Facades\Cache::put($lastSyncKey, true, 600);
-        }
+
 
         $query = Presensi::where('santri_id', $user->santri->id)
             ->whereBetween('tanggal', [$startDate, $endDate])

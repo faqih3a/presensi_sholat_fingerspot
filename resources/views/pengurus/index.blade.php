@@ -257,7 +257,6 @@
                             </td>
                             <td>
                                 <div class="fw-bold text-dark">{{ $u->name }}</div>
-                                <div class="small text-muted" style="font-size: 0.75rem;">PIN: {{ $u->fingerspot_pin ?? '-' }}</div>
                             </td>
                             <td>{{ $u->email }}</td>
                             <td>

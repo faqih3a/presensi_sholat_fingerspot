@@ -106,12 +106,6 @@
             <p class="text-muted small mb-0">Kelola daftar santri yang terdaftar dalam sistem presensi wajah.</p>
         </div>
         <div class="d-flex gap-2">
-            <form action="{{ route('santri.sync') }}" method="POST" class="d-inline-block">
-                @csrf
-                <button type="submit" class="btn btn-outline-success px-4 py-2 fw-bold" style="border-radius: 0.5rem;">
-                    <i class="bi bi-arrow-repeat me-2"></i> Sync Fingerspot
-                </button>
-            </form>
             <button type="button" class="btn btn-gradient-success px-4 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#registerModal">
                 <i class="bi bi-person-plus-fill me-2"></i> Tambah Santri
             </button>
@@ -290,10 +284,7 @@
                                 <label for="email" class="form-label fw-bold small text-muted text-uppercase">Email</label>
                                 <input type="email" class="form-control py-2" id="email" name="email" required placeholder="santri@thursina.id">
                             </div>
-                            <div class="mb-3">
-                                <label for="fingerspot_pin" class="form-label fw-bold small text-muted text-uppercase">Fingerspot PIN (Opsional)</label>
-                                <input type="text" class="form-control py-2" id="fingerspot_pin" name="fingerspot_pin" placeholder="Contoh: 101">
-                            </div>
+
                             <div class="mb-3">
                                 <label for="password" class="form-label fw-bold small text-muted text-uppercase">Password</label>
                                 <div class="input-group">
@@ -320,7 +311,7 @@
                         </div>
                     </div>
 
-                    <input type="hidden" id="face_descriptor" name="face_descriptor" value="[]">
+
 
                     <div class="d-flex gap-2 mt-4">
                         <button type="submit" id="submit-btn" class="btn btn-gradient-success flex-grow-1 py-2 fw-bold" disabled>

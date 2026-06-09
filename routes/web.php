@@ -39,7 +39,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kehadiran-sholat/export', [DashboardController::class, 'exportKehadiran'])->name('dashboard.kehadiran.export');
         
         Route::get('/santri', [SantriController::class, 'adminList'])->name('santri.index');
-        Route::post('/santri/sync', [SantriController::class, 'sync'])->name('santri.sync');
         Route::get('/santri/register', [SantriController::class, 'create'])->name('santri.create');
         Route::post('/santri/register', [SantriController::class, 'store'])->name('santri.store');
         Route::get('/santri/{santri}/edit', [SantriController::class, 'edit'])->name('santri.edit');
@@ -57,7 +56,6 @@ Route::middleware(['auth'])->group(function () {
     // Admin-only routes (Mosque Staff Management)
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/pengurus', [PengurusController::class, 'index'])->name('pengurus.index');
-        Route::post('/pengurus/sync', [PengurusController::class, 'sync'])->name('pengurus.sync');
         Route::get('/pengurus/create', [PengurusController::class, 'create'])->name('pengurus.create');
         Route::post('/pengurus', [PengurusController::class, 'store'])->name('pengurus.store');
         Route::get('/pengurus/{pengurus}/edit', [PengurusController::class, 'edit'])->name('pengurus.edit');

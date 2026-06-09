@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Santri;
 use App\Models\User;
-use App\Services\FingerspotService;
 
 class SantriController extends Controller
 {
@@ -24,8 +23,6 @@ class SantriController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:5',
             'foto_referensi' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'face_descriptor' => 'nullable|string',
-            'fingerspot_pin' => 'nullable|string|max:50|unique:santris,fingerspot_pin',
         ]);
 
         $imagePath = $request->file('foto_referensi')->store('santri_fotos', 'public');
@@ -44,8 +41,6 @@ class SantriController extends Controller
             'nama' => $request->nama,
             'kelas' => $request->kelas,
             'foto_referensi' => $fileName,
-            'face_descriptor' => $request->face_descriptor ?? '[]',
-            'fingerspot_pin' => $request->fingerspot_pin,
         ]);
 
         return response()->json([
@@ -78,13 +73,11 @@ class SantriController extends Controller
             'nama' => 'required|string|max:255',
             'kelas' => 'required|string|max:50',
             'foto_referensi' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'fingerspot_pin' => 'nullable|string|max:50|unique:santris,fingerspot_pin,' . $santri->id,
         ]);
 
         $data = [
             'nama' => $request->nama,
             'kelas' => $request->kelas,
-            'fingerspot_pin' => $request->fingerspot_pin,
         ];
 
         if ($request->hasFile('foto_referensi')) {
@@ -93,7 +86,6 @@ class SantriController extends Controller
             }
             $imagePath = $request->file('foto_referensi')->store('santri_fotos', 'public');
             $data['foto_referensi'] = basename($imagePath);
-            $data['face_descriptor'] = $request->face_descriptor ?? '[]';
         }
 
         $santri->update($data);
@@ -123,16 +115,5 @@ class SantriController extends Controller
         }
 
         return redirect()->route('santri.index')->with('success', 'Data santri berhasil dihapus.');
-    }
-
-    public function sync(Request $request, FingerspotService $fingerspotService)
-    {
-        $result = $fingerspotService->syncUsers();
-
-        if ($result['success']) {
-            return redirect()->route('santri.index')->with('success', $result['message']);
-        }
-
-        return redirect()->route('santri.index')->with('error', $result['message']);
     }
 }

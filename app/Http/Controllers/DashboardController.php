@@ -6,15 +6,11 @@ use App\Models\Presensi;
 use App\Models\Santri;
 use App\Models\Izin;
 use Illuminate\Http\Request;
-use App\Services\FingerspotService;
 
 class DashboardController extends Controller
 {
-    protected $fingerspotService;
-
-    public function __construct(FingerspotService $fingerspotService)
+    public function __construct()
     {
-        $this->fingerspotService = $fingerspotService;
     }
 
     public function index(Request $request)
@@ -42,18 +38,7 @@ class DashboardController extends Controller
             $display_date = $this->formatIndonesianDate($tanggal_mulai);
         }
 
-        // Only sync today and yesterday to prevent API latency during dashboard loads
-        $lastSyncKey = 'fingerspot_sync_last_run';
-        $forceSync = $request->get('sync') === 'true';
-        
-        if ($forceSync || !\Illuminate\Support\Facades\Cache::has($lastSyncKey)) {
-            $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
-            $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-            $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
-            $this->syncAlfas();
-            // Cache for 10 minutes (600 seconds)
-            \Illuminate\Support\Facades\Cache::put($lastSyncKey, true, 600);
-        }
+        $this->syncAlfas();
 
         $recentPresensis = Presensi::with('santri')
             ->whereNotNull('waktu_hadir')
@@ -86,7 +71,7 @@ class DashboardController extends Controller
             }
 
             return (object) [
-                'pin' => $santri ? $santri->fingerspot_pin : $presensi->santri_id,
+                'pin' => $presensi->santri_id,
                 'name' => $name,
                 'role' => $role,
                 'detail' => $detail,
@@ -297,17 +282,7 @@ class DashboardController extends Controller
             $display_date = $this->formatIndonesianDate($tanggal_mulai);
         }
 
-        // Only sync today and yesterday to prevent API latency during dashboard loads
-        $lastSyncKey = 'fingerspot_sync_last_run';
-        $forceSync = $request->get('sync') === 'true';
-        
-        if ($forceSync || !\Illuminate\Support\Facades\Cache::has($lastSyncKey)) {
-            $syncStart = \Carbon\Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
-            $syncEnd = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-            $this->fingerspotService->syncAttendance($syncStart, $syncEnd);
-            $this->syncAlfas();
-            \Illuminate\Support\Facades\Cache::put($lastSyncKey, true, 600);
-        }
+        $this->syncAlfas();
 
         $waktuSholat = $request->get('waktu_sholat');
         $status = $request->get('status');
