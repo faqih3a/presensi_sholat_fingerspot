@@ -161,12 +161,13 @@
                                 <span class="text-muted fw-bold small">{{ $index + 1 }}</span>
                             </td>
                             <td>
-                                @if($santri->foto_referensi)
-                                    @if(str_starts_with($santri->foto_referensi, 'http'))
-                                        <img src="{{ $santri->foto_referensi }}" alt="{{ $santri->nama }}" class="avatar-sm rounded-circle object-fit-cover">
-                                    @else
-                                        <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="{{ $santri->nama }}" class="avatar-sm rounded-circle object-fit-cover">
-                                    @endif
+                                @if($santri->display_photo)
+                                    <a href="{{ $santri->display_photo }}" target="_blank" title="Lihat Foto Penuh">
+                                        <img src="{{ $santri->display_photo }}" alt="{{ $santri->nama }}" class="avatar-sm rounded-circle object-fit-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="avatar-sm bg-light text-secondary rounded-circle align-items-center justify-content-center border" style="display: none;">
+                                            <i class="bi bi-person fs-5"></i>
+                                        </div>
+                                    </a>
                                 @else
                                     <div class="avatar-sm bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center border">
                                         <i class="bi bi-person fs-5"></i>
