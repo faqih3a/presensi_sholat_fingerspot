@@ -456,6 +456,11 @@
                             <i class="bi bi-file-earmark-check-fill"></i>
                             <span class="sidebar-text">Kelola Izin</span>
                         </a>
+                        
+                        <a class="list-group-item list-group-item-action {{ request()->is('tes') ? 'active' : '' }}" href="{{ route('tes.index') }}">
+                            <i class="bi bi-clipboard-plus-fill"></i>
+                            <span class="sidebar-text">Tes Presensi</span>
+                        </a>
                     @endif
                 @endauth
             </div>

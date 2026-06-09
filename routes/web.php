@@ -10,6 +10,7 @@ use App\Http\Controllers\IzinController;
 use App\Http\Controllers\AsatidzController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SantriDashboardController;
+use App\Http\Controllers\TesController;
 
 // Auth routes (Login is now the root page)
 Route::get('/', [AuthController::class, 'showLoginForm'])->name('login')->middleware('guest');
@@ -53,6 +54,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/presensi/latest-scans', [PresensiController::class, 'latestScans'])->name('presensi.latest-scans');
         Route::delete('/presensi/delete', [PresensiController::class, 'deleteByParams'])->name('presensi.delete-by-params');
         Route::delete('/presensi/{presensi}', [PresensiController::class, 'destroy'])->name('presensi.destroy');
+
+        // Tes Presensi (diluar waktu sholat)
+        Route::get('/tes', [TesController::class, 'index'])->name('tes.index');
+        Route::post('/tes', [TesController::class, 'store'])->name('tes.store');
+        Route::delete('/tes/{presensi}', [TesController::class, 'destroy'])->name('tes.destroy');
     });
 
     // Admin-only routes (Mosque Staff Management)
