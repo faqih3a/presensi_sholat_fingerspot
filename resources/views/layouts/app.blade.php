@@ -20,7 +20,7 @@
         #wrapper { overflow-x: hidden; }
         #sidebar-wrapper {
             min-height: 100vh;
-            width: 250px;
+            width: 280px;
             margin-left: 0;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             background-color: #ffffff;
@@ -46,7 +46,7 @@
         #sidebar-wrapper .list-group { width: 100%; padding: 0.75rem; }
         #sidebar-wrapper .list-group-item {
             border: none;
-            padding: 0.75rem 1rem;
+            padding: 0.85rem 1.25rem;
             background-color: transparent;
             color: #67748e;
             display: flex;
@@ -56,7 +56,7 @@
             border-radius: 0.5rem;
             margin-bottom: 0.25rem;
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             white-space: nowrap;
         }
         #sidebar-wrapper .sidebar-text {
@@ -83,11 +83,11 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             padding-left: 0;
         }
-        body.sb-sidenav-toggled #sidebar-wrapper { margin-left: -250px; }
+        body.sb-sidenav-toggled #sidebar-wrapper { margin-left: -280px; }
         
         /* Sidebar Responsive Logic */
         @media (min-width: 768px) {
-            #page-content-wrapper { padding-left: 250px; }
+            #page-content-wrapper { padding-left: 280px; }
             body.sb-sidenav-toggled #page-content-wrapper { padding-left: 0; }
             
             /* Sidebar Mini (Desktop) */
@@ -131,7 +131,7 @@
             }
         }
         @media (max-width: 767.98px) {
-            #sidebar-wrapper { margin-left: -250px; }
+            #sidebar-wrapper { margin-left: -280px; }
             body.sb-sidenav-toggled #sidebar-wrapper { margin-left: 0; }
             body.sb-sidenav-toggled #sidebar-overlay { display: block; }
         }
@@ -145,6 +145,10 @@
             backdrop-filter: blur(2px);
         }
 
+        .navbar {
+            padding: 0.85rem 1.75rem !important;
+            min-height: 70px;
+        }
         .navbar-light .navbar-nav .nav-link { color: #67748e; font-weight: 500; }
         .navbar-light .navbar-nav .nav-link:hover { color: #333; }
         
@@ -454,12 +458,12 @@
                         </button>
                         
                         <!-- Search Bar -->
-                        <form action="{{ route('dashboard.kehadiran') }}" method="GET" class="ms-md-3 me-auto d-none d-md-block no-loader" style="width: 250px;">
-                            <div class="input-group input-group-sm bg-light rounded-3 border-0">
+                        <form action="{{ route('dashboard.kehadiran') }}" method="GET" class="ms-md-3 me-auto d-none d-md-block no-loader" style="width: 320px;">
+                            <div class="input-group bg-light rounded-3 border-0" style="height: 40px;">
                                 <span class="input-group-text bg-transparent border-0 text-muted ps-3">
                                     <i class="bi bi-search"></i>
                                 </span>
-                                <input type="text" name="search" class="form-control bg-transparent border-0 ps-1" placeholder="Cari santri..." aria-label="Search" value="{{ request('search') }}">
+                                <input type="text" name="search" class="form-control bg-transparent border-0 ps-1" placeholder="Cari santri..." aria-label="Search" value="{{ request('search') }}" style="font-size: 0.9rem;">
                             </div>
                         </form>
                     </div>
@@ -479,13 +483,13 @@
                                         @endphp
                                         
                                         @if($navAvatarUrl)
-                                            <img src="{{ $navAvatarUrl }}" alt="Profile" class="rounded-circle shadow-sm" style="width: 35px; height: 35px; object-fit: cover; border: 2px solid #198754;">
+                                            <img src="{{ $navAvatarUrl }}" alt="Profile" class="rounded-circle shadow-sm" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #198754;">
                                         @else
-                                            <div class="bg-success rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm" style="width: 35px; height: 35px;">
-                                                <i class="bi bi-person-fill"></i>
+                                            <div class="bg-success rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person-fill" style="font-size: 1.2rem;"></i>
                                             </div>
                                         @endif
-                                        <span class="fw-semibold d-none d-sm-inline text-dark ms-1">{{ auth()->user()->name }}</span>
+                                        <span class="fw-semibold d-none d-sm-inline text-dark ms-1" style="font-size: 0.95rem;">{{ auth()->user()->name }}</span>
                                         <i class="bi bi-chevron-down small text-muted d-none d-sm-inline ms-1"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
