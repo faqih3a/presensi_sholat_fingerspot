@@ -168,18 +168,7 @@
 
     <!-- Stats Cards -->
     <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-4">
-            <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
-                <div>
-                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Asatidz & Admin</span>
-                    <span class="h3 fw-bold text-dark mb-0">{{ $totalPengurus }}</span>
-                </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center text-success" style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1);">
-                    <i class="bi bi-people-fill fs-5"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-sm-4">
+        <div class="col-12 col-sm-6">
             <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
                 <div>
                     <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Admin</span>
@@ -190,7 +179,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-4">
+        <div class="col-12 col-sm-6">
             <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
                 <div>
                     <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Asatidz</span>
