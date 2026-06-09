@@ -56,6 +56,9 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin-only routes (Mosque Staff Management)
     Route::middleware(['role:admin'])->group(function () {
+        // Fallback redirect for old URL
+        Route::redirect('/pengurus', '/asatidz');
+
         // Kelola Asatidz
         Route::get('/asatidz', [AsatidzController::class, 'index'])->name('asatidz.index');
         Route::get('/asatidz/create', [AsatidzController::class, 'create'])->name('asatidz.create');
