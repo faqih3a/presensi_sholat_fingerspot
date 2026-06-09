@@ -256,7 +256,7 @@ class FingerspotService
                     $todayStr = Carbon::now('Asia/Jakarta')->format('Y-m-d');
                     $yesterdayStr = Carbon::now('Asia/Jakarta')->subDay()->format('Y-m-d');
                     $isRecent = ($chunkStartStr === $todayStr || $chunkEndStr === $todayStr || $chunkStartStr === $yesterdayStr || $chunkEndStr === $yesterdayStr);
-                    $cacheTime = $isRecent ? 10 : 3600; // 10 seconds for recent, 1 hour for past static data
+                    $cacheTime = $isRecent ? 120 : 3600; // 120 seconds for recent, 1 hour for past static data
                     
                     if (!Cache::has($chunkCacheKey)) {
                         Log::info("Fingerspot: Fetching attlog chunk from {$chunkStartStr} to {$chunkEndStr}");
@@ -323,6 +323,31 @@ class FingerspotService
 
         $prayerSchedules = [];
 
+        // Pre-fetch all approved leaves in a single query.
+        // We'll fetch leaves for the last 3 days and the next 1 day to cover all logs dates safely.
+        $minDate = Carbon::now('Asia/Jakarta')->subDays(3)->format('Y-m-d');
+        $maxDate = Carbon::now('Asia/Jakarta')->addDays(1)->format('Y-m-d');
+
+        $izins = Izin::where('status', 'Disetujui')
+            ->where(function($q) use ($minDate, $maxDate) {
+                $q->whereBetween('tanggal_mulai', [$minDate, $maxDate])
+                  ->orWhereBetween('tanggal_selesai', [$minDate, $maxDate])
+                  ->orWhere(function($sq) use ($minDate, $maxDate) {
+                      $sq->where('tanggal_mulai', '<=', $minDate)
+                         ->where('tanggal_selesai', '>=', $maxDate);
+                  });
+            })
+            ->get();
+
+        // Fetch all existing presensi records in this date range to avoid query in loop
+        $presensiKeys = Presensi::whereBetween('tanggal', [$minDate, $maxDate])
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return ["{$item->santri_id}_{$item->tanggal}_{$item->waktu_sholat}" => $item];
+            });
+
+        $toInsert = [];
+
         foreach ($logs as $log) {
             $pin = $log['pin'] ?? null;
             $scanTimeStr = $log['scan_date'] ?? $log['datetime'] ?? $log['scan'] ?? null;
@@ -380,23 +405,21 @@ class FingerspotService
                 continue; // Not within active prayer windows
             }
 
-            // Check for approved permit
-            $hasIzin = Izin::where('user_id', $santri->user_id)
-                            ->where('status', 'Disetujui')
-                            ->whereDate('tanggal_mulai', '<=', $dateStr)
-                            ->whereDate('tanggal_selesai', '>=', $dateStr)
-                            ->exists();
+            // Check for approved permit in-memory
+            $hasIzin = $izins->contains(function($izin) use ($santri, $dateStr) {
+                return $izin->user_id == $santri->user_id && 
+                       $izin->tanggal_mulai <= $dateStr && 
+                       $izin->tanggal_selesai >= $dateStr;
+            });
 
             $status = $hasIzin ? 'Izin' : 'Hadir';
             
             // Extract the AWS photo URL or other image URL
             $photoUrl = $log['image_url'] ?? $log['photo_url'] ?? $log['photo'] ?? $log['image'] ?? $log['photo_link'] ?? null;
 
-            // Look for existing presensi record
-            $existing = Presensi::where('santri_id', $santri->id)
-                                ->where('tanggal', $dateStr)
-                                ->where('waktu_sholat', $waktuSholat)
-                                ->first();
+            // Look for existing presensi record in-memory
+            $key = "{$santri->id}_{$dateStr}_{$waktuSholat}";
+            $existing = $presensiKeys->get($key);
 
             if ($existing) {
                 // Update only if status is Alfa, or update the time if Hadir scan is newer/earlier
@@ -408,15 +431,23 @@ class FingerspotService
                     ]);
                 }
             } else {
-                Presensi::create([
-                    'santri_id' => $santri->id,
-                    'waktu_sholat' => $waktuSholat,
-                    'tanggal' => $dateStr,
-                    'waktu_hadir' => $timeStr,
-                    'status' => $status,
-                    'photo_url' => $photoUrl
-                ]);
+                if (!isset($toInsert[$key])) {
+                    $toInsert[$key] = [
+                        'santri_id' => $santri->id,
+                        'waktu_sholat' => $waktuSholat,
+                        'tanggal' => $dateStr,
+                        'waktu_hadir' => $timeStr,
+                        'status' => $status,
+                        'photo_url' => $photoUrl,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
             }
+        }
+
+        if (!empty($toInsert)) {
+            Presensi::insert(array_values($toInsert));
         }
     }
 
