@@ -201,8 +201,8 @@ $waktuHadir = $scanTime->format('H:i:s');
 // PIN di mesin FingerSpot = ID santri di database
 $santri = Santri::find($pin);
 if (!$santri) {
-    logWebhook("WARNING: Santri not found for pin=$pin");
-    echo json_encode(['status' => 'ok', 'message' => "Santri with pin $pin not found, data logged"]);
+    logWebhook("WARNING: Santri tidak ditemukan untuk pin=$pin. Silakan tekan tombol 'Sinkronisasi Mesin' di halaman Kelola Santri untuk mendaftarkan santri baru dari mesin.");
+    echo json_encode(['status' => 'ok', 'message' => "Santri dengan pin $pin belum terdaftar. Gunakan Sinkronisasi Mesin terlebih dahulu."]);
     exit;
 }
 
