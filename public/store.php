@@ -208,9 +208,18 @@ if (!$santri) {
 
 // AUTO-CAPTURE FOTO: Jika santri belum punya foto, ambil dari hasil scan presensi ini!
 if (!empty($photoUrl) && empty($santri->foto_referensi)) {
-    $santri->foto_referensi = $photoUrl;
-    $santri->save();
-    logWebhook("AUTO-PHOTO: Menyimpan foto profil otomatis untuk santri $pin dari hasil scan");
+    try {
+        $contents = file_get_contents($photoUrl);
+        if ($contents) {
+            $filename = 'auto_' . $pin . '_' . time() . '.jpg';
+            \Illuminate\Support\Facades\Storage::disk('public')->put('santri_fotos/' . $filename, $contents);
+            $santri->foto_referensi = $filename;
+            $santri->save();
+            logWebhook("AUTO-PHOTO: Berhasil mendownload dan menyimpan foto profil otomatis untuk santri $pin");
+        }
+    } catch (\Exception $e) {
+        logWebhook("AUTO-PHOTO ERROR: Gagal mendownload foto untuk santri $pin. " . $e->getMessage());
+    }
 }
 
 // ─── Tentukan Waktu Sholat ──────────────────────────────────────────
