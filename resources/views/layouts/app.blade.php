@@ -114,14 +114,16 @@
                 margin: 0;
             }
             body.sb-mini #sidebar-wrapper .list-group-item { 
-                justify-content: center; 
-                padding: 0.8rem 0;
-                margin: 0.4rem 0.8rem;
+                justify-content: center !important; 
+                padding: 0.8rem 0 !important;
+                margin: 0.4rem 0.8rem !important;
                 min-height: 50px;
+                gap: 0 !important;
             }
             body.sb-mini #sidebar-wrapper .list-group-item i { 
-                margin: 0; 
+                margin: 0 !important; 
                 font-size: 1.3rem;
+                width: auto !important;
             }
             body.sb-mini #sidebar-wrapper .list-group-item.active {
                 background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
