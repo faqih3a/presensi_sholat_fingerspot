@@ -38,8 +38,9 @@ if (!$pin) {
 // ─── Helper: Kirim request ke API FingerSpot ────────────────────────
 function requestUserinfo(string $apiUrl, string $apiToken, string $cloudId, string $pin): array
 {
-    // Gunakan murni angka untuk trans_id agar tidak diubah menjadi 0 oleh server FingerSpot
-    $transId = time() . str_pad($pin, 4, '0', STR_PAD_LEFT);
+    // Server FingerSpot membatasi max integer 32-bit (2147483647)
+    // Gunakan angka random di bawah limit tersebut
+    $transId = (string) rand(100000, 999999999);
     
     $payload = json_encode([
         'trans_id' => $transId,
