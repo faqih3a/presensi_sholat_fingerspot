@@ -36,7 +36,7 @@ class Santri extends Model
         }
 
         // Jika kosong atau default.jpg, coba ambil foto riwayat presensi terbaru dari mesin
-        $latest = $this->presensis()->whereNotNull('photo_url')->orderBy('waktu_scan', 'desc')->first();
+        $latest = $this->presensis()->whereNotNull('photo_url')->orderBy('created_at', 'desc')->first();
         return $latest ? $latest->photo_url : null;
     }
 }
