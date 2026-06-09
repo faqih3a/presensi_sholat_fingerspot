@@ -103,21 +103,30 @@
                 display: none !important; 
             }
             body.sb-mini #sidebar-wrapper .sidebar-heading { 
-                padding: 1rem 0; 
+                padding: 1rem 0 !important; 
                 min-height: 60px;
-                display: flex;
-                align-items: center;
+                display: flex !important;
+                align-items: center !important;
                 justify-content: center !important;
             }
             body.sb-mini #sidebar-wrapper .sidebar-heading .btn-link {
                 position: static;
-                margin: 0;
+                margin: 0 auto !important;
+                padding: 0 !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                width: 40px !important;
+                height: 40px !important;
             }
             body.sb-mini #sidebar-wrapper .list-group-item { 
-                justify-content: center !important; 
-                padding: 0.8rem 0 !important;
-                margin: 0.4rem 0.8rem !important;
-                min-height: 50px;
+                width: 50px !important;
+                height: 50px !important;
+                margin: 0.4rem auto !important;
+                padding: 0 !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
                 gap: 0 !important;
             }
             body.sb-mini #sidebar-wrapper .list-group-item i { 
@@ -130,6 +139,17 @@
             }
             body.sb-mini #sidebar-wrapper .mt-auto {
                 padding: 1rem 0 !important;
+                display: flex !important;
+                justify-content: center !important;
+            }
+            body.sb-mini #sidebar-wrapper #darkModeBtn {
+                margin: 0 auto !important;
+                padding: 0 !important;
+                width: 40px !important;
+                height: 40px !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
             }
         }
         @media (max-width: 767.98px) {
