@@ -52,6 +52,7 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
                     selected="{{ request('status') }}"
                     :options="[
                         '' => 'Semua Status',
+                        'Tes' => 'Tes',
                         'Hadir' => 'Hadir',
                         'Alfa' => 'Alpha',
                     ]"
@@ -113,6 +114,8 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
                         <td class="text-center">
                             @if($presensi->status == 'Alfa')
                                 <span class="badge badge-soft badge-soft-danger px-4">Alpha</span>
+                            @elseif($presensi->status == 'Tes')
+                                <span class="badge badge-soft badge-soft-warning px-4">Tes</span>
                             @else
                                 <span class="badge badge-soft badge-soft-success px-4">Hadir</span>
                             @endif

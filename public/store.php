@@ -234,7 +234,7 @@ try {
         ],
         [
             'waktu_hadir' => $waktuHadir,
-            'status'      => 'Hadir',
+            'status'      => $waktuSholat === 'Tes' ? 'Tes' : 'Hadir',
             'photo_url'   => $photoUrl,
         ]
     );
