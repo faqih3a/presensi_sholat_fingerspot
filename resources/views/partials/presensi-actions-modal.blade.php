@@ -6,7 +6,7 @@
                 <h6 class="modal-title fw-bold text-dark" id="editStatusModalLabel">Edit Status Kehadiran</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('presensi.update-status') }}" method="POST">
+            <form action="/presensi/update-status" method="POST">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="santri_id" id="edit_santri_id">
@@ -36,7 +36,7 @@
 </div>
 
 <!-- Hidden Delete Form -->
-<form id="deletePresensiForm" action="{{ route('presensi.delete-by-params') }}" method="POST" style="display: none;">
+<form id="deletePresensiForm" action="/presensi/delete" method="POST" style="display: none;">
     @csrf
     @method('DELETE')
     <input type="hidden" name="santri_id" id="delete_santri_id">

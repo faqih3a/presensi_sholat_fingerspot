@@ -531,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ─── Polling Function ──────────────────────────────────────
     function pollLatestScans() {
-        fetch(`{{ route('presensi.latest-scans') }}?since=${encodeURIComponent(lastPollTime)}`, {
+        fetch(`/presensi/latest-scans?since=${encodeURIComponent(lastPollTime)}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(response => response.json())
