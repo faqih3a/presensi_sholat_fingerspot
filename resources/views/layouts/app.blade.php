@@ -552,18 +552,6 @@
                     @yield('content')
                 </div>
                 
-                <!-- Footer -->
-                <footer class="d-flex flex-column flex-md-row justify-content-between align-items-center text-muted small mt-5 pt-4 border-top">
-                    <div class="mb-3 mb-md-0">
-                        © 2026, made with <i class="bi bi-heart-fill text-danger"></i> by <a href="#" class="text-success text-decoration-none fw-semibold">Ahmad Al-Faqih Asasi</a> for a better web. • Distributed by <a href="#" class="text-success text-decoration-none fw-semibold">Thursina</a>
-                    </div>
-                    <ul class="list-inline mb-0">
-                        <li class="list-inline-item"><a href="#" class="text-muted text-decoration-none">Creative Tim</a></li>
-                        <li class="list-inline-item ms-3"><a href="#" class="text-muted text-decoration-none">About Us</a></li>
-                        <li class="list-inline-item ms-3"><a href="#" class="text-muted text-decoration-none">Blog</a></li>
-                        <li class="list-inline-item ms-3"><a href="#" class="text-muted text-decoration-none">License</a></li>
-                    </ul>
-                </footer>
             </div>
         </div>
     </div>
