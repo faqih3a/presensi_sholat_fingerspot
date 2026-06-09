@@ -201,9 +201,34 @@ $waktuHadir = $scanTime->format('H:i:s');
 // PIN di mesin FingerSpot = ID santri di database
 $santri = Santri::find($pin);
 if (!$santri) {
-    logWebhook("WARNING: Santri tidak ditemukan untuk pin=$pin. Silakan tekan tombol 'Sinkronisasi Mesin' di halaman Kelola Santri untuk mendaftarkan santri baru dari mesin.");
-    echo json_encode(['status' => 'ok', 'message' => "Santri dengan pin $pin belum terdaftar. Gunakan Sinkronisasi Mesin terlebih dahulu."]);
-    exit;
+    try {
+        // Buat email dari kata pertama nama PIN (fallback: santriPIN@thursina.id)
+        $firstName = strtolower('santri' . $pin);
+        $email = $firstName . '@thursina.id';
+
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => $email],
+            [
+                'name'     => 'Santri ' . $pin,
+                'password' => \Illuminate\Support\Facades\Hash::make('santri'),
+                'role'     => 'santri',
+            ]
+        );
+
+        $santri = new Santri();
+        $santri->id             = $pin;
+        $santri->user_id        = $user->id;
+        $santri->nama           = 'Santri ' . $pin;
+        $santri->kelas          = 'Belum Diatur';
+        $santri->foto_referensi = '';
+        $santri->save();
+
+        logWebhook("AUTO-CREATE: Santri baru dari attlog - pin=$pin, email=$email");
+    } catch (\Exception $e) {
+        logWebhook("ERROR: Gagal auto-create santri pin=$pin - " . $e->getMessage());
+        echo json_encode(['status' => 'error', 'message' => 'Gagal membuat santri: ' . $e->getMessage()]);
+        exit;
+    }
 }
 
 // AUTO-CAPTURE FOTO: Jika santri belum punya foto atau masih foto default, ambil dari hasil scan presensi ini!
