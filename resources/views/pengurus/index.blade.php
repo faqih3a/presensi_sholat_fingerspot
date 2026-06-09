@@ -486,7 +486,7 @@
             imagePreview.src = imgUrl;
             imagePreview.style.display = 'block';
             previewPlaceholder.classList.add('d-none');
-            
+
             extractionStatus.classList.remove('d-none');
             extractionStatus.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> Foto profil terpilih!';
             extractionStatus.className = 'text-success mt-2 small fw-bold';
