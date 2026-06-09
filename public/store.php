@@ -218,9 +218,8 @@ $jadwal = getJadwalSholat($scanTime);
 $waktuSholat = determineWaktuSholat($scanTime, $jadwal);
 
 if (!$waktuSholat) {
-    logWebhook("WARNING: Scan time $scanStr tidak masuk rentang waktu sholat manapun (pin=$pin)");
-    echo json_encode(['status' => 'ok', 'message' => 'Scan time outside prayer time range, data logged']);
-    exit;
+    $waktuSholat = 'Tes';
+    logWebhook("INFO: Scan diluar waktu sholat, dicatat sebagai Tes - pin=$pin, waktu=$scanStr");
 }
 
 // ─── Simpan ke Database ─────────────────────────────────────────────
