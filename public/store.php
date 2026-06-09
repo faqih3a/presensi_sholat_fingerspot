@@ -324,6 +324,29 @@ function handleGetUserinfo(array $decoded): void
     $dbStatus = "NOT FOUND in database";
 
     try {
+        if (!$santri && $name !== '-') {
+            // Cari berdasarkan nama yang sama di web
+            $existingByName = \App\Models\Santri::where('nama', trim($name))->first();
+            if ($existingByName) {
+                $oldId = $existingByName->id;
+                \Illuminate\Support\Facades\DB::transaction(function() use ($oldId, $pin) {
+                    // Update ID di tabel santris
+                    \Illuminate\Support\Facades\DB::table('santris')
+                        ->where('id', $oldId)
+                        ->update(['id' => $pin]);
+                    
+                    // Update santri_id di tabel presensis agar riwayat terhubung ke PIN baru
+                    \Illuminate\Support\Facades\DB::table('presensis')
+                        ->where('santri_id', $oldId)
+                        ->update(['santri_id' => $pin]);
+                });
+
+                // Load ulang objek santri dengan ID yang baru (PIN)
+                $santri = \App\Models\Santri::find($pin);
+                logWebhook("USERINFO MATCH BY NAME: Menghubungkan santri '{$name}' (ID lama: $oldId) dengan PIN baru dari mesin: $pin");
+            }
+        }
+
         if (!$santri) {
             // Buat email dari kata pertama nama (lowercase) + @thursina.id
             $firstName = strtolower(explode(' ', trim($name))[0] ?? 'santri');
