@@ -368,18 +368,17 @@ function handleGetUserinfo(array $decoded): void
             // Santri sudah terdaftar di web — update nama dan biometrik jika berbeda
             $updated = false;
 
-            if ($name !== '-' && $santri->nama !== $name) {
+            // Generate new email based on first word of the name
+            $firstName = strtolower(explode(' ', trim($name))[0] ?? 'santri');
+            if ($firstName === '-' || $firstName === '') $firstName = 'santri' . $pin;
+            $newEmail = $firstName . '@thursina.id';
+
+            if ($name !== '-' && ($santri->nama !== $name || ($santri->user && $santri->user->email !== $newEmail))) {
                 $santri->nama = $name;
                 
                 // Update user name and email as well
                 if ($santri->user) {
                     $santri->user->name = $name;
-                    
-                    // Generate new email based on first word of the name
-                    $firstName = strtolower(explode(' ', trim($name))[0] ?? 'santri');
-                    if ($firstName === '-' || $firstName === '') $firstName = 'santri' . $pin;
-                    $newEmail = $firstName . '@thursina.id';
-                    
                     $santri->user->email = $newEmail;
                     $santri->user->save();
                 }
