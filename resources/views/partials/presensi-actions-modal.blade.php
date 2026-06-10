@@ -190,7 +190,7 @@
                             } else {
                                 tbody.innerHTML = `
                                     <tr id="emptyRow">
-                                        <td colspan="7" class="text-center py-5">
+                                        <td colspan="8" class="text-center py-5">
                                             <div class="py-4 text-muted">
                                                 <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
                                                 <h6 class="fw-bold">Belum Ada Data Presensi</h6>

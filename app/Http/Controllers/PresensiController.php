@@ -115,4 +115,30 @@ class PresensiController extends Controller
 
         return redirect()->back()->with('success', 'Data presensi berhasil dihapus.');
     }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:presensis,id',
+        ]);
+
+        $deletedCount = Presensi::whereIn('id', $request->ids)->delete();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            if ($deletedCount > 0) {
+                return response()->json([
+                    'success' => true, 
+                    'message' => $deletedCount . ' data presensi berhasil dihapus.'
+                ]);
+            }
+            return response()->json([
+                'success' => false, 
+                'message' => 'Data tidak ditemukan.'
+            ], 404);
+        }
+
+        return redirect()->back()->with('success', $deletedCount . ' data presensi berhasil dihapus.');
+    }
 }
+

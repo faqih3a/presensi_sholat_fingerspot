@@ -53,7 +53,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/presensi/update-status', [PresensiController::class, 'updateStatus'])->name('presensi.update-status');
         Route::get('/presensi/latest-scans', [PresensiController::class, 'latestScans'])->name('presensi.latest-scans');
         Route::post('/presensi/delete', [PresensiController::class, 'deleteByParams'])->name('presensi.delete-by-params');
+        Route::post('/presensi/bulk-delete', [PresensiController::class, 'bulkDelete'])->name('presensi.bulk-delete');
         Route::delete('/presensi/{presensi}', [PresensiController::class, 'destroy'])->name('presensi.destroy');
+
 
         // Tes Presensi (diluar waktu sholat)
         Route::get('/tes', [TesController::class, 'index'])->name('tes.index');

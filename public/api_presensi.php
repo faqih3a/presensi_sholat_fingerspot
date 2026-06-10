@@ -74,6 +74,28 @@ if ($action === 'delete') {
     exit;
 }
 
+// ─── ACTION: bulk-delete ─────────────────────────────────────────────
+if ($action === 'bulk-delete') {
+    $ids = $data['ids'] ?? null;
+
+    if (!is_array($ids) || empty($ids)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Tidak ada data terpilih untuk dihapus.']);
+        exit;
+    }
+
+    $deletedCount = Presensi::whereIn('id', $ids)->delete();
+
+    if ($deletedCount > 0) {
+        echo json_encode(['success' => true, 'message' => $deletedCount . ' data presensi berhasil dihapus.']);
+    } else {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Data tidak ditemukan.']);
+    }
+    exit;
+}
+
+
 // ─── ACTION: update-status ──────────────────────────────────────────
 if ($action === 'update-status') {
     $santriId = $data['santri_id'] ?? null;

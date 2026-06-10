@@ -241,6 +241,10 @@
                 <div class="live-dot"></div>
                 <span>LIVE</span>
             </div>
+            <!-- Bulk Delete Button (Hidden by default) -->
+            <button type="button" id="bulkDeleteBtn" class="btn btn-danger btn-sm rounded-3 px-3 shadow-sm d-none" onclick="bulkDeletePresensi()">
+                <i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
+            </button>
         </div>
         <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center">
             <form id="filterForm" action="{{ route('dashboard.kehadiran') }}" method="GET" class="d-flex flex-wrap align-items-center gap-3 m-0 no-loader">
@@ -290,6 +294,11 @@
             <table class="table table-hover align-middle mb-0 text-nowrap" id="kehadiranTable">
                 <thead class="bg-light">
                     <tr>
+                        <th class="text-center" width="40">
+                            <div class="form-check m-0 d-inline-block">
+                                <input class="form-check-input" type="checkbox" id="selectAllCheckbox">
+                            </div>
+                        </th>
                         <th>Nama Santri</th>
                         <th class="text-center" width="100">Foto Scan</th>
                         <th>Kelas</th>
@@ -302,6 +311,11 @@
                 <tbody id="kehadiranTbody">
                     @forelse($presensis as $presensi)
                     <tr data-presensi-id="{{ $presensi->id ?? '' }}" data-santri-id="{{ $presensi->santri_id }}" data-tanggal="{{ $presensi->tanggal }}" data-sholat="{{ $presensi->waktu_sholat }}">
+                        <td class="text-center">
+                            <div class="form-check m-0 d-inline-block">
+                                <input class="form-check-input row-checkbox" type="checkbox" value="{{ $presensi->id ?? '' }}">
+                            </div>
+                        </td>
                         <td>
                             <div class="fw-bold text-dark">{{ $presensi->santri->nama }}</div>
                         </td>
@@ -358,7 +372,7 @@
                     </tr>
                     @empty
                     <tr id="emptyRow">
-                        <td colspan="7" class="text-center py-5">
+                        <td colspan="8" class="text-center py-5">
                             <div class="py-4 text-muted">
                                 <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
                                 <h6 class="fw-bold">Belum Ada Data Presensi</h6>
@@ -495,6 +509,11 @@ document.addEventListener('DOMContentLoaded', function() {
         tr.className = 'row-new-entry';
 
         tr.innerHTML = `
+            <td class="text-center">
+                <div class="form-check m-0 d-inline-block">
+                    <input class="form-check-input row-checkbox" type="checkbox" value="${scan.id}">
+                </div>
+            </td>
             <td><div class="fw-bold text-dark">${scan.nama}</div></td>
             <td class="text-center">${fotoCell}</td>
             <td>${scan.kelas}</td>
@@ -527,6 +546,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const totalRows = tbody.querySelectorAll('tr[data-presensi-id]').length;
             countEl.textContent = `Menampilkan ${totalRows} data rekaman kehadiran terbaru.`;
         }
+        
+        // Update selection state/listeners if needed
+        updateBulkDeleteButtonState();
     }
 
     // ─── Polling Function ──────────────────────────────────────
@@ -571,6 +593,119 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Also poll once shortly after page load
     setTimeout(pollLatestScans, 2000);
+
+    // ─── Bulk Delete Action / Logic ─────────────────────────────
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const tbody = document.getElementById('kehadiranTbody');
+
+    function updateBulkDeleteButtonState() {
+        const checkedBoxes = tbody.querySelectorAll('.row-checkbox:checked');
+        const count = checkedBoxes.length;
+        
+        if (count > 0) {
+            selectedCountSpan.textContent = count;
+            bulkDeleteBtn.classList.remove('d-none');
+        } else {
+            bulkDeleteBtn.classList.add('d-none');
+        }
+
+        // Sync selectAllCheckbox
+        const totalCheckboxes = tbody.querySelectorAll('.row-checkbox').length;
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = totalCheckboxes > 0 && count === totalCheckboxes;
+        }
+    }
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            tbody.querySelectorAll('.row-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateBulkDeleteButtonState();
+        });
+    }
+
+    tbody.addEventListener('change', function(e) {
+        if (e.target.classList.contains('row-checkbox')) {
+            updateBulkDeleteButtonState();
+        }
+    });
+
+    window.bulkDeletePresensi = function() {
+        const checkedBoxes = tbody.querySelectorAll('.row-checkbox:checked');
+        const ids = Array.from(checkedBoxes).map(cb => cb.value).filter(val => val !== '');
+
+        if (ids.length === 0) {
+            return;
+        }
+
+        if (!confirm(`Apakah Anda yakin ingin menghapus ${ids.length} data presensi yang terpilih?`)) {
+            return;
+        }
+
+        bulkDeleteBtn.disabled = true;
+        bulkDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menghapus...';
+
+        fetch('/api_presensi.php?action=bulk-delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(response => response.json())
+        .then(data => {
+            bulkDeleteBtn.disabled = false;
+            bulkDeleteBtn.innerHTML = `<i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)`;
+            
+            if (data.success) {
+                checkedBoxes.forEach(cb => {
+                    const row = cb.closest('tr');
+                    if (row) {
+                        row.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
+                        row.style.opacity = '0';
+                        row.style.transform = 'translateX(30px)';
+                        setTimeout(() => {
+                            row.remove();
+                            const totalRows = tbody.querySelectorAll('tr[data-santri-id]').length;
+                            const countEl = document.getElementById('recordCount');
+                            if (totalRows === 0) {
+                                tbody.innerHTML = `
+                                    <tr id="emptyRow">
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="py-4 text-muted">
+                                                <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                                                <h6 class="fw-bold">Belum Ada Data Presensi</h6>
+                                                <p class="small mb-0">Data kehadiran akan muncul di sini setelah santri melakukan scan.</p>
+                                            </div>
+                                        </td>
+                                    </tr>`;
+                                if (countEl) countEl.textContent = '';
+                            } else {
+                                if (countEl) countEl.textContent = `Menampilkan ${totalRows} data rekaman kehadiran terbaru.`;
+                            }
+                            updateBulkDeleteButtonState();
+                        }, 400);
+                    }
+                });
+
+                if (selectAllCheckbox) selectAllCheckbox.checked = false;
+                showFlashMessage('success', data.message);
+            } else {
+                showFlashMessage('danger', data.message || 'Gagal menghapus data.');
+            }
+        })
+        .catch(err => {
+            bulkDeleteBtn.disabled = false;
+            bulkDeleteBtn.innerHTML = `<i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)`;
+            console.error('Bulk delete error:', err);
+            showFlashMessage('danger', 'Terjadi kesalahan saat menghapus data.');
+        });
+    };
 });
 </script>
 @endpush
