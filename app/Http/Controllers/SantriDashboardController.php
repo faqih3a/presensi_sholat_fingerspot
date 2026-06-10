@@ -36,8 +36,6 @@ class SantriDashboardController extends Controller
             $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(29)->format('Y-m-d');
         }
 
-        $this->syncAlfas($user->santri->id);
-
         // Get personal presensi history
         $query = Presensi::where('santri_id', $user->santri->id)
             ->whereBetween('tanggal', [$startDate, $endDate])

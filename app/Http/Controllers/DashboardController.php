@@ -40,8 +40,6 @@ class DashboardController extends Controller
             $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
         }
 
-        $this->syncAlfas();
-
         $recentPresensis = Presensi::with('santri')
             ->whereNotNull('waktu_hadir')
             ->orderBy('tanggal', 'desc')
@@ -349,8 +347,6 @@ class DashboardController extends Controller
             $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
         }
 
-        $this->syncAlfas();
-
         $waktuSholat = $request->get('waktu_sholat');
         $status = $request->get('status');
         $search = $request->get('search');
@@ -374,81 +370,9 @@ class DashboardController extends Controller
             });
         }
         
-        $realRecords = $query->get();
-        $realRecordsGrouped = $realRecords->groupBy(['tanggal', 'santri_id', 'waktu_sholat']);
-
-        // Synthesize missing records
-        $synthesized = collect();
-        $sholats = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
-        $sholatList = $waktuSholat ? [$waktuSholat] : $sholats;
-
-        $santriQuery = Santri::query();
-        if ($search) $santriQuery->where('nama', 'like', '%' . $search . '%');
-        $santris = $santriQuery->get();
-
-        $currentDate = \Carbon\Carbon::parse($tanggal_mulai, 'Asia/Jakarta');
-        $endRangeDate = \Carbon\Carbon::parse($tanggal_akhir, 'Asia/Jakarta');
-
-        // Pre-fetch all approved izins covering this range to avoid N+1 query in loops!
-        $izins = Izin::where('status', 'Disetujui')
-            ->where(function($q) use ($tanggal_mulai, $tanggal_akhir) {
-                $q->whereBetween('tanggal_mulai', [$tanggal_mulai, $tanggal_akhir])
-                  ->orWhereBetween('tanggal_selesai', [$tanggal_mulai, $tanggal_akhir])
-                  ->orWhere(function($sq) use ($tanggal_mulai, $tanggal_akhir) {
-                      $sq->where('tanggal_mulai', '<=', $tanggal_mulai)
-                         ->where('tanggal_selesai', '>=', $tanggal_akhir);
-                  });
-            })
-            ->get()
-            ->groupBy('user_id');
-
-        while ($currentDate->lte($endRangeDate)) {
-            $dateStr = $currentDate->format('Y-m-d');
-            $jadwal = $this->getJadwalSholat($currentDate);
-            $times = $jadwal ? $this->getPrayerEndTimes($dateStr, $jadwal) : [];
-
-            foreach ($santris as $santri) {
-                foreach ($sholatList as $s) {
-                    if (!isset($realRecordsGrouped[$dateStr][$santri->id][$s])) {
-                        // Check approved izin in-memory
-                        $hasIzin = false;
-                        if (isset($izins[$santri->user_id])) {
-                            $hasIzin = $izins[$santri->user_id]->contains(function($izin) use ($dateStr) {
-                                return $izin->tanggal_mulai <= $dateStr && $izin->tanggal_selesai >= $dateStr;
-                            });
-                        }
-
-                        $virtualStatus = $hasIzin ? 'Izin' : 'Alfa';
-                        
-                        if (!$status || $status === $virtualStatus) {
-                            if ($dateStr === $now->format('Y-m-d') && $jadwal && isset($times[$s])) {
-                                if ($now->lessThan($times[$s])) {
-                                    continue;
-                                }
-                            } elseif ($currentDate->greaterThan($now)) {
-                                continue;
-                            }
-
-                            $synthesized->push((object) [
-                                'id' => null,
-                                'santri' => $santri,
-                                'santri_id' => $santri->id,
-                                'waktu_sholat' => $s,
-                                'tanggal' => $dateStr,
-                                'waktu_hadir' => null,
-                                'status' => $virtualStatus,
-                                'photo_url' => null,
-                            ]);
-                        }
-                    }
-                }
-            }
-            $currentDate->addDay();
-        }
-
-        $presensis = $realRecords->concat($synthesized)
-                                ->sortByDesc('waktu_hadir')
-                                ->sortByDesc('tanggal');
+        $presensis = $query->orderBy('tanggal', 'desc')
+                           ->orderBy('waktu_hadir', 'desc')
+                           ->get();
 
         return compact(
             'presensis', 'tanggal_mulai', 'tanggal_akhir', 'waktuSholat', 'status',
