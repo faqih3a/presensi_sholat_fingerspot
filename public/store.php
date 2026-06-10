@@ -219,6 +219,8 @@ if (!$santri) {
         $santri->nama           = 'Santri ' . $pin;
         $santri->kelas          = 'Belum Diatur';
         $santri->foto_referensi = '';
+        $santri->finger_count   = 0;
+        $santri->face_count     = 1; // Otomatis tipe wajah
         $santri->save();
 
         logWebhook("AUTO-CREATE: Santri baru dari attlog - pin=$pin, email=$email");
@@ -354,17 +356,43 @@ function handleGetUserinfo(array $decoded): void
             $santri->id             = $pin;
             $santri->user_id        = $user->id;
             $santri->nama           = $name;
-            $santri->kelas          = 'Belum Diatur';
+            $santri->kelas          = 'Belum Diatur'; // Dibiarkan kosong/Belum Diatur untuk update manual
             $santri->foto_referensi = '';
-            $santri->finger_count   = (int) $finger;
-            $santri->face_count     = (int) $face;
+            $santri->finger_count   = 0; // Hardcode tipe jari ke 0
+            $santri->face_count     = 1; // Hardcode tipe wajah ke 1
             $santri->template       = $template;
             $santri->save();
 
             $dbStatus = "AUTO-CREATED → santri_id={$santri->id}, db_name={$santri->nama}";
         } else {
-            // Santri sudah terdaftar di web — abaikan, tidak perlu update
-            $dbStatus = "SUDAH TERDAFTAR → santri_id={$santri->id}, db_name={$santri->nama} (dilewati)";
+            // Santri sudah terdaftar di web — update nama dan biometrik jika berbeda
+            $updated = false;
+
+            if ($name !== '-' && $santri->nama !== $name) {
+                $santri->nama = $name;
+                
+                // Update user name as well
+                if ($santri->user) {
+                    $santri->user->name = $name;
+                    $santri->user->save();
+                }
+                $updated = true;
+            }
+
+            // Selalu pastikan tipe biometrik wajah di-hardcode
+            if ($santri->face_count !== 1 || $santri->finger_count !== 0 || $santri->template !== $template) {
+                $santri->finger_count = 0;
+                $santri->face_count = 1;
+                $santri->template = $template;
+                $updated = true;
+            }
+
+            if ($updated) {
+                $santri->save();
+                $dbStatus = "UPDATED → santri_id={$santri->id}, db_name={$santri->nama}";
+            } else {
+                $dbStatus = "SUDAH TERDAFTAR → santri_id={$santri->id}, db_name={$santri->nama} (dilewati)";
+            }
         }
     } catch (\Exception $e) {
         logWebhook("USERINFO DB ERROR: pin=$pin - " . $e->getMessage());
