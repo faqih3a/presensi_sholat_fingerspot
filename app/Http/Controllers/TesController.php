@@ -7,6 +7,7 @@ use App\Models\Presensi;
 use App\Models\Santri;
 use Carbon\Carbon;
 use App\Traits\DateAndPrayerHelper;
+use Illuminate\Support\Facades\Cache;
 
 class TesController extends Controller
 {
@@ -56,10 +57,12 @@ class TesController extends Controller
 
         $presensis = $query->get();
 
+        $tesEnabled = Cache::get('tes_page_enabled', true);
+
         return view('tes.index', compact(
             'presensis', 'tanggal_mulai', 'tanggal_akhir',
             'mode', 'ref_date', 'prev_date', 'next_date', 'display_date',
-            'status', 'search'
+            'status', 'search', 'tesEnabled'
         ));
     }
 
@@ -118,5 +121,14 @@ class TesController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function toggle(Request $request)
+    {
+        $enabled = $request->input('enabled') == '1';
+        Cache::forever('tes_page_enabled', $enabled);
+
+        $statusStr = $enabled ? 'diaktifkan' : 'dinonaktifkan';
+        return redirect()->back()->with('success', "Halaman dan pencatatan Tes berhasil {$statusStr}.");
     }
 }

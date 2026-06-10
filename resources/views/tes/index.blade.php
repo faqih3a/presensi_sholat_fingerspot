@@ -32,6 +32,34 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
     @include('partials.date-filter')
 </div>
 
+<div class="card card-stats mb-4 border-0 {{ $tesEnabled ? 'bg-light' : 'bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25' }}">
+    <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle p-3 {{ $tesEnabled ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-20 text-danger' }}">
+                <i class="bi {{ $tesEnabled ? 'bi-toggle-on' : 'bi-toggle-off' }} fs-3"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-1 {{ $tesEnabled ? 'text-dark' : 'text-danger' }}">Pencatatan Presensi Diluar Sholat (Tes)</h5>
+                <p class="mb-0 small {{ $tesEnabled ? 'text-muted' : 'text-danger text-opacity-75' }}">
+                    @if($tesEnabled)
+                        <strong>Status: AKTIF</strong>. Seluruh scan dari mesin di luar waktu sholat resmi akan dicatat sebagai data 'Tes'.
+                    @else
+                        <strong>Status: NONAKTIF</strong>. Scan di luar waktu sholat akan diabaikan oleh sistem (tidak dimasukkan ke database).
+                    @endif
+                </p>
+            </div>
+        </div>
+        <form action="{{ route('tes.toggle') }}" method="POST" class="m-0 no-loader">
+            @csrf
+            <input type="hidden" name="enabled" value="{{ $tesEnabled ? '0' : '1' }}">
+            <button type="submit" class="btn {{ $tesEnabled ? 'btn-danger' : 'btn-success' }} px-4 py-2 rounded-3 fw-bold shadow-sm">
+                <i class="bi {{ $tesEnabled ? 'bi-power' : 'bi-play-fill' }} me-1"></i>
+                {{ $tesEnabled ? 'Nonaktifkan Pencatatan' : 'Aktifkan Pencatatan' }}
+            </button>
+        </form>
+    </div>
+</div>
+
 <div class="card card-stats mb-4">
     <div class="card-header bg-white py-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <div class="d-flex align-items-center gap-3">

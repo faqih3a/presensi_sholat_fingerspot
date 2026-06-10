@@ -61,6 +61,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/tes', [TesController::class, 'index'])->name('tes.index');
         Route::get('/tes/export', [TesController::class, 'exportTes'])->name('tes.export');
         Route::delete('/tes/{presensi}', [TesController::class, 'destroy'])->name('tes.destroy');
+        Route::post('/tes/toggle', [TesController::class, 'toggle'])->name('tes.toggle');
     });
 
     // Admin-only routes (Mosque Staff Management)

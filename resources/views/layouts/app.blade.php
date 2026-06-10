@@ -645,6 +645,145 @@
             }
         });
     </script>
+
+    @auth
+    <!-- Auto-Logout due to Inactivity -->
+    <div class="modal fade" id="idleTimeoutModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="idleTimeoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-warning text-dark border-0">
+                    <h5 class="modal-title fw-bold" id="idleTimeoutModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> Peringatan Sesi Berakhir
+                    </h5>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-3">Anda tidak melakukan aktivitas selama beberapa waktu. Demi keamanan, Anda akan dikeluarkan secara otomatis dalam:</p>
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <div class="bg-light border rounded px-4 py-3 text-center" style="min-width: 120px;">
+                            <span id="idleTimerCountdown" class="fs-2 fw-bold text-danger">60</span>
+                            <div class="small text-muted">detik</div>
+                        </div>
+                    </div>
+                    <p class="text-muted small mb-0">Gerakkan mouse, ketik, atau klik tombol di bawah untuk melanjutkan sesi Anda.</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4">
+                    <button type="button" class="btn btn-light border px-4 me-2" id="idleLogoutBtn">Keluar Sekarang</button>
+                    <button type="button" class="btn btn-success px-4" id="idleKeepAliveBtn">Tetap Masuk</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form id="auto-logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+        <input type="hidden" name="auto_logout" value="1">
+    </form>
+
+    <script>
+        (function() {
+            const IDLE_LIMIT = 10 * 60 * 1000; // 10 menit
+            const WARNING_LIMIT = 9 * 60 * 1000; // 9 menit (peringatan muncul)
+            const STORAGE_KEY = 'last_activity_timestamp';
+            const LOGOUT_FORM_ID = 'auto-logout-form';
+            const MODAL_ID = 'idleTimeoutModal';
+            const COUNTDOWN_ID = 'idleTimerCountdown';
+            const KEEP_ALIVE_BTN_ID = 'idleKeepAliveBtn';
+            const LOGOUT_BTN_ID = 'idleLogoutBtn';
+
+            let warningModal = null;
+            let isModalShown = false;
+            let checkInterval = null;
+
+            function updateActivity() {
+                localStorage.setItem(STORAGE_KEY, Date.now().toString());
+                if (isModalShown) {
+                    hideWarningModal();
+                }
+            }
+
+            function hideWarningModal() {
+                if (warningModal) {
+                    warningModal.hide();
+                }
+                isModalShown = false;
+            }
+
+            function showWarningModal() {
+                if (!warningModal) {
+                    const modalEl = document.getElementById(MODAL_ID);
+                    if (modalEl && typeof bootstrap !== 'undefined') {
+                        warningModal = new bootstrap.Modal(modalEl);
+                    }
+                }
+                if (warningModal && !isModalShown) {
+                    warningModal.show();
+                    isModalShown = true;
+                }
+            }
+
+            function triggerLogout() {
+                clearInterval(checkInterval);
+                const form = document.getElementById(LOGOUT_FORM_ID);
+                if (form) {
+                    form.submit();
+                } else {
+                    window.location.href = '/logout';
+                }
+            }
+
+            function checkIdleTime() {
+                const lastActivity = parseInt(localStorage.getItem(STORAGE_KEY) || Date.now().toString(), 10);
+                const elapsed = Date.now() - lastActivity;
+
+                if (elapsed >= IDLE_LIMIT) {
+                    triggerLogout();
+                    return;
+                }
+
+                if (elapsed >= WARNING_LIMIT) {
+                    showWarningModal();
+                    const remainingSeconds = Math.max(0, Math.ceil((IDLE_LIMIT - elapsed) / 1000));
+                    const countdownEl = document.getElementById(COUNTDOWN_ID);
+                    if (countdownEl) {
+                        countdownEl.textContent = remainingSeconds;
+                    }
+                } else {
+                    if (isModalShown) {
+                        hideWarningModal();
+                    }
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const modalEl = document.getElementById(MODAL_ID);
+                if (!modalEl) return;
+
+                const currentStored = localStorage.getItem(STORAGE_KEY);
+                if (!currentStored || Date.now() - parseInt(currentStored, 10) > IDLE_LIMIT) {
+                    updateActivity();
+                }
+
+                const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+                events.forEach(event => {
+                    document.addEventListener(event, updateActivity, { passive: true });
+                });
+
+                const keepAliveBtn = document.getElementById(KEEP_ALIVE_BTN_ID);
+                if (keepAliveBtn) {
+                    keepAliveBtn.addEventListener('click', updateActivity);
+                }
+
+                const logoutBtn = document.getElementById(LOGOUT_BTN_ID);
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', triggerLogout);
+                }
+
+                checkInterval = setInterval(checkIdleTime, 1000);
+            });
+        })();
+    </script>
+    @endauth
+
     @include('partials.presensi-actions-modal')
     @stack('scripts')
 </body>

@@ -77,30 +77,28 @@ function determineWaktuSholat(Carbon $scanTime, array $jadwal): ?string
 {
     $date = $scanTime->format('Y-m-d');
 
-    // Definisi rentang waktu setiap sholat:
-    // Mulai = waktu adzan, Selesai = waktu adzan sholat berikutnya
-    // Untuk Isya, batas akhir = tengah malam (23:59)
-    // Untuk Subuh, batas awal = 03:00 (sebelum adzan subuh juga dihitung)
+    // Definisi rentang waktu presensi setiap sholat:
+    // Mulai = 30 menit sebelum adzan, Selesai = 10 menit setelah adzan
     $ranges = [
         'Subuh'   => [
-            'start' => Carbon::parse($date . ' 03:00', 'Asia/Jakarta'),
-            'end'   => Carbon::parse($date . ' ' . ($jadwal['Sunrise'] ?? '06:00'), 'Asia/Jakarta'),
+            'start' => Carbon::parse($date . ' ' . $jadwal['Fajr'], 'Asia/Jakarta')->subMinutes(30),
+            'end'   => Carbon::parse($date . ' ' . $jadwal['Fajr'], 'Asia/Jakarta')->addMinutes(10),
         ],
         'Dzuhur'  => [
-            'start' => Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta'),
-            'end'   => Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta'),
+            'start' => Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta')->subMinutes(30),
+            'end'   => Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta')->addMinutes(10),
         ],
         'Ashar'   => [
-            'start' => Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta'),
-            'end'   => Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta'),
+            'start' => Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta')->subMinutes(30),
+            'end'   => Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta')->addMinutes(10),
         ],
         'Maghrib' => [
-            'start' => Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta'),
-            'end'   => Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta'),
+            'start' => Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta')->subMinutes(30),
+            'end'   => Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta')->addMinutes(10),
         ],
         'Isya'    => [
-            'start' => Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta'),
-            'end'   => Carbon::parse($date . ' 23:59', 'Asia/Jakarta'),
+            'start' => Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta')->subMinutes(30),
+            'end'   => Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta')->addMinutes(10),
         ],
     ];
 
@@ -243,6 +241,17 @@ $jadwal = getJadwalSholat($scanTime);
 $waktuSholat = determineWaktuSholat($scanTime, $jadwal);
 
 if (!$waktuSholat) {
+    // Cek apakah fitur/halaman tes diaktifkan
+    $tesEnabled = Cache::get('tes_page_enabled', true);
+    if (!$tesEnabled) {
+        logWebhook("INFO: Scan diluar waktu sholat diabaikan karena pencatatan tes dinonaktifkan - pin=$pin, waktu=$scanStr");
+        echo json_encode([
+            'status'  => 'ok',
+            'message' => 'Scan outside prayer window ignored (testing disabled).'
+        ]);
+        exit;
+    }
+
     $waktuSholat = 'Tes';
     logWebhook("INFO: Scan diluar waktu sholat, dicatat sebagai Tes - pin=$pin, waktu=$scanStr");
 }

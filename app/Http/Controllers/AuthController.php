@@ -56,10 +56,16 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $autoLogout = $request->input('auto_logout') === '1';
+
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if ($autoLogout) {
+            return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir karena tidak ada aktivitas. Silakan login kembali.');
+        }
 
         return redirect()->route('login');
     }

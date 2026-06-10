@@ -50,18 +50,28 @@ class SyncAlfaEvent extends Command
         $times = $this->getPrayerEndTimes($today, $jadwal);
 
         foreach ($times as $prayer => $endTime) {
-            // "baru saja terlewat" window: now >= endTime AND now < endTime + 15 minutes
-            $windowEnd = $endTime->copy()->addMinutes(15);
-
-            if ($now->greaterThanOrEqualTo($endTime) && $now->lessThan($windowEnd)) {
+            // Check if current time is past the prayer's tolerance end time
+            if ($now->greaterThanOrEqualTo($endTime)) {
                 $cacheKey = "alfa_recorded_{$today}_{$prayer}";
 
                 if (Cache::has($cacheKey)) {
-                    $this->info("Alfa records for {$prayer} today ({$today}) have already been recorded. Skipping.");
+                    $this->info("Alfa records for {$prayer} today ({$today}) have already been recorded (cached). Skipping.");
                     continue;
                 }
 
-                $this->info("Tolerance window for {$prayer} just passed (End time: " . $endTime->toTimeString() . "). Recording Alfas...");
+                // Database check guard: verify if Alfa has already been recorded for this prayer time today
+                $dbExists = Presensi::where('tanggal', $today)
+                    ->where('waktu_sholat', $prayer)
+                    ->where('status', 'Alfa')
+                    ->exists();
+
+                if ($dbExists) {
+                    $this->info("Alfa records for {$prayer} today ({$today}) already exist in database. Syncing cache key.");
+                    Cache::put($cacheKey, true, 86400); // 1 day cache
+                    continue;
+                }
+
+                $this->info("Tolerance window for {$prayer} has passed (End time: " . $endTime->toTimeString() . "). Recording Alfas...");
                 
                 try {
                     $this->syncAlfasForSpecificPrayer($today, $prayer);
