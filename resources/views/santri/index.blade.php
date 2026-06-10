@@ -471,8 +471,8 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Menarik Data...';
         
         try {
-            // Hit get_userinfo.php untuk pin 1 sampai 10 (karena baru ada 2 orang)
-            const response = await fetch('/get_userinfo.php?pin=all&pin_end=10');
+            // Hit get_userinfo.php untuk pin 1 sampai 150
+            const response = await fetch('/get_userinfo.php?pin=all&pin_end=150');
             const result = await response.json();
             
             if (result.status === 'ok') {

@@ -10,12 +10,13 @@
  * 
  * Usage:
  *   GET  /get_userinfo.php?pin=1           → ambil userinfo pin 1
- *   GET  /get_userinfo.php?pin=all         → ambil semua userinfo (pin 1-100)
+ *   GET  /get_userinfo.php?pin=all         → ambil semua userinfo (pin 1-150)
  *   GET  /get_userinfo.php?pin=1&pin_end=5 → ambil userinfo pin 1 sampai 5
  * ====================================================================
  */
 
 // ─── Config ─────────────────────────────────────────────────────────
+set_time_limit(180); // Mencegah PHP timeout karena mengambil 150 pin membutuhkan waktu sekitar 30-45 detik
 $apiUrl        = 'https://developer.fingerspot.io/api/get_userinfo';
 $apiToken      = 'DWJ7LY8ZJQ6CD5NN';
 $cloudId       = 'S118001290';
@@ -88,8 +89,8 @@ function requestUserinfo(string $apiUrl, string $apiToken, string $cloudId, stri
 $results = [];
 
 if ($pin === 'all') {
-    // Ambil semua user (pin 1 sampai 10, tambahkan pin_end jika perlu lebih)
-    $maxPin = (int)($pinEnd ?? 10);
+    // Ambil semua user (pin 1 sampai 150, tambahkan pin_end jika perlu lebih)
+    $maxPin = (int)($pinEnd ?? 150);
     for ($i = 1; $i <= $maxPin; $i++) {
         $results[] = requestUserinfo($apiUrl, $apiToken, $cloudId, (string)$i);
         usleep(200000); // 200ms delay antar request agar tidak overload
