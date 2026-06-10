@@ -371,7 +371,7 @@ class DashboardController extends Controller
         }
         
         $presensis = $query->orderBy('tanggal', 'desc')
-                           ->orderByRaw("FIELD(waktu_sholat, 'Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya') ASC")
+                           ->orderByRaw("FIELD(waktu_sholat, 'Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya') DESC")
                            ->orderBy('waktu_hadir', 'desc')
                            ->get();
 
