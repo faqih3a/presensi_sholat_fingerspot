@@ -386,6 +386,97 @@
         body.dark-mode .modal-content { background-color: #1e1e1e; border-color: #333; }
         body.dark-mode .modal-header, body.dark-mode .modal-footer { border-color: #333; }
         body.dark-mode .close, body.dark-mode .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+
+        /* Mobile Bottom Navigation Bar Styles */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 65px;
+            background-color: #ffffff;
+            border-top: 1px solid #edf2f9;
+            box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.05);
+            z-index: 1040;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .bottom-nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            height: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #67748e;
+            font-size: 0.65rem;
+            font-weight: 700;
+            width: 20%;
+            height: 100%;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .bottom-nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 2px;
+            padding: 4px 16px;
+            border-radius: 20px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bottom-nav-item:hover {
+            color: #198754;
+        }
+        .bottom-nav-item.active {
+            color: #198754;
+        }
+        .bottom-nav-item.active i {
+            background-color: rgba(25, 135, 84, 0.1);
+            color: #198754;
+            transform: scale(1.05);
+        }
+        body.dark-mode .bottom-nav {
+            background-color: #1e1e1e;
+            border-top-color: #333;
+            box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.3);
+        }
+        body.dark-mode .bottom-nav-item {
+            color: #adb5bd;
+        }
+        body.dark-mode .bottom-nav-item:hover, body.dark-mode .bottom-nav-item.active {
+            color: #2dc57b;
+        }
+        body.dark-mode .bottom-nav-item.active i {
+            background-color: rgba(45, 197, 123, 0.15);
+            color: #2dc57b;
+        }
+
+        /* Responsiveness & Safe Area */
+        @media (max-width: 767.98px) {
+            body {
+                padding-bottom: 75px !important; /* Space for bottom nav */
+            }
+            #sidebarToggle {
+                display: none !important;
+            }
+            .container-fluid {
+                padding: 1rem !important;
+            }
+            .chart-card {
+                padding: 1.15rem !important;
+            }
+            .table:not(.no-responsive) {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
     </style>
     @stack('styles')
 </head>
@@ -555,6 +646,49 @@
             </div>
         </div>
     </div>
+    @auth
+    <!-- Bottom Navigation Bar for Mobile -->
+    <div class="bottom-nav d-md-none">
+        <div class="bottom-nav-inner">
+            @if(auth()->user()->role === 'santri')
+                <a href="/santri/dashboard" class="bottom-nav-item {{ request()->is('santri/dashboard*') ? 'active' : '' }}">
+                    <i class="bi bi-house-door-fill"></i>
+                    <span>Home</span>
+                </a>
+                <a href="{{ route('izin.index') }}" class="bottom-nav-item {{ request()->is('izin*') ? 'active' : '' }}">
+                    <i class="bi bi-file-earmark-text-fill"></i>
+                    <span>Izin</span>
+                </a>
+                <a href="{{ route('profile.index') }}" class="bottom-nav-item {{ request()->is('profile*') ? 'active' : '' }}">
+                    <i class="bi bi-person-fill"></i>
+                    <span>Profil</span>
+                </a>
+            @else
+                <a href="/dashboard" class="bottom-nav-item {{ request()->is('dashboard*') ? 'active' : '' }}">
+                    <i class="bi bi-house-door-fill"></i>
+                    <span>Home</span>
+                </a>
+                <a href="{{ route('santri.index') }}" class="bottom-nav-item {{ request()->is('santri*') ? 'active' : '' }}">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Jamaah</span>
+                </a>
+                <a href="/kehadiran-sholat" class="bottom-nav-item {{ request()->is('kehadiran-sholat*') ? 'active' : '' }}">
+                    <i class="bi bi-clipboard2-check-fill"></i>
+                    <span>Riwayat</span>
+                </a>
+                <a href="{{ route('izin.manage') }}" class="bottom-nav-item {{ request()->is('izin/manage*') ? 'active' : '' }}">
+                    <i class="bi bi-file-earmark-check-fill"></i>
+                    <span>Izin</span>
+                </a>
+                <a href="{{ route('profile.index') }}" class="bottom-nav-item {{ request()->is('profile*') ? 'active' : '' }}">
+                    <i class="bi bi-person-fill"></i>
+                    <span>Profil</span>
+                </a>
+            @endif
+        </div>
+    </div>
+    @endauth
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
