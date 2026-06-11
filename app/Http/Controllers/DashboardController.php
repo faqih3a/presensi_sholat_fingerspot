@@ -242,9 +242,11 @@ class DashboardController extends Controller
             $start->addDay();
         }
 
-        // === Weekly Chart Data (last 7 days) ===
+        // === Weekly Chart Data (last 7 days - Hadir, Izin, Alfa) ===
         $weeklyLabels = [];
-        $weeklyData = [];
+        $weeklyHadir = [];
+        $weeklyIzin = [];
+        $weeklyAlfa = [];
         $dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
         $nowCarbon = \Carbon\Carbon::now('Asia/Jakarta');
 
@@ -252,17 +254,60 @@ class DashboardController extends Controller
         $endWeeklyDate = $nowCarbon->format('Y-m-d');
 
         $weeklyCounts = \App\Models\Presensi::whereBetween('tanggal', [$startWeeklyDate, $endWeeklyDate])
-                                            ->where('status', 'Hadir')
-                                            ->selectRaw('tanggal, COUNT(*) as total')
-                                            ->groupBy('tanggal')
-                                            ->pluck('total', 'tanggal')
-                                            ->toArray();
+                                            ->selectRaw('tanggal, status, COUNT(*) as total')
+                                            ->groupBy('tanggal', 'status')
+                                            ->get()
+                                            ->groupBy('tanggal');
 
         for ($i = 6; $i >= 0; $i--) {
             $d = $nowCarbon->copy()->subDays($i);
             $dateStr = $d->format('Y-m-d');
-            $weeklyLabels[] = $dayNames[$d->dayOfWeek];
-            $weeklyData[] = $weeklyCounts[$dateStr] ?? 0;
+            $weeklyLabels[] = $d->format('d M') . ' (' . $dayNames[$d->dayOfWeek] . ')';
+            
+            $dayRecords = $weeklyCounts->get($dateStr) ?? collect();
+            
+            $hadirCount = 0;
+            $izinCount = 0;
+            $alfaCount = 0;
+            
+            foreach ($dayRecords as $record) {
+                $statusLower = strtolower($record->status);
+                if ($statusLower === 'hadir') {
+                    $hadirCount += $record->total;
+                } elseif ($statusLower === 'izin' || $statusLower === 'sakit') {
+                    $izinCount += $record->total;
+                } elseif (in_array($statusLower, ['alfa', 'alpha'])) {
+                    $alfaCount += $record->total;
+                }
+            }
+            
+            $weeklyHadir[] = $hadirCount;
+            $weeklyIzin[] = $izinCount;
+            $weeklyAlfa[] = $alfaCount;
+        }
+
+        // Generate Weekly Insight
+        $maxHadirDay = '';
+        $maxHadirVal = -1;
+        $maxAlfaDay = '';
+        $maxAlfaVal = -1;
+        
+        for ($i = 0; $i < 7; $i++) {
+            if ($weeklyHadir[$i] > $maxHadirVal) {
+                $maxHadirVal = $weeklyHadir[$i];
+                $maxHadirDay = $weeklyLabels[$i];
+            }
+            if ($weeklyAlfa[$i] > $maxAlfaVal) {
+                $maxAlfaVal = $weeklyAlfa[$i];
+                $maxAlfaDay = $weeklyLabels[$i];
+            }
+        }
+        
+        $weeklyInsight = "Kehadiran terbanyak pada {$maxHadirDay} ({$maxHadirVal} santri).";
+        if ($maxAlfaVal > 0) {
+            $weeklyInsight .= " Perlu perhatian pada {$maxAlfaDay} karena terdapat {$maxAlfaVal} santri alfa.";
+        } else {
+            $weeklyInsight .= " Pekan ini tingkat kedisiplinan santri sangat baik.";
         }
 
         // === Per-Prayer-Time Chart Data (today) ===
@@ -345,6 +390,24 @@ class DashboardController extends Controller
             $statusCounts['Alfa'] ?? 0,
         ];
 
+        // Generate Today Insight
+        $todayHadir = $statusCounts['Hadir'] ?? 0;
+        $todayIzin = $statusCounts['Izin'] ?? 0;
+        $todayAlfa = $statusCounts['Alfa'] ?? 0;
+        $totalPresensi = $todayHadir + $todayIzin + $todayAlfa;
+        
+        if ($totalPresensi > 0) {
+            $attendanceRate = round(($todayHadir / $totalPresensi) * 100);
+            $todayInsight = "Tingkat kehadiran hari ini mencapai {$attendanceRate}% ({$todayHadir} dari {$totalPresensi} santri hadir).";
+            if ($todayAlfa > 0) {
+                $todayInsight .= " Ada {$todayAlfa} santri alfa yang belum melakukan scan.";
+            } else {
+                $todayInsight .= " Seluruh santri yang terdaftar hari ini hadir/izin.";
+            }
+        } else {
+            $todayInsight = "Belum ada data presensi yang tercatat untuk periode hari ini.";
+        }
+
         // Determine next prayer time
         $nextPrayer = null;
         if ($jadwal) {
@@ -375,7 +438,7 @@ class DashboardController extends Controller
             'statusData', 'tanggal_mulai', 'tanggal_akhir',
             'mode', 'ref_date', 'prev_date', 'next_date', 'display_date',
             'recentActivities',
-            'weeklyLabels', 'weeklyData', 'prayerLabels', 'prayerData',
+            'weeklyLabels', 'weeklyHadir', 'weeklyIzin', 'weeklyAlfa', 'weeklyInsight', 'todayInsight', 'prayerLabels', 'prayerData',
             'totalScanHariIni', 'jamaahHadirHariIni', 'ketepatanWaktu', 'nextPrayer'
         ));
     }
