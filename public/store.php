@@ -203,11 +203,12 @@ if (!$santri) {
         // Buat email dari kata pertama nama PIN (fallback: santriPIN@thursina.id)
         $firstName = strtolower('santri' . $pin);
         $email = $firstName . '@thursina.id';
+        $displayName = "Nama Belum Diatur (PIN: " . $pin . ")";
 
         $user = \App\Models\User::firstOrCreate(
             ['email' => $email],
             [
-                'name'     => 'Santri ' . $pin,
+                'name'     => $displayName,
                 'password' => \Illuminate\Support\Facades\Hash::make('santri'),
                 'role'     => 'santri',
             ]
@@ -216,7 +217,7 @@ if (!$santri) {
         $santri = new Santri();
         $santri->id             = $pin;
         $santri->user_id        = $user->id;
-        $santri->nama           = 'Santri ' . $pin;
+        $santri->nama           = $displayName;
         $santri->kelas          = 'Belum Diatur';
         $santri->foto_referensi = '';
         $santri->finger_count   = 0;
@@ -314,7 +315,15 @@ function handleGetUserinfo(array $decoded): void
     }
 
     $pin       = $data['pin'] ?? '-';
-    $name      = $data['name'] ?? '-';
+    $nameInput = trim($data['name'] ?? '');
+    
+    // Gunakan fallback jika nama kosong atau berisi tanda '-'
+    if ($nameInput === '' || $nameInput === '-') {
+        $displayName = "Nama Belum Diatur (PIN: " . $pin . ")";
+    } else {
+        $displayName = $nameInput;
+    }
+    
     $privilege = $data['privilege'] ?? '-';
     $finger    = $data['finger'] ?? '0';
     $face      = $data['face'] ?? '0';
@@ -328,7 +337,7 @@ function handleGetUserinfo(array $decoded): void
     $privLabel = $privLabels[$privilege] ?? "Unknown($privilege)";
 
     // Log detail lengkap
-    logWebhook("USERINFO: trans_id=$transId, cloud_id=$cloudId, pin=$pin, name=$name, privilege=$privLabel, finger=$finger, face=$face, rfid=" . ($rfid ?: '(kosong)') . ", vein=$vein, template_length=" . strlen($template));
+    logWebhook("USERINFO: trans_id=$transId, cloud_id=$cloudId, pin=$pin, name=$nameInput, privilege=$privLabel, finger=$finger, face=$face, rfid=" . ($rfid ?: '(kosong)') . ", vein=$vein, template_length=" . strlen($template));
 
     // Cek apakah pin ini ada di database santri
     $santri = \App\Models\Santri::find($pin);
@@ -337,15 +346,16 @@ function handleGetUserinfo(array $decoded): void
     try {
         if (!$santri) {
             // Buat email dari kata pertama nama (lowercase) + @thursina.id
-            $firstName = strtolower(explode(' ', trim($name))[0] ?? 'santri');
-            if ($firstName === '-' || $firstName === '') $firstName = 'santri' . $pin;
+            $cleanNameForEmail = ($nameInput === '' || $nameInput === '-') ? '' : $nameInput;
+            $firstName = strtolower(explode(' ', trim($cleanNameForEmail))[0] ?? '');
+            if ($firstName === '' || $firstName === '-') $firstName = 'santri' . $pin;
             $email = $firstName . '@thursina.id';
 
             // Buat user akun default (firstOrCreate untuk hindari duplikat email)
             $user = \App\Models\User::firstOrCreate(
                 ['email' => $email],
                 [
-                    'name'     => $name,
+                    'name'     => $displayName,
                     'password' => \Illuminate\Support\Facades\Hash::make('santri'),
                     'role'     => 'santri',
                 ]
@@ -355,7 +365,7 @@ function handleGetUserinfo(array $decoded): void
             $santri = new \App\Models\Santri();
             $santri->id             = $pin;
             $santri->user_id        = $user->id;
-            $santri->nama           = $name;
+            $santri->nama           = $displayName;
             $santri->kelas          = 'Belum Diatur'; // Dibiarkan kosong/Belum Diatur untuk update manual
             $santri->foto_referensi = '';
             $santri->finger_count   = 0; // Hardcode tipe jari ke 0
@@ -369,16 +379,18 @@ function handleGetUserinfo(array $decoded): void
             $updated = false;
 
             // Generate new email based on first word of the name
-            $firstName = strtolower(explode(' ', trim($name))[0] ?? 'santri');
-            if ($firstName === '-' || $firstName === '') $firstName = 'santri' . $pin;
+            $cleanNameForEmail = ($nameInput === '' || $nameInput === '-') ? '' : $nameInput;
+            $firstName = strtolower(explode(' ', trim($cleanNameForEmail))[0] ?? '');
+            if ($firstName === '' || $firstName === '-') $firstName = 'santri' . $pin;
             $newEmail = $firstName . '@thursina.id';
 
-            if ($name !== '-' && ($santri->nama !== $name || ($santri->user && $santri->user->email !== $newEmail))) {
-                $santri->nama = $name;
+            // Update nama jika berbeda
+            if ($santri->nama !== $displayName || ($santri->user && $santri->user->email !== $newEmail)) {
+                $santri->nama = $displayName;
                 
                 // Update user name and email as well
                 if ($santri->user) {
-                    $santri->user->name = $name;
+                    $santri->user->name = $displayName;
                     $santri->user->email = $newEmail;
                     $santri->user->save();
                 }
