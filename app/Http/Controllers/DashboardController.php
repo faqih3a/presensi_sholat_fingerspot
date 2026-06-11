@@ -254,7 +254,7 @@ class DashboardController extends Controller
         $endWeeklyDate = $nowCarbon->format('Y-m-d');
 
         $weeklyCounts = \App\Models\Presensi::whereBetween('tanggal', [$startWeeklyDate, $endWeeklyDate])
-                                            ->selectRaw('tanggal, status, COUNT(*) as total')
+                                            ->selectRaw('tanggal, status, COUNT(DISTINCT santri_id) as total')
                                             ->groupBy('tanggal', 'status')
                                             ->get()
                                             ->groupBy('tanggal');
@@ -373,34 +373,20 @@ class DashboardController extends Controller
                   });
         })->pluck('id')->toArray();
 
-        // Data for status distribution chart
-        $distQuery = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate]);
-        if ($waktuSholat) {
-            $distQuery->where('waktu_sholat', $waktuSholat);
-        }
-        
-        $statusCounts = (clone $distQuery)->selectRaw('status, COUNT(*) as total')
-                                          ->groupBy('status')
-                                          ->pluck('total', 'status')
-                                          ->toArray();
-
         $statusData = [
-            $statusCounts['Hadir'] ?? 0,
-            $statusCounts['Izin'] ?? 0,
-            $statusCounts['Alfa'] ?? 0,
+            $hadirHariIni,
+            $totalIzin,
+            $totalAlfa,
         ];
 
         // Generate Today Insight
-        $todayHadir = $statusCounts['Hadir'] ?? 0;
-        $todayIzin = $statusCounts['Izin'] ?? 0;
-        $todayAlfa = $statusCounts['Alfa'] ?? 0;
-        $totalPresensi = $todayHadir + $todayIzin + $todayAlfa;
+        $totalPresensi = $hadirHariIni + $totalIzin + $totalAlfa;
         
         if ($totalPresensi > 0) {
-            $attendanceRate = round(($todayHadir / $totalPresensi) * 100);
-            $todayInsight = "Tingkat kehadiran hari ini mencapai {$attendanceRate}% ({$todayHadir} dari {$totalPresensi} santri hadir).";
-            if ($todayAlfa > 0) {
-                $todayInsight .= " Ada {$todayAlfa} santri alfa yang belum melakukan scan.";
+            $attendanceRate = round(($hadirHariIni / $totalPresensi) * 100);
+            $todayInsight = "Tingkat kehadiran hari ini mencapai {$attendanceRate}% ({$hadirHariIni} dari {$totalPresensi} santri).";
+            if ($totalAlfa > 0) {
+                $todayInsight .= " Ada {$totalAlfa} santri alfa yang belum melakukan scan.";
             } else {
                 $todayInsight .= " Seluruh santri yang terdaftar hari ini hadir/izin.";
             }
