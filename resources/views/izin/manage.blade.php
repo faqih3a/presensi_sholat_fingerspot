@@ -21,7 +21,7 @@
             </div>
         @endif
 
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden d-none d-md-block">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
@@ -169,6 +169,94 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- Mobile Card List View -->
+        <div class="d-md-none">
+            @forelse($izins as $izin)
+                <div class="card border-0 shadow-sm rounded-4 mb-3 p-3 bg-white">
+                    <div class="d-flex align-items-start gap-3">
+                        <!-- Left: Avatar -->
+                        <div class="flex-shrink-0">
+                            @if($izin->user->role === 'santri' && $izin->user->santri && $izin->user->santri->display_photo)
+                                <img src="{{ $izin->user->santri->display_photo }}" alt="Profile" class="rounded-circle shadow-sm object-fit-cover" style="width: 45px; height: 45px; border: 2px solid #fff;">
+                            @else
+                                <div class="avatar bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 45px; height: 45px; font-size: 1.2rem;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                            @endif
+                        </div>
+                        
+                        <!-- Right: Details -->
+                        <div class="flex-grow-1 min-w-0">
+                            <!-- Kanan Atas: Nama & Badge -->
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                                <span class="fw-bold text-dark text-truncate" style="font-size: 0.95rem;">{{ $izin->user->name }}</span>
+                                <span class="badge 
+                                    @if($izin->jenis_izin == 'Sakit') bg-danger-subtle text-danger 
+                                    @elseif($izin->jenis_izin == 'Izin') bg-info-subtle text-info 
+                                    @else bg-warning-subtle text-warning @endif 
+                                    px-2 py-1 rounded-3 small">
+                                    {{ $izin->jenis_izin }}
+                                </span>
+                            </div>
+
+                            <!-- Kanan Tengah: Tanggal & Hari -->
+                            <div class="d-flex align-items-center gap-2 mb-2" style="font-size: 0.8rem;">
+                                <span class="fw-semibold text-secondary"><i class="bi bi-calendar-event me-1"></i>{{ $izin->tanggal_mulai->format('d/m/y') }} - {{ $izin->tanggal_selesai->format('d/m/y') }}</span>
+                                <span class="badge bg-light text-muted border py-0 px-1.5" style="font-size: 0.7rem;">{{ $izin->tanggal_mulai->diffInDays($izin->tanggal_selesai) + 1 }} Hari</span>
+                                @if($izin->waktu_sholat && $izin->waktu_sholat !== 'Full Day')
+                                    <span class="badge bg-secondary-subtle text-secondary py-0 px-1" style="font-size: 0.7rem;">{{ $izin->waktu_sholat }}</span>
+                                @endif
+                            </div>
+
+                            <!-- Kanan Bawah: Keterangan -->
+                            <div class="bg-light p-2 rounded-3 text-secondary mb-3" style="font-size: 0.8rem; line-height: 1.4;">
+                                {{ $izin->keterangan }}
+                            </div>
+
+                            <!-- Status & Action Buttons -->
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <!-- Status Badge -->
+                                <div>
+                                    @if($izin->status == 'Pending')
+                                        <span class="badge bg-warning-subtle text-warning px-2.5 py-1.5 rounded-pill fw-medium" style="font-size: 0.75rem;">
+                                            <i class="bi bi-clock-history me-1"></i> Pending
+                                        </span>
+                                    @elseif($izin->status == 'Disetujui')
+                                        <span class="badge bg-success-subtle text-success px-2.5 py-1.5 rounded-pill fw-medium" style="font-size: 0.75rem;">
+                                            <i class="bi bi-check-circle me-1"></i> Disetujui
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger px-2.5 py-1.5 rounded-pill fw-medium" style="font-size: 0.75rem;">
+                                            <i class="bi bi-x-circle me-1"></i> Ditolak
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2">
+                                    @if($izin->lampiran)
+                                        <a href="{{ asset('storage/' . $izin->lampiran) }}" target="_blank" class="btn btn-sm btn-light rounded-3 shadow-sm border-0 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Lihat Lampiran">
+                                            <i class="bi bi-paperclip"></i>
+                                        </a>
+                                    @endif
+                                    <button type="button" class="btn btn-sm bg-success-subtle text-success rounded-3 px-3 fw-semibold border-0 shadow-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#actionModal{{ $izin->id }}" style="height: 32px;">
+                                        <i class="bi bi-check2-circle"></i> Proses
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="card border-0 shadow-sm rounded-4 py-5 text-center bg-white">
+                    <div class="py-4 text-muted">
+                        <i class="bi bi-inbox text-muted fs-1 mb-3 d-block"></i>
+                        <p class="mb-0">Belum ada pengajuan izin yang perlu diproses.</p>
+                    </div>
+                </div>
+            @endforelse
         </div>
     </div>
 </div>

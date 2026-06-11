@@ -290,7 +290,7 @@
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-md-block">
             <table class="table table-hover align-middle mb-0 text-nowrap" id="kehadiranTable">
                 <thead class="bg-light">
                     <tr>
@@ -340,7 +340,7 @@
                                 {{ $presensi->waktu_sholat }}
                             </span>
                         </td>
-                        <td>
+                        <td class="waktu-hadir-cell">
                             <div class="d-flex align-items-center">
                                 @if($presensi->waktu_hadir)
                                     <div class="fw-bold text-dark me-2">{{ \Carbon\Carbon::parse($presensi->waktu_hadir)->format('H:i') }}</div>
@@ -350,7 +350,7 @@
                                 <div class="small text-muted border-start ps-2">{{ \Carbon\Carbon::parse($presensi->tanggal)->format('d M Y') }}</div>
                             </div>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center status-cell">
                             @if($presensi->status == 'Alfa')
                                 <span class="badge badge-soft badge-soft-danger px-4">Alpha</span>
                             @elseif($presensi->status == 'Izin')
@@ -383,6 +383,87 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <!-- Mobile Card List View -->
+        <div class="d-md-none p-3" id="kehadiranCardList">
+            @forelse($presensis as $presensi)
+                <div class="card border-0 shadow-sm rounded-4 mb-3 p-3 bg-white" data-presensi-id="{{ $presensi->id ?? '' }}" data-santri-id="{{ $presensi->santri_id }}" data-tanggal="{{ $presensi->tanggal }}" data-sholat="{{ $presensi->waktu_sholat }}">
+                    <div class="d-flex align-items-start gap-3">
+                        <!-- Left: Scan Photo / Profile Photo -->
+                        <div class="flex-shrink-0">
+                            @if($presensi->photo_url)
+                                <a href="{{ $presensi->photo_url }}" target="_blank" title="Buka foto asli">
+                                    <img src="{{ $presensi->photo_url }}" alt="Scan" class="rounded border shadow-sm object-fit-cover" style="width: 50px; height: 50px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <div class="avatar bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 50px; display: none; font-size: 1.2rem;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                </a>
+                            @else
+                                <div class="avatar bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Right: Details -->
+                        <div class="flex-grow-1 min-w-0">
+                            <!-- Kanan Atas: Nama & Kelas -->
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                                <div>
+                                    <span class="fw-bold text-dark d-block text-truncate" style="font-size: 0.95rem;">{{ $presensi->santri->nama }}</span>
+                                    <span class="text-muted small">Kelas: {{ $presensi->santri->kelas }}</span>
+                                </div>
+                                <span class="badge badge-soft status-badge
+                                    @if($presensi->status == 'Alfa') badge-soft-danger
+                                    @elseif($presensi->status == 'Izin') badge-soft-info
+                                    @else badge-soft-success @endif 
+                                    px-3.5 py-1.5 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                                    {{ $presensi->status == 'Alfa' ? 'Alpha' : $presensi->status }}
+                                </span>
+                            </div>
+
+                            <!-- Kanan Bawah: Waktu Sholat & Presensi -->
+                            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                                <div class="d-flex flex-wrap gap-2 align-items-center">
+                                    <span class="badge badge-soft badge-soft-info py-0.5 px-2" style="font-size: 0.7rem;">
+                                        @if(in_array($presensi->waktu_sholat, ['Dzuhur', 'Ashar']))
+                                            <i class="bi bi-sun-fill me-1 small"></i>
+                                        @else
+                                            <i class="bi bi-moon-stars-fill me-1 small"></i>
+                                        @endif
+                                        {{ $presensi->waktu_sholat }}
+                                    </span>
+                                    <span class="text-muted small waktu-text" style="font-size: 0.75rem;">
+                                        @if($presensi->waktu_hadir)
+                                            <strong class="waktu-val">{{ \Carbon\Carbon::parse($presensi->waktu_hadir)->format('H:i') }}</strong>
+                                        @else
+                                            <strong class="text-danger waktu-val">-</strong>
+                                        @endif
+                                        <span class="tanggal-val">• {{ \Carbon\Carbon::parse($presensi->tanggal)->format('d M') }}</span>
+                                    </span>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Edit Status" onclick="editStatus('{{ $presensi->santri_id }}', '{{ $presensi->tanggal }}', '{{ $presensi->waktu_sholat }}', '{{ $presensi->status }}')">
+                                        <i class="bi bi-pencil-square text-primary"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Hapus" onclick="deletePresensi('{{ $presensi->santri_id }}', '{{ $presensi->tanggal }}', '{{ $presensi->waktu_sholat }}')">
+                                        <i class="bi bi-trash text-danger"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="card border-0 shadow-sm rounded-4 py-5 text-center bg-white">
+                    <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50 text-muted"></i>
+                    <h6 class="fw-bold">Belum Ada Data Presensi</h6>
+                    <p class="small mb-0 text-muted">Data kehadiran akan muncul di sini setelah santri melakukan scan.</p>
+                </div>
+            @endforelse
         </div>
     </div>
     @if(count($presensis) > 0)
@@ -455,23 +536,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }, TOAST_DURATION);
     }
 
-    // ─── Insert New Row into Table ─────────────────────────────
+    // ─── Insert New Row into Table / Card List ──────────────────
     function insertNewRow(scan) {
         const tbody = document.getElementById('kehadiranTbody');
+        const cardList = document.getElementById('kehadiranCardList');
         
-        // Remove empty state row if present
+        // Remove empty state if present
         const emptyRow = document.getElementById('emptyRow');
         if (emptyRow) emptyRow.remove();
 
+        const emptyCard = cardList ? cardList.querySelector('.py-5') : null;
+        if (emptyCard) {
+            const emptyCardContainer = emptyCard.closest('.card');
+            if (emptyCardContainer) emptyCardContainer.remove();
+        }
+
         // Check if row already exists (same santri + tanggal + sholat)
-        const existingRow = tbody.querySelector(
+        const existingRow = tbody ? tbody.querySelector(
             `tr[data-santri-id="${scan.santri_id}"][data-tanggal="${scan.tanggal}"][data-sholat="${scan.waktu_sholat}"]`
-        );
+        ) : null;
         if (existingRow) {
-            // Update existing row with highlight
             existingRow.classList.add('row-new-entry');
             setTimeout(() => existingRow.classList.remove('row-new-entry'), 2000);
-            return;
         }
 
         const sholatIcon = ['Dzuhur', 'Ashar'].includes(scan.waktu_sholat)
@@ -480,6 +566,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const waktu = scan.waktu_hadir ? scan.waktu_hadir.substring(0, 5) : '-';
         const waktuClass = scan.waktu_hadir ? 'fw-bold text-dark me-2' : 'fw-bold text-danger me-2';
+        const waktuCardClass = scan.waktu_hadir ? 'waktu-val' : 'text-danger waktu-val';
 
         const fotoCell = scan.photo_url
             ? `<a href="${scan.photo_url}" target="_blank" title="Buka foto asli">
@@ -487,10 +574,19 @@ document.addEventListener('DOMContentLoaded', function() {
                </a>`
             : '<span class="text-muted small">-</span>';
 
+        const fotoHtmlCard = scan.photo_url
+            ? `<a href="${scan.photo_url}" target="_blank" title="Buka foto asli">
+                 <img src="${scan.photo_url}" alt="Scan" class="rounded border shadow-sm object-fit-cover" style="width: 50px; height: 50px;">
+               </a>`
+            : `<div class="avatar bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                 <i class="bi bi-person-fill"></i>
+               </div>`;
+
         // Format tanggal
         const d = new Date(scan.tanggal + 'T00:00:00');
         const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
         const formattedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        const formattedDateShort = `${d.getDate()} ${months[d.getMonth()]}`;
 
         let statusBadge = '';
         if (scan.status === 'Alfa') {
@@ -501,48 +597,113 @@ document.addEventListener('DOMContentLoaded', function() {
             statusBadge = '<span class="badge badge-soft badge-soft-success px-4">Hadir</span>';
         }
 
-        const tr = document.createElement('tr');
-        tr.setAttribute('data-presensi-id', scan.id);
-        tr.setAttribute('data-santri-id', scan.santri_id);
-        tr.setAttribute('data-tanggal', scan.tanggal);
-        tr.setAttribute('data-sholat', scan.waktu_sholat);
-        tr.className = 'row-new-entry';
+        let statusBadgeCard = '';
+        if (scan.status === 'Alfa') {
+            statusBadgeCard = '<span class="badge badge-soft status-badge badge-soft-danger px-3.5 py-1.5 rounded-pill fw-bold" style="font-size: 0.75rem;">Alpha</span>';
+        } else if (scan.status === 'Izin') {
+            statusBadgeCard = '<span class="badge badge-soft status-badge badge-soft-info px-3.5 py-1.5 rounded-pill fw-bold" style="font-size: 0.75rem;">Izin</span>';
+        } else {
+            statusBadgeCard = '<span class="badge badge-soft status-badge badge-soft-success px-3.5 py-1.5 rounded-pill fw-bold" style="font-size: 0.75rem;">Hadir</span>';
+        }
 
-        tr.innerHTML = `
-            <td class="text-center">
-                <div class="form-check m-0 d-inline-block">
-                    <input class="form-check-input row-checkbox" type="checkbox" value="${scan.id}">
-                </div>
-            </td>
-            <td><div class="fw-bold text-dark">${scan.nama}</div></td>
-            <td class="text-center">${fotoCell}</td>
-            <td>${scan.kelas}</td>
-            <td><span class="badge badge-soft badge-soft-info">${sholatIcon} ${scan.waktu_sholat}</span></td>
-            <td>
-                <div class="d-flex align-items-center">
-                    <div class="${waktuClass}">${waktu}</div>
-                    <div class="small text-muted border-start ps-2">${formattedDate}</div>
-                </div>
-            </td>
-            <td class="text-center">${statusBadge}</td>
-            <td class="text-center">
-                <div class="d-flex justify-content-center gap-2">
-                    <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Edit Status" onclick="editStatus('${scan.santri_id}', '${scan.tanggal}', '${scan.waktu_sholat}', '${scan.status}')">
-                        <i class="bi bi-pencil-square text-primary"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Hapus" onclick="deletePresensi('${scan.santri_id}', '${scan.tanggal}', '${scan.waktu_sholat}')">
-                        <i class="bi bi-trash text-danger"></i>
-                    </button>
-                </div>
-            </td>
-        `;
+        // 1. Insert into Table (Desktop)
+        if (tbody && !existingRow) {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-presensi-id', scan.id);
+            tr.setAttribute('data-santri-id', scan.santri_id);
+            tr.setAttribute('data-tanggal', scan.tanggal);
+            tr.setAttribute('data-sholat', scan.waktu_sholat);
+            tr.className = 'row-new-entry';
 
-        // Insert at top of tbody
-        tbody.insertBefore(tr, tbody.firstChild);
+            tr.innerHTML = `
+                <td class="text-center">
+                    <div class="form-check m-0 d-inline-block">
+                        <input class="form-check-input row-checkbox" type="checkbox" value="${scan.id}">
+                    </div>
+                </td>
+                <td><div class="fw-bold text-dark">${scan.nama}</div></td>
+                <td class="text-center">${fotoCell}</td>
+                <td>${scan.kelas}</td>
+                <td><span class="badge badge-soft badge-soft-info">${sholatIcon} ${scan.waktu_sholat}</span></td>
+                <td class="waktu-hadir-cell">
+                    <div class="d-flex align-items-center">
+                        <div class="${waktuClass}">${waktu}</div>
+                        <div class="small text-muted border-start ps-2">${formattedDate}</div>
+                    </div>
+                </td>
+                <td class="text-center status-cell">${statusBadge}</td>
+                <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Edit Status" onclick="editStatus('${scan.santri_id}', '${scan.tanggal}', '${scan.waktu_sholat}', '${scan.status}')">
+                            <i class="bi bi-pencil-square text-primary"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Hapus" onclick="deletePresensi('${scan.santri_id}', '${scan.tanggal}', '${scan.waktu_sholat}')">
+                            <i class="bi bi-trash text-danger"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+
+            tbody.insertBefore(tr, tbody.firstChild);
+        }
+
+        // 2. Insert into Card List (Mobile)
+        if (cardList) {
+            const existingCard = cardList.querySelector(
+                `.card[data-santri-id="${scan.santri_id}"][data-tanggal="${scan.tanggal}"][data-sholat="${scan.waktu_sholat}"]`
+            );
+            if (existingCard) {
+                existingCard.classList.add('row-new-entry');
+                setTimeout(() => existingCard.classList.remove('row-new-entry'), 2000);
+            } else {
+                const card = document.createElement('div');
+                card.className = 'card border-0 shadow-sm rounded-4 mb-3 p-3 bg-white row-new-entry';
+                card.setAttribute('data-presensi-id', scan.id);
+                card.setAttribute('data-santri-id', scan.santri_id);
+                card.setAttribute('data-tanggal', scan.tanggal);
+                card.setAttribute('data-sholat', scan.waktu_sholat);
+
+                card.innerHTML = `
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="flex-shrink-0">${fotoHtmlCard}</div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                                <div>
+                                    <span class="fw-bold text-dark d-block text-truncate" style="font-size: 0.95rem;">${scan.nama}</span>
+                                    <span class="text-muted small">Kelas: ${scan.kelas}</span>
+                                </div>
+                                ${statusBadgeCard}
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                                <div class="d-flex flex-wrap gap-2 align-items-center">
+                                    <span class="badge badge-soft badge-soft-info py-0.5 px-2" style="font-size: 0.7rem;">
+                                        ${sholatIcon} ${scan.waktu_sholat}
+                                    </span>
+                                    <span class="text-muted small waktu-text" style="font-size: 0.75rem;">
+                                        <strong class="${waktuCardClass}">${waktu}</strong>
+                                        <span class="tanggal-val">• ${formattedDateShort}</span>
+                                    </span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Edit Status" onclick="editStatus('${scan.santri_id}', '${scan.tanggal}', '${scan.waktu_sholat}', '${scan.status}')">
+                                        <i class="bi bi-pencil-square text-primary"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Hapus" onclick="deletePresensi('${scan.santri_id}', '${scan.tanggal}', '${scan.waktu_sholat}')">
+                                        <i class="bi bi-trash text-danger"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                cardList.insertBefore(card, cardList.firstChild);
+            }
+        }
 
         // Update count
         const countEl = document.getElementById('recordCount');
-        if (countEl) {
+        if (countEl && tbody) {
             const totalRows = tbody.querySelectorAll('tr[data-presensi-id]').length;
             countEl.textContent = `Menampilkan ${totalRows} data rekaman kehadiran terbaru.`;
         }
