@@ -217,13 +217,6 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
             <h5 class="chart-title mb-4">Aktivitas Terbaru</h5>
             @forelse($recentActivities as $activity)
             <div class="d-flex align-items-center {{ $loop->last ? '' : 'mb-4' }}">
-                <div class="position-relative me-3">
-                    @if($activity->avatar)
-                    <img src="{{ $activity->avatar }}" alt="Avatar" class="rounded-circle object-fit-cover" style="width:45px;height:45px">
-                    @else
-                    <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width:45px;height:45px"><i class="bi bi-person fs-4"></i></div>
-                    @endif
-                </div>
                 <div class="flex-grow-1">
                     <div class="d-flex justify-content-between align-items-start">
                         <div><span class="fw-bold text-dark small">{{ $activity->name }}</span> <span class="badge bg-light text-muted border ms-1" style="font-size:.65rem">{{ $activity->detail }}</span></div>
