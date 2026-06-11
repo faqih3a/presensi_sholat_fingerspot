@@ -222,9 +222,9 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
                         <span class="text-muted" style="font-size:.75rem">{{ $activity->scan_time->locale('id')->diffForHumans() }}</span>
                     </div>
                     <div class="d-flex align-items-center gap-2 mt-1" style="font-size:.75rem">
-                        <span class="badge-soft badge-soft-success py-0 px-2 d-inline-flex align-items-center gap-1" style="font-size:.75rem;line-height:1.5"><i class="bi {{ $activity->verify_icon }}"></i> {{ $activity->verify_method }}</span>
+                        <span class="badge bg-{{ $activity->color }} bg-opacity-10 text-{{ $activity->color }} border border-{{ $activity->color }} border-opacity-25 py-0 px-2 d-inline-flex align-items-center gap-1" style="font-size:.75rem;line-height:1.5"><i class="bi {{ $activity->verify_icon }}"></i> {{ $activity->verify_method }}</span>
                         <span class="text-secondary">•</span>
-                        <span class="fw-semibold text-success">{{ $activity->status_scan_label }}</span>
+                        <span class="fw-semibold text-{{ $activity->color }}">{{ $activity->status_scan_label }}</span>
                         <span class="text-secondary">•</span>
                         <span class="text-black-50" style="font-size:.7rem">{{ $activity->scan_time->format('H:i') }} WIB</span>
                     </div>

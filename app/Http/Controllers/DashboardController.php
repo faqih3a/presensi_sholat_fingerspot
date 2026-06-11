@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Presensi;
 use App\Models\Santri;
 use App\Models\Izin;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Traits\DateAndPrayerHelper;
 
@@ -40,49 +41,124 @@ class DashboardController extends Controller
             $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
         }
 
-        $recentPresensis = Presensi::with('santri')
-            ->whereNotNull('waktu_hadir')
-            ->orderBy('tanggal', 'desc')
-            ->orderBy('waktu_hadir', 'desc')
-            ->take(5)
-            ->get();
+        // 1. Perizinan (Izin)
+        $izins = Izin::with('user.santri')
+            ->latest('updated_at')
+            ->take(15)
+            ->get()
+            ->map(function ($izin) {
+                $user = $izin->user;
+                $santri = $user ? $user->santri : null;
+                $name = $santri ? $santri->nama : ($user ? $user->name : 'Tanpa Nama');
+                $detail = $santri ? 'Kelas ' . $santri->kelas : ($user ? ucfirst($user->role) : 'Santri');
+                $avatar = ($santri && $santri->foto_referensi) ? asset('storage/santri_fotos/' . $santri->foto_referensi) : null;
+                if ($user && $user->avatar && !$avatar) {
+                    $avatar = asset('storage/avatars/' . $user->avatar);
+                }
 
-        $recentActivities = $recentPresensis->map(function ($presensi) {
-            $santri = $presensi->santri;
-            $name = $santri ? $santri->nama : 'PIN ' . $presensi->santri_id;
-            $role = 'santri';
-            $detail = $santri ? 'Kelas ' . $santri->kelas : 'Santri';
-            $avatar = ($santri && $santri->foto_referensi) ? asset('storage/santri_fotos/' . $santri->foto_referensi) : null;
-            
-            $verifyMethod = 'Fingerprint';
-            $verifyIcon = 'bi-fingerprint';
-            
-            if ($presensi->photo_url) {
-                $verifyMethod = 'Face';
-                $verifyIcon = 'bi-person-bounding-box';
-            }
-            
-            $statusScanLabel = 'Scan Masuk';
-            
-            try {
-                $carbonScan = \Carbon\Carbon::parse($presensi->tanggal . ' ' . $presensi->waktu_hadir, 'Asia/Jakarta');
-            } catch (\Exception $e) {
-                $carbonScan = \Carbon\Carbon::now('Asia/Jakarta');
-            }
+                $status = $izin->status;
+                $color = 'warning';
+                $icon = 'bi-file-earmark-text-fill';
+                $msg = "Mengajukan Izin {$izin->jenis_izin}";
+                if ($status === 'Disetujui') {
+                    $color = 'success';
+                    $icon = 'bi-check-circle-fill';
+                    $msg = "Izin {$izin->jenis_izin} Disetujui";
+                } elseif ($status === 'Ditolak') {
+                    $color = 'danger';
+                    $icon = 'bi-x-circle-fill';
+                    $msg = "Izin {$izin->jenis_izin} Ditolak";
+                }
 
-            return (object) [
-                'pin' => $presensi->santri_id,
-                'name' => $name,
-                'role' => $role,
-                'detail' => $detail,
-                'avatar' => $avatar,
-                'scan_time' => $carbonScan,
-                'verify_method' => $verifyMethod,
-                'verify_icon' => $verifyIcon,
-                'status_scan_label' => $statusScanLabel,
-                'photo_url' => $presensi->photo_url,
-            ];
-        });
+                return (object) [
+                    'name' => $name,
+                    'detail' => $detail,
+                    'avatar' => $avatar,
+                    'scan_time' => $izin->updated_at,
+                    'verify_icon' => $icon,
+                    'verify_method' => 'Perizinan',
+                    'status_scan_label' => $msg,
+                    'color' => $color,
+                ];
+            });
+
+        // 2. Ketidakhadiran (Alfa)
+        $alfas = Presensi::with('santri')
+            ->whereIn('status', ['Alfa', 'Alpha'])
+            ->latest('updated_at')
+            ->take(15)
+            ->get()
+            ->map(function ($presensi) {
+                $santri = $presensi->santri;
+                $name = $santri ? $santri->nama : 'PIN ' . $presensi->santri_id;
+                $detail = $santri ? 'Kelas ' . $santri->kelas : 'Santri';
+                $avatar = ($santri && $santri->foto_referensi) ? asset('storage/santri_fotos/' . $santri->foto_referensi) : null;
+
+                return (object) [
+                    'name' => $name,
+                    'detail' => $detail,
+                    'avatar' => $avatar,
+                    'scan_time' => $presensi->updated_at ?? \Carbon\Carbon::parse($presensi->tanggal . ' 18:00:00'),
+                    'verify_icon' => 'bi-x-circle-fill',
+                    'verify_method' => 'Ketidakhadiran',
+                    'status_scan_label' => "Alfa Sholat {$presensi->waktu_sholat}",
+                    'color' => 'danger',
+                ];
+            });
+
+        // 3. Pendaftaran Santri Baru
+        $newSantris = Santri::latest('created_at')
+            ->take(15)
+            ->get()
+            ->map(function ($santri) {
+                $name = $santri->nama;
+                $detail = 'Kelas ' . $santri->kelas;
+                $avatar = $santri->foto_referensi ? asset('storage/santri_fotos/' . $santri->foto_referensi) : null;
+
+                return (object) [
+                    'name' => $name,
+                    'detail' => $detail,
+                    'avatar' => $avatar,
+                    'scan_time' => $santri->created_at,
+                    'verify_icon' => 'bi-person-plus-fill',
+                    'verify_method' => 'Santri Baru',
+                    'status_scan_label' => 'Santri terdaftar aktif',
+                    'color' => 'primary',
+                ];
+            });
+
+        // 4. Pendaftaran Staf/Admin Baru
+        $newStaffs = User::whereIn('role', ['asatidz', 'admin'])
+            ->latest('created_at')
+            ->take(15)
+            ->get()
+            ->map(function ($user) {
+                $name = $user->name;
+                $detail = ucfirst($user->role);
+                $avatar = $user->avatar ? asset('storage/avatars/' . $user->avatar) : null;
+
+                return (object) [
+                    'name' => $name,
+                    'detail' => $detail,
+                    'avatar' => $avatar,
+                    'scan_time' => $user->created_at,
+                    'verify_icon' => 'bi-person-badge-fill',
+                    'verify_method' => 'Pengurus Baru',
+                    'status_scan_label' => "Akun {$detail} terdaftar",
+                    'color' => 'info',
+                ];
+            });
+
+        // Gabungkan dan urutkan berdasarkan waktu terbaru
+        $recentActivities = collect()
+            ->concat($izins)
+            ->concat($alfas)
+            ->concat($newSantris)
+            ->concat($newStaffs)
+            ->sortByDesc(function ($activity) {
+                return $activity->scan_time;
+            })
+            ->take(12);
 
         
         // Hitung total santri
