@@ -48,13 +48,13 @@ class SantriDashboardController extends Controller
             $query->where('waktu_sholat', $waktuSholat);
         }
 
-        $presensis = $query->get();
+        $riwayatPresensi = $query->get();
 
-        // Calculate totals based on filtered results
-        $totalHadir = $presensis->where('status', 'Hadir')->count();
-        $totalAlfa = $presensis->where('status', 'Alfa')->count();
+        // Calculate totals based on filtered results (case-insensitive and support both 'Alfa' and 'Alpha')
+        $totalHadir = $riwayatPresensi->filter(fn($p) => strtolower($p->status) === 'hadir')->count();
+        $totalAlpha = $riwayatPresensi->filter(fn($p) => in_array(strtolower($p->status), ['alfa', 'alpha']))->count();
 
-        return view('santri.dashboard', compact('presensis', 'user', 'totalHadir', 'totalAlfa', 'period', 'waktuSholat'));
+        return view('santri.dashboard', compact('riwayatPresensi', 'user', 'totalHadir', 'totalAlpha', 'period', 'waktuSholat'));
     }
 
     public function export(Request $request)

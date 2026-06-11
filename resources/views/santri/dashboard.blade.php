@@ -144,7 +144,7 @@
                 <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.65rem;">Alpha {{ $period == 'today' ? 'Hari Ini' : ($period == 'week' ? 'Minggu Ini' : 'Bulan Ini') }}</div>
                 <div class="task-checkbox" style="background-color: rgba(239, 68, 68, 0.1); color: #ef4444;"><i class="bi bi-calendar-x"></i></div>
             </div>
-            <div class="h3 mb-1 fw-bold text-dark">{{ $totalAlfa }}x Alpha</div>
+            <div class="h3 mb-1 fw-bold text-dark">{{ $totalAlpha }}x Alpha</div>
             <div class="small text-muted">Belum melakukan presensi</div>
         </div>
     </div>
@@ -191,7 +191,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($presensis as $presensi)
+                    @forelse($riwayatPresensi as $presensi)
                     <tr>
                         <td class="fw-bold text-dark">{{ \Carbon\Carbon::parse($presensi->tanggal)->format('d M Y') }}</td>
                         <td>
@@ -214,8 +214,10 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            @if($presensi->status == 'Hadir')
+                            @if(strtolower($presensi->status) === 'hadir')
                                 <span class="badge badge-soft badge-soft-success px-4">Hadir</span>
+                            @elseif(strtolower($presensi->status) === 'izin')
+                                <span class="badge badge-soft badge-soft-info px-4">Izin</span>
                             @else
                                 <span class="badge badge-soft badge-soft-danger px-4">Alpha</span>
                             @endif
