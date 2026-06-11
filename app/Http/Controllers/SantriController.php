@@ -58,7 +58,7 @@ class SantriController extends Controller
 
     public function adminList()
     {
-        $santris = Santri::latest()->get();
+        $santris = Santri::orderBy('id', 'asc')->get();
         return view('santri.index', compact('santris'));
     }
 

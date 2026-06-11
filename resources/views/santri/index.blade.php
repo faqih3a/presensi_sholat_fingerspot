@@ -158,7 +158,7 @@
                         @forelse($santris as $index => $santri)
                         <tr>
                             <td class="text-center">
-                                <span class="text-muted fw-bold small">{{ $index + 1 }}</span>
+                                <span class="text-muted fw-bold small">{{ method_exists($santris, 'currentPage') ? ($santris->currentPage() - 1) * $santris->perPage() + $loop->iteration : $loop->iteration }}</span>
                             </td>
                             <td>
                                 @if($santri->display_photo)
@@ -241,10 +241,19 @@
             </div>
         </div>
         @if(count($santris) > 0)
-        <div class="card-footer bg-white border-top py-3">
+        <div class="card-footer bg-white border-top py-3 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <div class="small text-muted">
-                Menampilkan 1 sampai {{ count($santris) }} dari {{ count($santris) }} data santri.
+                @if(method_exists($santris, 'firstItem'))
+                    Menampilkan {{ $santris->firstItem() }} sampai {{ $santris->lastItem() }} dari {{ $santris->total() }} data santri.
+                @else
+                    Menampilkan 1 sampai {{ count($santris) }} dari {{ count($santris) }} data santri.
+                @endif
             </div>
+            @if(method_exists($santris, 'links'))
+                <div>
+                    {{ $santris->links() }}
+                </div>
+            @endif
         </div>
         @endif
     </div>
