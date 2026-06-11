@@ -15,7 +15,7 @@ use App\Http\Controllers\TesController;
 // Auth routes (Login is now the root page)
 Route::get('/', [AuthController::class, 'showLoginForm'])->name('login')->middleware('guest');
 Route::post('/', [AuthController::class, 'login'])->middleware('guest');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 
 // Protected routes
