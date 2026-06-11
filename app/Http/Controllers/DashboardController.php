@@ -158,7 +158,7 @@ class DashboardController extends Controller
             ->sortByDesc(function ($activity) {
                 return $activity->scan_time;
             })
-            ->take(12);
+            ->take(5);
 
         
         // Hitung total santri
