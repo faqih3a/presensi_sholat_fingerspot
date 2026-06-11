@@ -161,9 +161,46 @@
     </div>
 
     <div class="card card-stats overflow-hidden">
-        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
-            <h6 class="m-0 fw-bold text-dark"><i class="bi bi-people-fill text-success me-2"></i>Daftar Santri</h6>
-            <div class="small text-muted">{{ count($santris) }} Santri Terdaftar</div>
+        <div class="card-header bg-white py-3 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <h6 class="m-0 fw-bold text-dark"><i class="bi bi-people-fill text-success me-2"></i>Daftar Santri</h6>
+                <div class="small text-muted">
+                    @if(method_exists($santris, 'total'))
+                        {{ $santris->total() }}
+                    @else
+                        {{ count($santris) }}
+                    @endif
+                    Santri Terdaftar
+                </div>
+            </div>
+            
+            <form action="{{ route('santri.index') }}" method="GET" class="d-flex flex-wrap gap-2 align-items-center w-100 w-md-auto">
+                <!-- Dropdown Filter Kelas -->
+                <div style="min-width: 150px;">
+                    <select name="kelas" class="form-select border-0 bg-light rounded-pill px-3 py-2 fw-bold text-dark" onchange="this.form.submit()">
+                        <option value="">Semua Kelas</option>
+                        <option value="7 MTs" {{ request('kelas') == '7 MTs' ? 'selected' : '' }}>7 MTs</option>
+                        <option value="8 MTs" {{ request('kelas') == '8 MTs' ? 'selected' : '' }}>8 MTs</option>
+                        <option value="9 MTs" {{ request('kelas') == '9 MTs' ? 'selected' : '' }}>9 MTs</option>
+                        <option value="10 MA" {{ request('kelas') == '10 MA' ? 'selected' : '' }}>10 MA</option>
+                        <option value="11 MA" {{ request('kelas') == '11 MA' ? 'selected' : '' }}>11 MA</option>
+                        <option value="12 MA" {{ request('kelas') == '12 MA' ? 'selected' : '' }}>12 MA</option>
+                    </select>
+                </div>
+
+                <!-- Input Search -->
+                <div class="input-group" style="min-width: 250px;">
+                    <input type="text" name="search" class="form-control border-0 bg-light rounded-start-pill px-3 py-2" placeholder="Cari nama santri..." value="{{ request('search') }}">
+                    <button class="btn btn-light border-0 bg-light rounded-end-pill px-3" type="submit">
+                        <i class="bi bi-search text-muted"></i>
+                    </button>
+                    @if(request('search') || request('kelas'))
+                        <a href="{{ route('santri.index') }}" class="btn btn-danger rounded-pill ms-2 px-3 d-flex align-items-center justify-content-center" title="Reset Filter">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    @endif
+                </div>
+            </form>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">

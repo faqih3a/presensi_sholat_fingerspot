@@ -56,9 +56,23 @@ class SantriController extends Controller
         return response()->json($santris);
     }
 
-    public function adminList()
+    public function adminList(Request $request)
     {
-        $santris = Santri::orderBy('id', 'asc')->get();
+        $search = $request->input('search');
+        $kelas = $request->input('kelas');
+
+        $query = Santri::query();
+
+        $query->when($search, function ($q) use ($search) {
+            return $q->where('nama', 'like', '%' . $search . '%');
+        });
+
+        $query->when($kelas, function ($q) use ($kelas) {
+            return $q->where('kelas', $kelas);
+        });
+
+        $santris = $query->orderBy('nama', 'asc')->paginate(15)->withQueryString();
+
         return view('santri.index', compact('santris'));
     }
 
