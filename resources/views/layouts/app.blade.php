@@ -511,7 +511,7 @@
                             <span class="sidebar-text">Dashboard Santri</span>
                         </a>
                         <a class="list-group-item list-group-item-action {{ request()->is('izin') || request()->is('izin/create') ? 'active' : '' }}" href="{{ route('izin.index') }}">
-                            <i class="bi bi-file-earmark-text-fill"></i>
+                            <i class="bi bi-envelope-open-fill"></i>
                             <span class="sidebar-text">Permohonan Izin</span>
                         </a>
                     @endif
@@ -544,7 +544,7 @@
                         </a>
                         
                         <a class="list-group-item list-group-item-action {{ request()->is('izin/manage') ? 'active' : '' }}" href="{{ route('izin.manage') }}">
-                            <i class="bi bi-file-earmark-check-fill"></i>
+                            <i class="bi bi-envelope-open-fill"></i>
                             <span class="sidebar-text">Kelola Izin</span>
                         </a>
                         
@@ -656,7 +656,7 @@
                     <span>Home</span>
                 </a>
                 <a href="{{ route('izin.index') }}" class="bottom-nav-item {{ request()->is('izin*') ? 'active' : '' }}">
-                    <i class="bi bi-file-earmark-text-fill"></i>
+                    <i class="bi bi-envelope-open-fill"></i>
                     <span>Izin</span>
                 </a>
                 <a href="{{ route('profile.index') }}" class="bottom-nav-item {{ request()->is('profile*') ? 'active' : '' }}">
@@ -670,14 +670,14 @@
                 </a>
                 <a href="{{ route('santri.index') }}" class="bottom-nav-item {{ request()->is('santri*') ? 'active' : '' }}">
                     <i class="bi bi-people-fill"></i>
-                    <span>Jamaah</span>
+                    <span>Santri</span>
                 </a>
                 <a href="/kehadiran-sholat" class="bottom-nav-item {{ request()->is('kehadiran-sholat*') ? 'active' : '' }}">
                     <i class="bi bi-clipboard2-check-fill"></i>
                     <span>Riwayat</span>
                 </a>
                 <a href="{{ route('izin.manage') }}" class="bottom-nav-item {{ request()->is('izin/manage*') ? 'active' : '' }}">
-                    <i class="bi bi-file-earmark-check-fill"></i>
+                    <i class="bi bi-envelope-open-fill"></i>
                     <span>Izin</span>
                 </a>
                 <a href="{{ route('profile.index') }}" class="bottom-nav-item {{ request()->is('profile*') ? 'active' : '' }}">
