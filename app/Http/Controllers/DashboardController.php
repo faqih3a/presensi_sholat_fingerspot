@@ -150,14 +150,19 @@ class DashboardController extends Controller
             $start = $end->copy()->subDays(30);
         }
 
+        $chartStartStr = $start->format('Y-m-d');
+        $chartEndStr = $end->format('Y-m-d');
+
+        $dailyCounts = \App\Models\Presensi::whereBetween('tanggal', [$chartStartStr, $chartEndStr])
+                                            ->selectRaw('tanggal, COUNT(DISTINCT santri_id) as total')
+                                            ->groupBy('tanggal')
+                                            ->pluck('total', 'tanggal')
+                                            ->toArray();
+
         while ($start->lte($end)) {
             $dateStr = $start->format('Y-m-d');
             $chartLabels[] = $start->format('d M');
-            
-            $count = \App\Models\Presensi::where('tanggal', $dateStr)
-                                         ->distinct('santri_id')
-                                         ->count('santri_id');
-            $chartData[] = $count;
+            $chartData[] = $dailyCounts[$dateStr] ?? 0;
             $start->addDay();
         }
 
@@ -166,23 +171,38 @@ class DashboardController extends Controller
         $weeklyData = [];
         $dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
         $nowCarbon = \Carbon\Carbon::now('Asia/Jakarta');
+
+        $startWeeklyDate = $nowCarbon->copy()->subDays(6)->format('Y-m-d');
+        $endWeeklyDate = $nowCarbon->format('Y-m-d');
+
+        $weeklyCounts = \App\Models\Presensi::whereBetween('tanggal', [$startWeeklyDate, $endWeeklyDate])
+                                            ->where('status', 'Hadir')
+                                            ->selectRaw('tanggal, COUNT(*) as total')
+                                            ->groupBy('tanggal')
+                                            ->pluck('total', 'tanggal')
+                                            ->toArray();
+
         for ($i = 6; $i >= 0; $i--) {
             $d = $nowCarbon->copy()->subDays($i);
+            $dateStr = $d->format('Y-m-d');
             $weeklyLabels[] = $dayNames[$d->dayOfWeek];
-            $weeklyData[] = \App\Models\Presensi::where('tanggal', $d->format('Y-m-d'))
-                                                 ->where('status', 'Hadir')
-                                                 ->count();
+            $weeklyData[] = $weeklyCounts[$dateStr] ?? 0;
         }
 
         // === Per-Prayer-Time Chart Data (today) ===
         $today = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
         $prayerLabels = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
         $prayerData = [];
+
+        $prayerCounts = \App\Models\Presensi::where('tanggal', $today)
+                                            ->where('status', 'Hadir')
+                                            ->selectRaw('waktu_sholat, COUNT(*) as total')
+                                            ->groupBy('waktu_sholat')
+                                            ->pluck('total', 'waktu_sholat')
+                                            ->toArray();
+
         foreach ($prayerLabels as $p) {
-            $prayerData[] = \App\Models\Presensi::where('tanggal', $today)
-                                                 ->where('waktu_sholat', $p)
-                                                 ->where('status', 'Hadir')
-                                                 ->count();
+            $prayerData[] = $prayerCounts[$p] ?? 0;
         }
 
         // === Total Scan Hari Ini (all scans today, not just unique santri) ===
@@ -238,10 +258,15 @@ class DashboardController extends Controller
             $distQuery->where('waktu_sholat', $waktuSholat);
         }
         
+        $statusCounts = (clone $distQuery)->selectRaw('status, COUNT(*) as total')
+                                          ->groupBy('status')
+                                          ->pluck('total', 'status')
+                                          ->toArray();
+
         $statusData = [
-            (clone $distQuery)->where('status', 'Hadir')->count(),
-            (clone $distQuery)->where('status', 'Izin')->count(),
-            (clone $distQuery)->where('status', 'Alfa')->count(),
+            $statusCounts['Hadir'] ?? 0,
+            $statusCounts['Izin'] ?? 0,
+            $statusCounts['Alfa'] ?? 0,
         ];
 
         // Determine next prayer time
