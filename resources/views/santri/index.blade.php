@@ -18,7 +18,11 @@
     .card-stats {
         border-radius: 1rem;
         border: none;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease;
+    }
+    .card-stats:hover {
+        transform: translateY(-2px);
     }
     .table th {
         font-weight: 700;
@@ -134,6 +138,27 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Santri</span>
+                    <span class="h3 fw-bold text-dark mb-0">
+                        @if(method_exists($santris, 'total'))
+                            {{ $santris->total() }}
+                        @else
+                            {{ count($santris) }}
+                        @endif
+                    </span>
+                </div>
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-success" style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1);">
+                    <i class="bi bi-people-fill fs-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="card card-stats overflow-hidden">
         <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
