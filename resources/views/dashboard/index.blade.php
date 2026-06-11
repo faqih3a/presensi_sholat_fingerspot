@@ -42,16 +42,17 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
 {{-- 4 Summary Cards --}}
 <div class="row g-3 mb-4">
     <div class="col-xl-3 col-md-6">
-        <div class="stat-card">
+        <div class="stat-card h-100">
             <div>
                 <div class="stat-label">Total Jamaah Terdaftar</div>
                 <div class="stat-value text-dark">{{ number_format($totalSantri) }}</div>
+                <div class="stat-sub">Santri terdaftar aktif</div>
             </div>
             <div class="icon-box" style="background:rgba(25,135,84,.12)"><i class="bi bi-people-fill text-success"></i></div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="stat-card">
+        <div class="stat-card h-100">
             <div>
                 <div class="stat-label">Jamaah Hadir Hari Ini</div>
                 <div class="stat-value text-dark">{{ number_format($jamaahHadirHariIni) }}</div>
@@ -61,7 +62,7 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="stat-card">
+        <div class="stat-card h-100">
             <div>
                 <div class="stat-label">Ketepatan Waktu</div>
                 <div class="stat-value text-dark">{{ $ketepatanWaktu }}%</div>
@@ -71,7 +72,7 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="stat-card">
+        <div class="stat-card h-100">
             <div>
                 <div class="stat-label">Total Scan Hari Ini</div>
                 <div class="stat-value text-dark">{{ number_format($totalScanHariIni) }}</div>
@@ -127,8 +128,8 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
 
 {{-- Charts Section --}}
 <div class="row g-4 mb-4">
-    <div class="col-lg-7">
-        <div class="chart-card h-100">
+    <div class="col-lg-7 d-flex flex-column">
+        <div class="chart-card w-100 flex-grow-1">
             <div class="mb-3">
                 <div class="chart-title">Grafik Kehadiran Mingguan</div>
                 <div class="chart-sub">Perbandingan kehadiran jamaah 7 hari terakhir</div>
@@ -136,8 +137,8 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
             <div style="height:280px"><canvas id="weeklyChart"></canvas></div>
         </div>
     </div>
-    <div class="col-lg-5">
-        <div class="chart-card h-100">
+    <div class="col-lg-5 d-flex flex-column">
+        <div class="chart-card w-100 flex-grow-1">
             <div class="mb-3">
                 <div class="chart-title">Kehadiran Per Waktu Sholat</div>
                 <div class="chart-sub">Distribusi jamaah hari ini</div>
@@ -149,8 +150,8 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
 
 {{-- Izin & Alfa + Activity --}}
 <div class="row g-4 mb-4">
-    <div class="col-lg-6">
-        <div class="chart-card h-100">
+    <div class="col-lg-6 d-flex flex-column">
+        <div class="chart-card w-100 flex-grow-1">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="chart-title mb-0">Santri Izin (Periode)</h5>
                 <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-3">{{ $izinTodayRecords->count() }} Santri</span>
@@ -174,8 +175,8 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
             @endif
         </div>
     </div>
-    <div class="col-lg-6">
-        <div class="chart-card h-100">
+    <div class="col-lg-6 d-flex flex-column">
+        <div class="chart-card w-100 flex-grow-1">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="chart-title mb-0">Santri Alfa (Periode)</h5>
                 <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">{{ $alfaTodayRecords->count() }} Santri</span>
