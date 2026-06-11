@@ -298,7 +298,7 @@ class DashboardController extends Controller
         $ketepatanWaktu = $totalExpectedToday > 0 ? round(($hadirToday / $totalExpectedToday) * 100, 0) : 0;
 
         // Ambil jadwal sholat untuk tanggal akhir range
-        $jadwal = $this->getJadwalSholat(\Carbon\Carbon::parse($endDate, 'Asia/Jakarta'));
+        $jadwal = $this->getJadwalSholat(\Carbon\Carbon::now('Asia/Jakarta'));
 
         // Fetch specifically for the range's Izin and Alfa lists
         $izinTodayRecords = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])

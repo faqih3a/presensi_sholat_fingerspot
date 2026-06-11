@@ -44,7 +44,7 @@ function getJadwalSholat(Carbon $date): array
 
     return Cache::remember($cacheKey, 86400, function () use ($date, $address) {
         try {
-            $response = Http::timeout(5)->get('https://api.aladhan.com/v1/timingsByAddress', [
+            $response = Http::timeout(2)->get('https://api.aladhan.com/v1/timingsByAddress', [
                 'address' => $address,
                 'method'  => 20, // Kemenag RI
                 'date'    => $date->format('d-m-Y'),
