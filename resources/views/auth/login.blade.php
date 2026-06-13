@@ -177,18 +177,8 @@
         <div class="col-lg-6 d-none d-lg-flex right-panel">
             <div class="glass-effect">
                 <h1 class="display-4 fw-800 mb-3" style="letter-spacing: -2px;">Digital Attendance System</h1>
-                <p class="lead mb-4 opacity-75">Sistem presensi berbasis AI Face Recognition untuk kemudahan pemantauan ibadah santri di lingkungan Thursina IIBS.</p>
+                <p class="lead mb-4 opacity-75">Sistem presensi berbasis Face Recognition untuk kemudahan pemantauan ibadah santri di lingkungan Thursina.</p>
                 <div class="d-flex justify-content-center gap-4 mt-2">
-                    <div class="text-center">
-                        <h4 class="fw-bold mb-0">100%</h4>
-                        <p class="small opacity-50 mb-0">Accurate</p>
-                    </div>
-                    <div class="border-start opacity-25"></div>
-                    <div class="text-center">
-                        <h4 class="fw-bold mb-0">AI</h4>
-                        <p class="small opacity-50 mb-0">Powered</p>
-                    </div>
-                    <div class="border-start opacity-25"></div>
                     <div class="text-center">
                         <h4 class="fw-bold mb-0">Live</h4>
                         <p class="small opacity-50 mb-0">Reports</p>
