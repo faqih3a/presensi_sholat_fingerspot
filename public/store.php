@@ -226,11 +226,11 @@ if (!$santri) {
 
         logWebhook("AUTO-CREATE: Santri baru dari attlog - pin=$pin, email=$email");
 
-        // AUTO-FETCH NAME: Kirim request get_userinfo ke API Fingerspot
-        // agar mesin mengirimkan nama asli santri via webhook handleGetUserinfo
+        // AUTO-FETCH NAME (FIRE & FORGET): Kirim request get_userinfo ke API Fingerspot
+        // Gunakan timeout rendah (1 detik) agar tidak menghambat webhook response (menghindari duplikasi/retry webhook).
         try {
-            logWebhook("AUTO-FETCH-NAME: Memicu get_userinfo ke mesin untuk PIN $pin...");
-            Http::timeout(3)->withHeaders([
+            logWebhook("AUTO-FETCH-NAME: Memicu get_userinfo untuk PIN $pin (Fire & Forget)...");
+            Http::timeout(1)->connectTimeout(1)->withHeaders([
                 'Content-Type'  => 'application/json',
                 'Authorization' => 'Bearer DWJ7LY8ZJQ6CD5NN'
             ])->post('https://developer.fingerspot.io/api/get_userinfo', [
@@ -239,7 +239,8 @@ if (!$santri) {
                 'pin'      => (string) $pin,
             ]);
         } catch (\Exception $e) {
-            logWebhook("AUTO-FETCH-NAME ERROR: Gagal memicu get_userinfo untuk PIN $pin - " . $e->getMessage());
+            // Abaikan timeout/koneksi terputus karena ini bersifat fire-and-forget
+            logWebhook("AUTO-FETCH-NAME: Request sent for PIN $pin");
         }
     } catch (\Exception $e) {
         logWebhook("ERROR: Gagal auto-create santri pin=$pin - " . $e->getMessage());
