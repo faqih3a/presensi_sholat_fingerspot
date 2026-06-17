@@ -406,20 +406,12 @@ function handleGetUserinfo(array $decoded): void
     $cloudId = $decoded['cloud_id'] ?? 'unknown';
     $data    = $decoded['data'] ?? null;
     
-    // Cari PIN terkait dari transId jika ada di cache
-    $cachedPin = Cache::get("sync_trans_{$transId}");
- 
     // Skenario Error Handling: Jika data berisi string error (seperti "ERROR_NO_ID") atau bukan array/objek valid
     if (empty($data) || !is_array($data)) {
         logWebhook("INFO: get_userinfo skipped because data is not an array (e.g. ERROR_NO_ID). trans_id=$transId");
         
         // Increment counter error berurutan untuk deteksi ujung data santri
         Cache::increment('sync_consecutive_errors');
-        
-        // Simpan status error untuk PIN yang dikirim
-        if ($cachedPin) {
-            Cache::put("sync_error_pin_{$cachedPin}", 'ERROR_NO_ID', 60);
-        }
         
         echo json_encode([
             'status'  => 'ok',
@@ -431,11 +423,6 @@ function handleGetUserinfo(array $decoded): void
     if (!isset($data['pin'])) {
         // PIN tidak ada di mesin — abaikan, dan hitung sebagai error berurutan
         Cache::increment('sync_consecutive_errors');
-        
-        if ($cachedPin) {
-            Cache::put("sync_error_pin_{$cachedPin}", 'ERROR_NO_ID', 60);
-        }
-        
         echo json_encode(['status' => 'ok', 'message' => 'PIN not found on device — skipped']);
         return;
     }
