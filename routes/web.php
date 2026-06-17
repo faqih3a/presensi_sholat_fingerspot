@@ -47,7 +47,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/santri/{santri}/edit', [SantriController::class, 'edit'])->name('santri.edit');
         Route::put('/santri/{santri}', [SantriController::class, 'update'])->name('santri.update');
         Route::delete('/santri/{santri}', [SantriController::class, 'destroy'])->name('santri.destroy');
-        Route::post('/santri/sync-pin', [SantriController::class, 'syncPin'])->name('santri.sync-pin');
         
         Route::get('/izin/manage', [IzinController::class, 'manage'])->name('izin.manage');
         Route::post('/izin/{izin}/status', [IzinController::class, 'updateStatus'])->name('izin.update-status');

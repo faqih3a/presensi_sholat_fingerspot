@@ -235,17 +235,7 @@
             <h1 class="h3 mb-1 text-dark fw-bold">Data Santri</h1>
             <p class="text-muted small mb-0">Kelola daftar santri yang terdaftar dalam sistem presensi wajah.</p>
         </div>
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <!-- Targeted Sync Input Group -->
-            <form id="form-targeted-sync" class="d-flex align-items-center me-md-2">
-                <div class="input-group">
-                    <input type="number" id="sync-pin-input" name="pin" class="form-control border shadow-sm" placeholder="PIN Mesin..." min="1" required style="max-width: 140px; border-radius: 0.5rem 0 0 0.5rem;">
-                    <button type="submit" id="btn-sync-pin" class="btn btn-success fw-bold" style="border-radius: 0 0.5rem 0.5rem 0;">
-                        <i class="bi bi-cloud-download-fill me-1"></i> Tarik PIN
-                    </button>
-                </div>
-            </form>
-
+        <div class="d-flex gap-2">
             <button type="button" id="btn-sync-mesin" class="btn btn-light border shadow-sm px-4 py-2 fw-bold text-dark" onclick="syncMesin()">
                 <i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin
             </button>
@@ -1061,81 +1051,5 @@
             }
         } catch (e) { /* ignore */ }
     })();
-
-    // ─── Targeted PIN Sync Handler ──────────────────────────────────────
-    const formTargetedSync = document.getElementById('form-targeted-sync');
-    if (formTargetedSync) {
-        formTargetedSync.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            
-            const pinInput = document.getElementById('sync-pin-input');
-            const submitBtn = document.getElementById('btn-sync-pin');
-            const pin = pinInput.value.trim();
-            
-            if (!pin) return;
-            
-            // Set loading state
-            pinInput.disabled = true;
-            submitBtn.disabled = true;
-            const originalHtml = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
-            
-            try {
-                const response = await fetch('{{ route("santri.sync-pin") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ pin: pin })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    if (typeof Swal !== 'undefined') {
-                        await Swal.fire({
-                            title: 'Sukses!',
-                            text: result.message,
-                            icon: 'success',
-                            confirmButtonColor: '#198754'
-                        });
-                    } else {
-                        alert('Sukses: ' + result.message);
-                    }
-                    window.location.reload();
-                } else {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            title: 'Gagal!',
-                            text: result.message,
-                            icon: 'error',
-                            confirmButtonColor: '#dc3545'
-                        });
-                    } else {
-                        alert('Gagal: ' + result.message);
-                    }
-                }
-            } catch (error) {
-                console.error(error);
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: 'Terjadi kesalahan sistem saat sinkronisasi PIN.',
-                        icon: 'error',
-                        confirmButtonColor: '#dc3545'
-                    });
-                } else {
-                    alert('Error: Terjadi kesalahan sistem saat sinkronisasi PIN.');
-                }
-            } finally {
-                // Reset loading state
-                pinInput.disabled = false;
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalHtml;
-            }
-        });
-    }
 </script>
 @endpush
