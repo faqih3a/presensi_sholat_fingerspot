@@ -389,9 +389,19 @@ function handleGetUserinfo(array $decoded): void
     $transId = $decoded['trans_id'] ?? 'unknown';
     $cloudId = $decoded['cloud_id'] ?? 'unknown';
     $data    = $decoded['data'] ?? null;
-
-    if (!$data || !isset($data['pin'])) {
-        // PIN tidak ada di mesin — abaikan, tidak perlu log
+ 
+    // Skenario Error Handling: Jika data berisi string error (seperti "ERROR_NO_ID") atau bukan array/objek valid
+    if (empty($data) || !is_array($data)) {
+        logWebhook("INFO: get_userinfo skipped because data is not an array (e.g. ERROR_NO_ID). trans_id=$transId");
+        echo json_encode([
+            'status'  => 'ok',
+            'message' => 'Error or empty data ignored successfully'
+        ]);
+        return;
+    }
+ 
+    if (!isset($data['pin'])) {
+        // PIN tidak ada di mesin — abaikan
         echo json_encode(['status' => 'ok', 'message' => 'PIN not found on device — skipped']);
         return;
     }
