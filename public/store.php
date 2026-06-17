@@ -393,6 +393,10 @@ function handleGetUserinfo(array $decoded): void
     // Skenario Error Handling: Jika data berisi string error (seperti "ERROR_NO_ID") atau bukan array/objek valid
     if (empty($data) || !is_array($data)) {
         logWebhook("INFO: get_userinfo skipped because data is not an array (e.g. ERROR_NO_ID). trans_id=$transId");
+        
+        // Increment counter error berurutan untuk deteksi ujung data santri
+        Cache::increment('sync_consecutive_errors');
+        
         echo json_encode([
             'status'  => 'ok',
             'message' => 'Error or empty data ignored successfully'
@@ -401,10 +405,14 @@ function handleGetUserinfo(array $decoded): void
     }
  
     if (!isset($data['pin'])) {
-        // PIN tidak ada di mesin — abaikan
+        // PIN tidak ada di mesin — abaikan, dan hitung sebagai error berurutan
+        Cache::increment('sync_consecutive_errors');
         echo json_encode(['status' => 'ok', 'message' => 'PIN not found on device — skipped']);
         return;
     }
+
+    // Jika data valid, reset counter error berurutan
+    Cache::put('sync_consecutive_errors', 0, 300);
 
     $pin       = $data['pin'] ?? '-';
     $nameInput = trim($data['name'] ?? '');

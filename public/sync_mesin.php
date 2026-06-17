@@ -154,10 +154,19 @@ $progress = [
 ];
 updateProgress($progressFile, $progress);
 
+// Reset counter error berurutan di awal sinkronisasi
+\Illuminate\Support\Facades\Cache::put('sync_consecutive_errors', 0, 300);
+
 // ─── Background: Kirim perintah get_userinfo dalam batch ────────────
 $allResults = [];
 
 for ($batchStart = 1; $batchStart <= $maxPin; $batchStart += $batchSize) {
+    // Cek apakah dideteksi 5+ ERROR_NO_ID berturut-turut dari webhook
+    $consecutiveErrors = \Illuminate\Support\Facades\Cache::get('sync_consecutive_errors', 0);
+    if ($consecutiveErrors >= 5) {
+        break; // Hentikan sinkronisasi karena sudah mencapai batas akhir user terdaftar
+    }
+
     // Cek apakah dibatalkan
     $currentProgress = readProgress($progressFile);
     if ($currentProgress && $currentProgress['status'] === 'cancelled') {
