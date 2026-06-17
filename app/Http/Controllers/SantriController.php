@@ -181,4 +181,84 @@ class SantriController extends Controller
         }
         return redirect()->route('santri.index')->with('success', 'Data santri berhasil dihapus.');
     }
+
+    public function syncMesin(Request $request)
+    {
+        $apiUrl = 'https://developer.fingerspot.io/api/get_userlist';
+        $apiToken = 'DWJ7LY8ZJQ6CD5NN';
+        $cloudId = 'S118001290';
+
+        try {
+            // Langkah 1: Tarik Daftar PIN Valid menggunakan get_userlist
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $apiToken
+            ])->post($apiUrl, [
+                'trans_id' => (string) rand(100000, 999999999),
+                'cloud_id' => $cloudId,
+            ]);
+
+            if (!$response->successful() || !$response->json('success')) {
+                $errMessage = $response->json('message') ?? 'Gagal menghubungi Fingerspot Cloud API.';
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Langkah 1 Gagal: ' . $errMessage
+                ], 400);
+            }
+
+            $dataList = $response->json('data') ?? [];
+            if (!is_array($dataList)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Langkah 1 Gagal: Format data respons tidak valid.'
+                ], 400);
+            }
+
+            // Ekstrak PIN valid dari daftar user
+            $pins = [];
+            foreach ($dataList as $item) {
+                $pin = $item['pin'] ?? $item['user_id'] ?? $item['emp_pin'] ?? null;
+                if ($pin !== null) {
+                    $pins[] = (string) $pin;
+                }
+            }
+
+            if (empty($pins)) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Tidak ada PIN pengguna yang terdaftar di mesin.',
+                    'count' => 0
+                ]);
+            }
+
+            // Langkah 2: Kirim get_userinfo untuk setiap PIN valid (secara paralel menggunakan Pool)
+            $infoUrl = 'https://developer.fingerspot.io/api/get_userinfo';
+            
+            \Illuminate\Support\Facades\Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($pins, $cloudId, $apiToken, $infoUrl) {
+                foreach ($pins as $pin) {
+                    $pool->timeout(2)->connectTimeout(2)->withHeaders([
+                        'Content-Type' => 'application/json',
+                        'Authorization' => 'Bearer ' . $apiToken
+                    ])->post($infoUrl, [
+                        'trans_id' => (string) rand(100000, 999999999),
+                        'cloud_id' => $cloudId,
+                        'pin'      => (string) $pin,
+                    ]);
+                }
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Berhasil mengirim perintah sinkronisasi untuk ' . count($pins) . ' santri terdaftar di mesin.',
+                'count' => count($pins),
+                'pins' => $pins
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat sinkronisasi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

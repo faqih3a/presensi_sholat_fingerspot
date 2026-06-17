@@ -699,9 +699,7 @@
     }
 
     // ─── Sinkronisasi Mesin (Async + Progress Polling) ──────────────────
-    let syncPollingTimer = null;
-    const SYNC_POLL_INTERVAL = 1500; // 1.5 detik
-
+    // ─── Sinkronisasi Mesin (Smart Sync) ────────────────────────────────
     // Elemen-elemen overlay
     const syncOverlay     = document.getElementById('syncOverlay');
     const syncIcon        = document.getElementById('syncIcon');
@@ -718,27 +716,35 @@
     async function syncMesin() {
         const btn = document.getElementById('btn-sync-mesin');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memulai...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
 
         // Tampilkan overlay
         showSyncOverlay();
 
         try {
-            // Kirim perintah START ke sync_mesin.php (akan langsung return)
-            const response = await fetch('/sync_mesin.php?action=start', { method: 'POST' });
+            const response = await fetch('{{ route("santri.sync-mesin") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            });
             const result = await response.json();
 
-            if (result.status === 'started' || result.status === 'already_running') {
-                // Mulai polling progress
-                startProgressPolling();
+            if (result.success) {
+                // Selesai
+                syncProgressBar.style.width = '100%';
+                syncProgressText.textContent = `${result.count} PIN`;
+                onSyncComplete(result);
             } else {
-                showSyncError(result.message || 'Gagal memulai sinkronisasi.');
+                showSyncError(result.message || 'Gagal sinkronisasi.');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin';
             }
         } catch (error) {
-            console.error('Sync start error:', error);
-            showSyncError('Terjadi kesalahan jaringan saat memulai sinkronisasi.');
+            console.error('Sync error:', error);
+            showSyncError('Terjadi kesalahan jaringan saat sinkronisasi.');
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin';
         }
@@ -752,104 +758,27 @@
         syncIcon.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
         syncTitle.textContent = 'Sinkronisasi Mesin';
         syncPhase.className = 'sync-phase sending';
-        syncPhaseText.textContent = 'Mengirim perintah...';
-        syncMessage.textContent = 'Memulai proses sinkronisasi...';
-        syncProgressBar.style.width = '0%';
-        syncProgressText.textContent = '0 / 150';
+        syncPhaseText.textContent = 'Menghubungkan...';
+        syncMessage.textContent = 'Menarik daftar PIN aktif dan mengirimkan perintah sinkronisasi ke mesin absensi...';
+        syncProgressBar.style.width = '40%';
+        syncProgressText.textContent = 'Menghubungkan';
         syncStats.style.display = 'none';
-        syncCancelBtn.style.display = '';
-        syncActions.innerHTML = `
-            <button type="button" class="btn btn-sm btn-outline-danger px-4 rounded-pill" id="syncCancelBtn" onclick="cancelSync()">
-                <i class="bi bi-x-lg me-1"></i> Batalkan
-            </button>
-        `;
+        if (syncCancelBtn) syncCancelBtn.style.display = 'none';
+        syncActions.innerHTML = '';
         syncOverlay.classList.add('active');
     }
 
-    function startProgressPolling() {
-        if (syncPollingTimer) clearInterval(syncPollingTimer);
-
-        syncPollingTimer = setInterval(async () => {
-            try {
-                const resp = await fetch('/sync_mesin.php?action=status');
-                const progress = await resp.json();
-                updateSyncUI(progress);
-
-                // Berhenti polling jika selesai/error/cancelled
-                if (['completed', 'cancelled', 'idle'].includes(progress.status)) {
-                    clearInterval(syncPollingTimer);
-                    syncPollingTimer = null;
-                }
-            } catch (err) {
-                console.error('Polling error:', err);
-            }
-        }, SYNC_POLL_INTERVAL);
-    }
-
-    function updateSyncUI(progress) {
-        if (!progress || progress.status === 'idle') return;
-
-        const total = progress.total_pins || 150;
-        const sent = progress.sent || 0;
-        const pct = Math.round((sent / total) * 100);
-
-        // Update progress bar
-        syncProgressBar.style.width = pct + '%';
-        syncProgressText.textContent = `${sent} / ${total}`;
-
-        // Update message
-        syncMessage.textContent = progress.message || '';
-
-        // Update phase badge
-        const phase = progress.phase || 'sending_commands';
-        if (phase === 'sending_commands') {
-            syncPhase.className = 'sync-phase sending';
-            syncPhaseText.innerHTML = '<i class="bi bi-broadcast me-1"></i> Mengirim ke Mesin';
-        } else if (phase === 'waiting_webhook') {
-            syncPhase.className = 'sync-phase waiting';
-            syncPhaseText.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Menunggu Respon Mesin';
-            syncProgressBar.style.width = '85%';
-        } else if (phase === 'finalizing') {
-            syncPhase.className = 'sync-phase finalizing';
-            syncPhaseText.innerHTML = '<i class="bi bi-database-check me-1"></i> Memverifikasi Data';
-            syncProgressBar.style.width = '95%';
-        } else if (phase === 'done') {
-            syncPhase.className = 'sync-phase done';
-            syncPhaseText.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Selesai';
-            syncProgressBar.style.width = '100%';
-        }
-
-        // Tampilkan stats saat sudah mulai mengirim
-        if (sent > 0) {
-            syncStats.style.display = 'flex';
-            document.getElementById('statSuccess').textContent = progress.success || 0;
-            document.getElementById('statFailed').textContent = progress.failed || 0;
-            if (progress.total_santri_db) {
-                document.getElementById('statTotal').textContent = progress.total_santri_db;
-            }
-        }
-
-        // Jika selesai
-        if (progress.status === 'completed') {
-            onSyncComplete(progress);
-        } else if (progress.status === 'cancelled') {
-            onSyncCancelled();
-        }
-    }
-
-    function onSyncComplete(progress) {
+    function onSyncComplete(result) {
         // Ubah ikon jadi centang
         syncIcon.className = 'sync-icon';
         syncIcon.style.background = 'rgba(25,135,84,0.15)';
         syncIcon.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
         syncTitle.textContent = 'Sinkronisasi Berhasil!';
+        syncPhase.className = 'sync-phase done';
+        syncPhaseText.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Selesai';
+        syncMessage.textContent = result.message;
 
-        // Update stats total dari DB
-        if (progress.total_santri_db) {
-            document.getElementById('statTotal').textContent = progress.total_santri_db;
-        }
-
-        // Ganti tombol cancel jadi tombol tutup
+        // Ganti tombol jadi tombol tutup
         syncActions.innerHTML = `
             <button type="button" class="btn btn-sm btn-gradient-success px-4 rounded-pill fw-bold" onclick="closeSyncOverlay()">
                 <i class="bi bi-check-lg me-1"></i> Selesai
@@ -865,29 +794,6 @@
         btn.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin';
     }
 
-    function onSyncCancelled() {
-        syncIcon.className = 'sync-icon';
-        syncIcon.style.background = 'rgba(255,193,7,0.15)';
-        syncIcon.style.color = '#997404';
-        syncIcon.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i>';
-        syncTitle.textContent = 'Sinkronisasi Dibatalkan';
-        syncPhase.className = 'sync-phase error';
-        syncPhaseText.innerHTML = '<i class="bi bi-x-circle me-1"></i> Dibatalkan';
-
-        syncActions.innerHTML = `
-            <button type="button" class="btn btn-sm btn-light px-4 rounded-pill fw-bold" onclick="closeSyncOverlay()">
-                Tutup
-            </button>
-        `;
-
-        // Refresh tabel data (mungkin sebagian sudah tersinkron)
-        refreshSantriTable();
-
-        const btn = document.getElementById('btn-sync-mesin');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin';
-    }
-
     function showSyncError(message) {
         syncIcon.className = 'sync-icon';
         syncIcon.style.background = 'rgba(220,53,69,0.1)';
@@ -897,6 +803,8 @@
         syncPhase.className = 'sync-phase error';
         syncPhaseText.innerHTML = '<i class="bi bi-x-circle me-1"></i> Error';
         syncMessage.textContent = message;
+        syncProgressBar.style.width = '0%';
+        syncProgressText.textContent = 'Gagal';
 
         syncActions.innerHTML = `
             <button type="button" class="btn btn-sm btn-light px-4 rounded-pill fw-bold" onclick="closeSyncOverlay()">
@@ -905,20 +813,8 @@
         `;
     }
 
-    async function cancelSync() {
-        try {
-            await fetch('/sync_mesin.php?action=cancel', { method: 'POST' });
-        } catch (e) {
-            console.error('Cancel error:', e);
-        }
-    }
-
     function closeSyncOverlay() {
         syncOverlay.classList.remove('active');
-        if (syncPollingTimer) {
-            clearInterval(syncPollingTimer);
-            syncPollingTimer = null;
-        }
     }
 
     // ─── AJAX Table Refresh ─────────────────────────────────────────────
@@ -1036,20 +932,6 @@
         }
     }
 
-    // ─── Cek apakah ada sync yang sedang berjalan saat page load ────────
-    (async function checkOngoingSync() {
-        try {
-            const resp = await fetch('/sync_mesin.php?action=status');
-            const progress = await resp.json();
-            if (progress.status === 'running') {
-                const btn = document.getElementById('btn-sync-mesin');
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Menyinkronkan...';
-                showSyncOverlay();
-                updateSyncUI(progress);
-                startProgressPolling();
-            }
-        } catch (e) { /* ignore */ }
-    })();
+    // No ongoing sync check needed as sync is synchronous now
 </script>
 @endpush
