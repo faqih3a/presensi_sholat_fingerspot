@@ -182,4 +182,82 @@ class SantriController extends Controller
 
         return redirect()->route('santri.index')->with('success', 'Data santri berhasil dihapus.');
     }
+
+    public function syncPin(Request $request)
+    {
+        $pin = $request->input('pin');
+        if (empty($pin)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'PIN tidak boleh kosong.'
+            ]);
+        }
+
+        $transId = (string) rand(100000, 999999999);
+        
+        // Reset status error & simpan trans_id mapping
+        \Illuminate\Support\Facades\Cache::forget("sync_error_pin_{$pin}");
+        \Illuminate\Support\Facades\Cache::put("sync_trans_{$transId}", $pin, 300);
+
+        // Tembakkan API get_userinfo
+        try {
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer DWJ7LY8ZJQ6CD5NN'
+            ])->post('https://developer.fingerspot.io/api/get_userinfo', [
+                'trans_id' => $transId,
+                'cloud_id' => 'S118001290',
+                'pin'      => (string) $pin,
+            ]);
+
+            if (!$response->successful() || !$response->json('success')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengirimkan perintah ke mesin.'
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghubungi server Fingerspot: ' . $e->getMessage()
+            ]);
+        }
+
+        // Polling database/cache
+        $startTime = time();
+        $maxWait = 8; // 8 detik max wait
+        
+        $initialSantri = Santri::find($pin);
+        $initialUpdatedAt = $initialSantri ? $initialSantri->updated_at->toISOString() : null;
+
+        while (time() - $startTime < $maxWait) {
+            usleep(500000); // Sleep 500ms
+            
+            // Cek apakah ada record error dari webhook
+            if (\Illuminate\Support\Facades\Cache::get("sync_error_pin_{$pin}") === 'ERROR_NO_ID') {
+                \Illuminate\Support\Facades\Cache::forget("sync_error_pin_{$pin}");
+                return response()->json([
+                    'success' => false,
+                    'message' => 'PIN tidak ditemukan di mesin.'
+                ]);
+            }
+
+            // Cek data santri di DB
+            $currentSantri = Santri::find($pin);
+            if ($currentSantri) {
+                $currentUpdatedAt = $currentSantri->updated_at->toISOString();
+                if (!$initialSantri || $currentUpdatedAt !== $initialUpdatedAt) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Berhasil menarik data PIN $pin ({$currentSantri->nama})!"
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Timeout: Mesin offline atau lambat merespon.'
+        ]);
+    }
 }
