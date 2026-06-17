@@ -381,6 +381,9 @@ try {
 // =====================================================================
 // HANDLER: get_userinfo (data user dari mesin)
 // =====================================================================
+// LOGIKA: "Insert Ignore" — Jika PIN sudah ada di DB, SKIP.
+//         Jika belum ada, buat santri baru.
+// =====================================================================
 function handleGetUserinfo(array $decoded): void
 {
     $transId = $decoded['trans_id'] ?? 'unknown';
@@ -418,118 +421,100 @@ function handleGetUserinfo(array $decoded): void
     // Log detail lengkap
     logWebhook("USERINFO: trans_id=$transId, cloud_id=$cloudId, pin=$pin, name=$nameInput, privilege=$privLabel, finger=$finger, face=$face, rfid=" . ($rfid ?: '(kosong)') . ", vein=$vein, template_length=" . strlen($template));
 
-    // Cek apakah pin ini ada di database santri
+    // ─── Pengecekan Eksistensi: Cek apakah PIN sudah ada di database ────
     $santri = \App\Models\Santri::find($pin);
-    $dbStatus = "NOT FOUND in database";
 
+    if ($santri) {
+        // ════════════════════════════════════════════════════════════════
+        // PIN SUDAH ADA → SKIP (Tidak update apapun)
+        // ════════════════════════════════════════════════════════════════
+        logWebhook("SKIP: Santri sudah terdaftar di DB → santri_id={$santri->id}, nama={$santri->nama} (tidak di-update)");
+
+        // AUTO-FOTO: Jika santri belum punya foto, coba ambil dari presensi terakhir
+        if (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg') {
+            $latestPhoto = \App\Models\Presensi::where('santri_id', $santri->id)
+                ->whereNotNull('photo_url')
+                ->where('photo_url', '!=', '')
+                ->latest('updated_at')
+                ->first();
+            if ($latestPhoto) {
+                $santri->update(['foto_referensi' => $latestPhoto->photo_url]);
+                logWebhook("AUTO-PHOTO SYNC: Foto profil santri $pin diambil dari presensi terakhir");
+            }
+        }
+
+        echo json_encode([
+            'status'  => 'ok',
+            'message' => "PIN $pin sudah terdaftar (dilewati)",
+            'data'    => [
+                'trans_id'       => $transId,
+                'pin'            => $pin,
+                'action'         => 'skipped',
+                'matched_santri' => [
+                    'id'    => $santri->id,
+                    'nama'  => $santri->nama,
+                    'kelas' => $santri->kelas,
+                ],
+            ],
+        ]);
+        return;
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // PIN BELUM ADA → CREATE (Buat santri baru)
+    // ════════════════════════════════════════════════════════════════════
     try {
-        if (!$santri) {
-            // Buat email dari kata pertama nama (lowercase) + @thursina.id
-            $cleanNameForEmail = ($nameInput === '' || $nameInput === '-') ? '' : $nameInput;
-            $firstName = strtolower(explode(' ', trim($cleanNameForEmail))[0] ?? '');
-            if ($firstName === '' || $firstName === '-') $firstName = 'santri' . $pin;
-            $email = $firstName . '@thursina.id';
+        // Buat email dari kata pertama nama (lowercase) + @thursina.id
+        $cleanNameForEmail = ($nameInput === '' || $nameInput === '-') ? '' : $nameInput;
+        $firstName = strtolower(explode(' ', trim($cleanNameForEmail))[0] ?? '');
+        if ($firstName === '' || $firstName === '-') $firstName = 'santri' . $pin;
+        $email = $firstName . '@thursina.id';
 
-            // Buat user akun default (firstOrCreate untuk hindari duplikat email)
-            $user = \App\Models\User::firstOrCreate(
-                ['email' => $email],
-                [
-                    'name'     => $displayName,
-                    'password' => \Illuminate\Support\Facades\Hash::make('santri'),
-                    'role'     => 'santri',
-                ]
-            );
+        // Buat user akun default (firstOrCreate untuk hindari duplikat email)
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => $email],
+            [
+                'name'     => $displayName,
+                'password' => \Illuminate\Support\Facades\Hash::make('santri'),
+                'role'     => 'santri',
+            ]
+        );
 
-            // Buat santri baru (paksa ID sama dengan PIN dari mesin)
-            $santri = new \App\Models\Santri();
-            $santri->id             = $pin;
-            $santri->user_id        = $user->id;
-            $santri->nama           = $displayName;
-            $santri->kelas          = 'Belum Diatur'; // Dibiarkan kosong/Belum Diatur untuk update manual
-            $santri->foto_referensi = '';
-            $santri->finger_count   = 0; // Hardcode tipe jari ke 0
-            $santri->face_count     = 1; // Hardcode tipe wajah ke 1
-            $santri->template       = $template;
-            $santri->save();
+        // Buat santri baru (paksa ID sama dengan PIN dari mesin)
+        $santri = new \App\Models\Santri();
+        $santri->id             = $pin;
+        $santri->user_id        = $user->id;
+        $santri->nama           = $displayName;
+        $santri->kelas          = 'Belum Diatur';
+        $santri->foto_referensi = '';
+        $santri->finger_count   = 0;
+        $santri->face_count     = 1;
+        $santri->template       = $template;
+        $santri->save();
 
-            $dbStatus = "AUTO-CREATED → santri_id={$santri->id}, db_name={$santri->nama}";
-        } else {
-            // Santri sudah terdaftar di web — update nama dan biometrik jika berbeda
-            $updated = false;
+        logWebhook("CREATED: Santri baru berhasil dibuat → santri_id={$santri->id}, nama={$santri->nama}, email=$email");
 
-            // Generate new email based on first word of the name
-            $cleanNameForEmail = ($nameInput === '' || $nameInput === '-') ? '' : $nameInput;
-            $firstName = strtolower(explode(' ', trim($cleanNameForEmail))[0] ?? '');
-            if ($firstName === '' || $firstName === '-') $firstName = 'santri' . $pin;
-            $newEmail = $firstName . '@thursina.id';
+        echo json_encode([
+            'status'  => 'ok',
+            'message' => "Santri baru berhasil dibuat untuk PIN $pin ($displayName)",
+            'data'    => [
+                'trans_id'       => $transId,
+                'pin'            => $pin,
+                'action'         => 'created',
+                'matched_santri' => [
+                    'id'    => $santri->id,
+                    'nama'  => $santri->nama,
+                    'kelas' => $santri->kelas,
+                ],
+            ],
+        ]);
 
-            // Update nama jika berbeda
-            if ($santri->nama !== $displayName || ($santri->user && $santri->user->email !== $newEmail)) {
-                $santri->nama = $displayName;
-                
-                // Update user name and email as well
-                if ($santri->user) {
-                    $santri->user->name = $displayName;
-                    $santri->user->email = $newEmail;
-                    $santri->user->save();
-                }
-                $updated = true;
-            }
-
-            // Selalu pastikan tipe biometrik wajah di-hardcode
-            if ($santri->face_count !== 1 || $santri->finger_count !== 0 || $santri->template !== $template) {
-                $santri->finger_count = 0;
-                $santri->face_count = 1;
-                $santri->template = $template;
-                $updated = true;
-            }
-
-            if ($updated) {
-                $santri->save();
-                $dbStatus = "UPDATED → santri_id={$santri->id}, db_name={$santri->nama}";
-            } else {
-                $dbStatus = "SUDAH TERDAFTAR → santri_id={$santri->id}, db_name={$santri->nama} (dilewati)";
-            }
-        }
     } catch (\Exception $e) {
-        logWebhook("USERINFO DB ERROR: pin=$pin - " . $e->getMessage());
-        $dbStatus = "DB ERROR: " . $e->getMessage();
+        logWebhook("ERROR: Gagal membuat santri baru pin=$pin - " . $e->getMessage());
+        echo json_encode([
+            'status'  => 'error',
+            'message' => "Gagal membuat santri: " . $e->getMessage(),
+            'data'    => ['pin' => $pin, 'action' => 'error'],
+        ]);
     }
-
-    // AUTO-FOTO: Jika santri belum punya foto, ambil dari data presensi terakhir
-    if ($santri && (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg')) {
-        $latestPhoto = \App\Models\Presensi::where('santri_id', $santri->id)
-            ->whereNotNull('photo_url')
-            ->where('photo_url', '!=', '')
-            ->latest('updated_at')
-            ->first();
-        if ($latestPhoto) {
-            $santri->update(['foto_referensi' => $latestPhoto->photo_url]);
-            logWebhook("AUTO-PHOTO SYNC: Foto profil santri $pin diambil dari presensi terakhir");
-        }
-    }
-    
-    logWebhook("USERINFO MATCH: pin=$pin → $dbStatus");
-
-    echo json_encode([
-        'status'  => 'ok',
-        'message' => "Userinfo received for pin $pin ($name)",
-        'data'    => [
-            'trans_id'     => $transId,
-            'cloud_id'     => $cloudId,
-            'pin'          => $pin,
-            'name'         => $name,
-            'privilege'    => $privLabel,
-            'finger_count' => $finger,
-            'face_count'   => $face,
-            'has_rfid'     => !empty($rfid),
-            'has_password' => !empty($password),
-            'vein_count'   => $vein,
-            'matched_santri' => $santri ? [
-                'id'   => $santri->id,
-                'nama' => $santri->nama,
-                'kelas' => $santri->kelas,
-            ] : null,
-        ],
-    ]);
 }
