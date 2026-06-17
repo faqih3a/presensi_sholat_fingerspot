@@ -425,10 +425,38 @@ function handleGetUserinfo(array $decoded): void
     $santri = \App\Models\Santri::find($pin);
 
     if ($santri) {
-        // ════════════════════════════════════════════════════════════════
-        // PIN SUDAH ADA → SKIP (Tidak update apapun)
-        // ════════════════════════════════════════════════════════════════
-        logWebhook("SKIP: Santri sudah terdaftar di DB → santri_id={$santri->id}, nama={$santri->nama} (tidak di-update)");
+        // Cek apakah nama santri saat ini masih placeholder default
+        $isPlaceholder = (strpos($santri->nama, 'Nama Belum Diatur') !== false);
+        $hasRealName = (strpos($displayName, 'Nama Belum Diatur') === false);
+
+        if ($isPlaceholder && $hasRealName) {
+            logWebhook("UPDATE PLACEHOLDER: Mengubah nama placeholder santri $pin menjadi '$displayName'");
+            $santri->nama = $displayName;
+            $santri->save();
+
+            if ($santri->user) {
+                $santri->user->name = $displayName;
+                
+                // Cek jika email user juga masih email default (santri{PIN}@thursina.id)
+                $defaultEmail = 'santri' . $pin . '@thursina.id';
+                if ($santri->user->email === $defaultEmail) {
+                    $firstName = strtolower(explode(' ', trim($displayName))[0] ?? '');
+                    if ($firstName !== '' && $firstName !== '-') {
+                        $newEmail = $firstName . '@thursina.id';
+                        // Hindari email duplikat
+                        if (!\App\Models\User::where('email', $newEmail)->exists()) {
+                            $santri->user->email = $newEmail;
+                        }
+                    }
+                }
+                $santri->user->save();
+            }
+        } else {
+            // ════════════════════════════════════════════════════════════════
+            // PIN SUDAH ADA & BUKAN PLACEHOLDER → SKIP (Tidak update apapun)
+            // ════════════════════════════════════════════════════════════════
+            logWebhook("SKIP: Santri sudah terdaftar di DB → santri_id={$santri->id}, nama={$santri->nama} (tidak di-update)");
+        }
 
         // AUTO-FOTO: Jika santri belum punya foto, coba ambil dari presensi terakhir
         if (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg') {

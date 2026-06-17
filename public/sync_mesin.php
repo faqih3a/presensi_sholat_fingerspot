@@ -156,17 +156,32 @@ updateProgress($progressFile, $progress);
 
 // ─── Background: Kirim perintah get_userinfo dalam batch ────────────
 $allResults = [];
+$logFile = __DIR__ . '/../storage/logs/webhook.log';
+
+// Helper: log ke file yang sama dengan webhook
+function logSync(string $message) {
+    global $logFile;
+    try {
+        $timestamp = Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        file_put_contents($logFile, "[$timestamp] SYNC: $message\n", FILE_APPEND);
+    } catch (\Exception $e) {}
+}
+
+logSync("═══ SINKRONISASI DIMULAI ═══ Total PIN: $maxPin, Batch size: $batchSize");
 
 for ($batchStart = 1; $batchStart <= $maxPin; $batchStart += $batchSize) {
     // Cek apakah dibatalkan
     $currentProgress = readProgress($progressFile);
     if ($currentProgress && $currentProgress['status'] === 'cancelled') {
+        logSync("CANCELLED: Sinkronisasi dibatalkan oleh user pada batch PIN $batchStart");
         break;
     }
 
     $batchEnd = min($batchStart + $batchSize - 1, $maxPin);
     $multiHandle = curl_multi_init();
     $handles = [];
+
+    logSync("BATCH: Mengirim PIN $batchStart-$batchEnd...");
 
     // Buat semua cURL handles untuk batch ini
     for ($pin = $batchStart; $pin <= $batchEnd; $pin++) {
@@ -202,6 +217,8 @@ for ($batchStart = 1; $batchStart <= $maxPin; $batchStart += $batchSize) {
     } while ($running > 0);
 
     // Proses hasil batch
+    $batchSuccess = 0;
+    $batchFailed = 0;
     foreach ($handles as $pin => $info) {
         $ch = $info['handle'];
         $result = curl_multi_getcontent($ch);
@@ -211,6 +228,16 @@ for ($batchStart = 1; $batchStart <= $maxPin; $batchStart += $batchSize) {
         $decoded = json_decode($result, true);
         $success = !$error && ($decoded['success'] ?? false);
 
+        // Log setiap response untuk debugging
+        if ($error) {
+            logSync("  PIN $pin → CURL ERROR: $error");
+        } elseif (!$success) {
+            $msg = $decoded['message'] ?? $result ?? 'unknown';
+            logSync("  PIN $pin → API GAGAL (HTTP $httpCode): $msg");
+        } else {
+            logSync("  PIN $pin → OK (trans_id={$info['trans_id']})");
+        }
+
         $allResults[] = [
             'pin'      => $pin,
             'trans_id' => $info['trans_id'],
@@ -219,8 +246,10 @@ for ($batchStart = 1; $batchStart <= $maxPin; $batchStart += $batchSize) {
 
         if ($success) {
             $progress['success']++;
+            $batchSuccess++;
         } else {
             $progress['failed']++;
+            $batchFailed++;
         }
         $progress['sent']++;
 
@@ -229,6 +258,8 @@ for ($batchStart = 1; $batchStart <= $maxPin; $batchStart += $batchSize) {
     }
 
     curl_multi_close($multiHandle);
+
+    logSync("BATCH RESULT: PIN $batchStart-$batchEnd → $batchSuccess OK, $batchFailed gagal");
 
     // Update progress setelah setiap batch
     $progress['message'] = "Mengirim perintah ke mesin... ({$progress['sent']}/{$maxPin})";
@@ -252,6 +283,9 @@ $progress['phase'] = 'waiting_webhook';
 $progress['message'] = 'Perintah terkirim! Menunggu mesin mengirim data via webhook...';
 updateProgress($progressFile, $progress);
 
+logSync("FASE 2: Menunggu mesin mengirim data via webhook (8 detik)...");
+logSync("RINGKASAN PENGIRIMAN: {$progress['success']} OK, {$progress['failed']} gagal dari {$progress['sent']} total");
+
 // Tunggu beberapa detik agar webhook sempat diproses oleh mesin
 sleep(8);
 
@@ -269,6 +303,8 @@ $progress['message'] = "Sinkronisasi selesai! {$progress['success']} perintah be
 $progress['total_santri_db'] = $totalSantri;
 $progress['completed_at'] = Carbon::now('Asia/Jakarta')->toISOString();
 updateProgress($progressFile, $progress);
+
+logSync("═══ SINKRONISASI SELESAI ═══ Total santri di DB: $totalSantri");
 
 $kernel->terminate($request, new Illuminate\Http\Response());
 exit;
