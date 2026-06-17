@@ -225,6 +225,22 @@ if (!$santri) {
         $santri->save();
 
         logWebhook("AUTO-CREATE: Santri baru dari attlog - pin=$pin, email=$email");
+
+        // AUTO-FETCH NAME: Kirim request get_userinfo ke API Fingerspot
+        // agar mesin mengirimkan nama asli santri via webhook handleGetUserinfo
+        try {
+            logWebhook("AUTO-FETCH-NAME: Memicu get_userinfo ke mesin untuk PIN $pin...");
+            Http::timeout(3)->withHeaders([
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer DWJ7LY8ZJQ6CD5NN'
+            ])->post('https://developer.fingerspot.io/api/get_userinfo', [
+                'trans_id' => (string) rand(100000, 999999999),
+                'cloud_id' => 'S118001290',
+                'pin'      => (string) $pin,
+            ]);
+        } catch (\Exception $e) {
+            logWebhook("AUTO-FETCH-NAME ERROR: Gagal memicu get_userinfo untuk PIN $pin - " . $e->getMessage());
+        }
     } catch (\Exception $e) {
         logWebhook("ERROR: Gagal auto-create santri pin=$pin - " . $e->getMessage());
         echo json_encode(['status' => 'error', 'message' => 'Gagal membuat santri: ' . $e->getMessage()]);
