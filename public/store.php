@@ -259,25 +259,104 @@ if (!$waktuSholat) {
     logWebhook("INFO: Scan diluar waktu sholat, dicatat sebagai Tes - pin=$pin, waktu=$scanStr");
 }
 
-// ─── Simpan ke Database ─────────────────────────────────────────────
-// updateOrCreate: jika sudah ada record untuk santri+tanggal+waktu_sholat yang sama,
-// maka update (misal santri scan ulang). Jika belum ada, buat baru.
+// ─── Simpan ke Database (FIRST SCAN WINS) ───────────────────────────
+// Logika: Cek dulu apakah sudah ada record presensi untuk santri ini
+// pada tanggal & waktu sholat yang sama. Jika sudah ada dan berstatus
+// "Hadir", ABAIKAN scan baru (return OK agar mesin tidak kirim ulang).
+// Hanya buat record baru jika belum ada data sama sekali.
+// Untuk "Tes", setiap scan selalu membuat record baru (tidak ada constraint unik).
 try {
-    $presensi = Presensi::updateOrCreate(
-        [
+    // --- Khusus Tes: langsung create baru setiap kali scan ---
+    if ($waktuSholat === 'Tes') {
+        $presensi = Presensi::create([
             'santri_id'    => $santri->id,
             'tanggal'      => $tanggal,
             'waktu_sholat' => $waktuSholat,
-        ],
-        [
-            'waktu_hadir' => $waktuHadir,
-            'status'      => $waktuSholat === 'Tes' ? 'Tes' : 'Hadir',
-            'photo_url'   => $photoUrl,
-        ]
-    );
+            'waktu_hadir'  => $waktuHadir,
+            'status'       => 'Tes',
+            'photo_url'    => $photoUrl,
+        ]);
 
-    $action = $presensi->wasRecentlyCreated ? 'CREATED' : 'UPDATED';
-    logWebhook("SUCCESS: $action presensi - santri_id={$santri->id}, nama={$santri->nama}, tanggal=$tanggal, sholat=$waktuSholat, waktu=$waktuHadir, verify=$verify, status_scan=$statusScan");
+        logWebhook("SUCCESS: CREATED presensi Tes - santri_id={$santri->id}, nama={$santri->nama}, tanggal=$tanggal, waktu=$waktuHadir, verify=$verify, status_scan=$statusScan");
+
+        echo json_encode([
+            'status'  => 'ok',
+            'message' => "Presensi Tes recorded for {$santri->nama}",
+            'data'    => [
+                'santri_id'    => $santri->id,
+                'nama'         => $santri->nama,
+                'tanggal'      => $tanggal,
+                'waktu_sholat' => $waktuSholat,
+                'waktu_hadir'  => $waktuHadir,
+                'action'       => 'created',
+            ]
+        ]);
+        return;
+    }
+
+    // --- Presensi Sholat: First Scan Wins ---
+    // Cek apakah sudah ada record untuk santri + tanggal + waktu_sholat ini
+    $existing = Presensi::where('santri_id', $santri->id)
+        ->where('tanggal', $tanggal)
+        ->where('waktu_sholat', $waktuSholat)
+        ->first();
+
+    if ($existing && $existing->status === 'Hadir') {
+        // Record sudah ada & berstatus Hadir → ABAIKAN (jangan update/overwrite)
+        logWebhook("SKIP: Presensi sudah tercatat (First Scan Wins) - santri_id={$santri->id}, nama={$santri->nama}, tanggal=$tanggal, sholat=$waktuSholat, waktu_awal={$existing->waktu_hadir}, scan_baru=$waktuHadir");
+
+        echo json_encode([
+            'status'  => 'ok',
+            'message' => "Presensi $waktuSholat sudah tercatat sebelumnya untuk {$santri->nama} (scan diabaikan)",
+            'data'    => [
+                'santri_id'    => $santri->id,
+                'nama'         => $santri->nama,
+                'tanggal'      => $tanggal,
+                'waktu_sholat' => $waktuSholat,
+                'waktu_hadir'  => $existing->waktu_hadir,
+                'action'       => 'skipped',
+            ]
+        ]);
+        return;
+    }
+
+    if ($existing) {
+        // Record ada tapi statusnya bukan "Hadir" (misal: "Alfa" dari auto-generate)
+        // → Update ke "Hadir" karena santri ternyata hadir
+        $existing->update([
+            'waktu_hadir' => $waktuHadir,
+            'status'      => 'Hadir',
+            'photo_url'   => $photoUrl,
+        ]);
+
+        logWebhook("SUCCESS: UPDATED presensi (Alfa→Hadir) - santri_id={$santri->id}, nama={$santri->nama}, tanggal=$tanggal, sholat=$waktuSholat, waktu=$waktuHadir, verify=$verify, status_scan=$statusScan");
+
+        echo json_encode([
+            'status'  => 'ok',
+            'message' => "Presensi $waktuSholat updated to Hadir for {$santri->nama}",
+            'data'    => [
+                'santri_id'    => $santri->id,
+                'nama'         => $santri->nama,
+                'tanggal'      => $tanggal,
+                'waktu_sholat' => $waktuSholat,
+                'waktu_hadir'  => $waktuHadir,
+                'action'       => 'updated',
+            ]
+        ]);
+        return;
+    }
+
+    // Belum ada record sama sekali → Buat baru
+    $presensi = Presensi::create([
+        'santri_id'    => $santri->id,
+        'tanggal'      => $tanggal,
+        'waktu_sholat' => $waktuSholat,
+        'waktu_hadir'  => $waktuHadir,
+        'status'       => 'Hadir',
+        'photo_url'    => $photoUrl,
+    ]);
+
+    logWebhook("SUCCESS: CREATED presensi - santri_id={$santri->id}, nama={$santri->nama}, tanggal=$tanggal, sholat=$waktuSholat, waktu=$waktuHadir, verify=$verify, status_scan=$statusScan");
 
     echo json_encode([
         'status'  => 'ok',
@@ -288,7 +367,7 @@ try {
             'tanggal'      => $tanggal,
             'waktu_sholat' => $waktuSholat,
             'waktu_hadir'  => $waktuHadir,
-            'action'       => strtolower($action),
+            'action'       => 'created',
         ]
     ]);
 
