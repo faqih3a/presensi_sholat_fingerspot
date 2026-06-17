@@ -99,6 +99,132 @@
     body.dark-mode .preview-container {
         background: #2c2c2c;
     }
+
+    /* ─── Sync Overlay ────────────────────────────────────── */
+    .sync-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        animation: syncFadeIn 0.3s ease;
+    }
+    .sync-overlay.active { display: flex; }
+
+    @keyframes syncFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .sync-card {
+        background: #fff;
+        border-radius: 1.25rem;
+        padding: 2rem 2.5rem;
+        max-width: 480px;
+        width: 90%;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        text-align: center;
+        animation: syncSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes syncSlideUp {
+        from { opacity: 0; transform: translateY(30px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .sync-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin-bottom: 1rem;
+    }
+    .sync-icon.spinning i {
+        animation: syncSpin 1.2s linear infinite;
+    }
+    @keyframes syncSpin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .sync-progress-track {
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 999px;
+        overflow: hidden;
+        margin: 1.25rem 0;
+    }
+    .sync-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #198754, #2dc57b, #198754);
+        background-size: 200% 100%;
+        border-radius: 999px;
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: syncShimmer 2s ease infinite;
+    }
+    @keyframes syncShimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    .sync-phase {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 1rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.75rem;
+    }
+    .sync-phase.sending { background: rgba(13,110,253,0.1); color: #0d6efd; }
+    .sync-phase.waiting { background: rgba(255,193,7,0.15); color: #997404; }
+    .sync-phase.finalizing { background: rgba(25,135,84,0.1); color: #198754; }
+    .sync-phase.done { background: rgba(25,135,84,0.15); color: #198754; }
+    .sync-phase.error { background: rgba(220,53,69,0.1); color: #dc3545; }
+
+    .sync-stats {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    .sync-stat {
+        text-align: center;
+    }
+    .sync-stat-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    .sync-stat-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #67748e;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+
+    body.dark-mode .sync-card {
+        background: #1e1e1e;
+        color: #f8f9fa;
+    }
+    body.dark-mode .sync-progress-track {
+        background: #333;
+    }
+    body.dark-mode .sync-stat-label {
+        color: #adb5bd;
+    }
 </style>
 @endpush
 
@@ -425,6 +551,46 @@
     </div>
 </div>
 
+<!-- Sync Progress Overlay -->
+<div class="sync-overlay" id="syncOverlay">
+    <div class="sync-card">
+        <div class="sync-icon spinning" id="syncIcon" style="background: rgba(25,135,84,0.1); color: #198754;">
+            <i class="bi bi-arrow-repeat"></i>
+        </div>
+        <h5 class="fw-bold mb-1" id="syncTitle">Sinkronisasi Mesin</h5>
+        <div class="sync-phase sending" id="syncPhase">
+            <i class="bi bi-broadcast"></i> <span id="syncPhaseText">Mengirim perintah...</span>
+        </div>
+        <p class="text-muted small mb-0" id="syncMessage">Memulai proses sinkronisasi...</p>
+
+        <div class="sync-progress-track">
+            <div class="sync-progress-bar" id="syncProgressBar" style="width: 0%;"></div>
+        </div>
+        <div class="small text-muted fw-bold" id="syncProgressText">0 / 150</div>
+
+        <div class="sync-stats" id="syncStats" style="display: none;">
+            <div class="sync-stat">
+                <div class="sync-stat-value text-success" id="statSuccess">0</div>
+                <div class="sync-stat-label">Berhasil</div>
+            </div>
+            <div class="sync-stat">
+                <div class="sync-stat-value text-danger" id="statFailed">0</div>
+                <div class="sync-stat-label">Gagal</div>
+            </div>
+            <div class="sync-stat">
+                <div class="sync-stat-value text-primary" id="statTotal">0</div>
+                <div class="sync-stat-label">Total DB</div>
+            </div>
+        </div>
+
+        <div class="mt-3" id="syncActions">
+            <button type="button" class="btn btn-sm btn-outline-danger px-4 rounded-pill" id="syncCancelBtn" onclick="cancelSync()">
+                <i class="bi bi-x-lg me-1"></i> Batalkan
+            </button>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -532,39 +698,358 @@
         `;
     }
 
-    // Fungsi Sinkronisasi Mesin
+    // ─── Sinkronisasi Mesin (Async + Progress Polling) ──────────────────
+    let syncPollingTimer = null;
+    const SYNC_POLL_INTERVAL = 1500; // 1.5 detik
+
+    // Elemen-elemen overlay
+    const syncOverlay     = document.getElementById('syncOverlay');
+    const syncIcon        = document.getElementById('syncIcon');
+    const syncTitle       = document.getElementById('syncTitle');
+    const syncPhase       = document.getElementById('syncPhase');
+    const syncPhaseText   = document.getElementById('syncPhaseText');
+    const syncMessage     = document.getElementById('syncMessage');
+    const syncProgressBar = document.getElementById('syncProgressBar');
+    const syncProgressText = document.getElementById('syncProgressText');
+    const syncStats       = document.getElementById('syncStats');
+    const syncActions     = document.getElementById('syncActions');
+    const syncCancelBtn   = document.getElementById('syncCancelBtn');
+
     async function syncMesin() {
         const btn = document.getElementById('btn-sync-mesin');
-        const originalHtml = btn.innerHTML;
-        
-        // Ubah tampilan tombol jadi loading
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Menarik Data...';
-        
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memulai...';
+
+        // Tampilkan overlay
+        showSyncOverlay();
+
         try {
-            // Hit get_userinfo.php untuk pin 1 sampai 150
-            const response = await fetch('/get_userinfo.php?pin=all&pin_end=150');
+            // Kirim perintah START ke sync_mesin.php (akan langsung return)
+            const response = await fetch('/sync_mesin.php?action=start', { method: 'POST' });
             const result = await response.json();
-            
-            if (result.status === 'ok') {
-                // Berhasil kirim perintah, tunjukkan notifikasi
-                alert('Perintah sinkronisasi berhasil dikirim ke mesin! Halaman akan dimuat ulang dalam 5 detik...');
-                
-                // Beri waktu mesin untuk memproses & mengirim webhook (sekitar 5 detik)
-                setTimeout(() => {
-                    location.reload();
-                }, 5000);
+
+            if (result.status === 'started' || result.status === 'already_running') {
+                // Mulai polling progress
+                startProgressPolling();
             } else {
-                alert('Gagal mengirim perintah sinkronisasi: ' + (result.message || 'Unknown error'));
+                showSyncError(result.message || 'Gagal memulai sinkronisasi.');
                 btn.disabled = false;
-                btn.innerHTML = originalHtml;
+                btn.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin';
             }
         } catch (error) {
-            console.error('Sync Error:', error);
-            alert('Terjadi kesalahan jaringan saat menyinkronkan dengan mesin.');
+            console.error('Sync start error:', error);
+            showSyncError('Terjadi kesalahan jaringan saat memulai sinkronisasi.');
             btn.disabled = false;
-            btn.innerHTML = originalHtml;
+            btn.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin';
         }
     }
+
+    function showSyncOverlay() {
+        // Reset ke state awal
+        syncIcon.className = 'sync-icon spinning';
+        syncIcon.style.background = 'rgba(25,135,84,0.1)';
+        syncIcon.style.color = '#198754';
+        syncIcon.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
+        syncTitle.textContent = 'Sinkronisasi Mesin';
+        syncPhase.className = 'sync-phase sending';
+        syncPhaseText.textContent = 'Mengirim perintah...';
+        syncMessage.textContent = 'Memulai proses sinkronisasi...';
+        syncProgressBar.style.width = '0%';
+        syncProgressText.textContent = '0 / 150';
+        syncStats.style.display = 'none';
+        syncCancelBtn.style.display = '';
+        syncActions.innerHTML = `
+            <button type="button" class="btn btn-sm btn-outline-danger px-4 rounded-pill" id="syncCancelBtn" onclick="cancelSync()">
+                <i class="bi bi-x-lg me-1"></i> Batalkan
+            </button>
+        `;
+        syncOverlay.classList.add('active');
+    }
+
+    function startProgressPolling() {
+        if (syncPollingTimer) clearInterval(syncPollingTimer);
+
+        syncPollingTimer = setInterval(async () => {
+            try {
+                const resp = await fetch('/sync_mesin.php?action=status');
+                const progress = await resp.json();
+                updateSyncUI(progress);
+
+                // Berhenti polling jika selesai/error/cancelled
+                if (['completed', 'cancelled', 'idle'].includes(progress.status)) {
+                    clearInterval(syncPollingTimer);
+                    syncPollingTimer = null;
+                }
+            } catch (err) {
+                console.error('Polling error:', err);
+            }
+        }, SYNC_POLL_INTERVAL);
+    }
+
+    function updateSyncUI(progress) {
+        if (!progress || progress.status === 'idle') return;
+
+        const total = progress.total_pins || 150;
+        const sent = progress.sent || 0;
+        const pct = Math.round((sent / total) * 100);
+
+        // Update progress bar
+        syncProgressBar.style.width = pct + '%';
+        syncProgressText.textContent = `${sent} / ${total}`;
+
+        // Update message
+        syncMessage.textContent = progress.message || '';
+
+        // Update phase badge
+        const phase = progress.phase || 'sending_commands';
+        if (phase === 'sending_commands') {
+            syncPhase.className = 'sync-phase sending';
+            syncPhaseText.innerHTML = '<i class="bi bi-broadcast me-1"></i> Mengirim ke Mesin';
+        } else if (phase === 'waiting_webhook') {
+            syncPhase.className = 'sync-phase waiting';
+            syncPhaseText.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Menunggu Respon Mesin';
+            syncProgressBar.style.width = '85%';
+        } else if (phase === 'finalizing') {
+            syncPhase.className = 'sync-phase finalizing';
+            syncPhaseText.innerHTML = '<i class="bi bi-database-check me-1"></i> Memverifikasi Data';
+            syncProgressBar.style.width = '95%';
+        } else if (phase === 'done') {
+            syncPhase.className = 'sync-phase done';
+            syncPhaseText.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Selesai';
+            syncProgressBar.style.width = '100%';
+        }
+
+        // Tampilkan stats saat sudah mulai mengirim
+        if (sent > 0) {
+            syncStats.style.display = 'flex';
+            document.getElementById('statSuccess').textContent = progress.success || 0;
+            document.getElementById('statFailed').textContent = progress.failed || 0;
+            if (progress.total_santri_db) {
+                document.getElementById('statTotal').textContent = progress.total_santri_db;
+            }
+        }
+
+        // Jika selesai
+        if (progress.status === 'completed') {
+            onSyncComplete(progress);
+        } else if (progress.status === 'cancelled') {
+            onSyncCancelled();
+        }
+    }
+
+    function onSyncComplete(progress) {
+        // Ubah ikon jadi centang
+        syncIcon.className = 'sync-icon';
+        syncIcon.style.background = 'rgba(25,135,84,0.15)';
+        syncIcon.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+        syncTitle.textContent = 'Sinkronisasi Berhasil!';
+
+        // Update stats total dari DB
+        if (progress.total_santri_db) {
+            document.getElementById('statTotal').textContent = progress.total_santri_db;
+        }
+
+        // Ganti tombol cancel jadi tombol tutup
+        syncActions.innerHTML = `
+            <button type="button" class="btn btn-sm btn-gradient-success px-4 rounded-pill fw-bold" onclick="closeSyncOverlay()">
+                <i class="bi bi-check-lg me-1"></i> Selesai
+            </button>
+        `;
+
+        // Refresh tabel data di background
+        refreshSantriTable();
+
+        // Reset tombol sync
+        const btn = document.getElementById('btn-sync-mesin');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin';
+    }
+
+    function onSyncCancelled() {
+        syncIcon.className = 'sync-icon';
+        syncIcon.style.background = 'rgba(255,193,7,0.15)';
+        syncIcon.style.color = '#997404';
+        syncIcon.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i>';
+        syncTitle.textContent = 'Sinkronisasi Dibatalkan';
+        syncPhase.className = 'sync-phase error';
+        syncPhaseText.innerHTML = '<i class="bi bi-x-circle me-1"></i> Dibatalkan';
+
+        syncActions.innerHTML = `
+            <button type="button" class="btn btn-sm btn-light px-4 rounded-pill fw-bold" onclick="closeSyncOverlay()">
+                Tutup
+            </button>
+        `;
+
+        // Refresh tabel data (mungkin sebagian sudah tersinkron)
+        refreshSantriTable();
+
+        const btn = document.getElementById('btn-sync-mesin');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin';
+    }
+
+    function showSyncError(message) {
+        syncIcon.className = 'sync-icon';
+        syncIcon.style.background = 'rgba(220,53,69,0.1)';
+        syncIcon.style.color = '#dc3545';
+        syncIcon.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i>';
+        syncTitle.textContent = 'Gagal Sinkronisasi';
+        syncPhase.className = 'sync-phase error';
+        syncPhaseText.innerHTML = '<i class="bi bi-x-circle me-1"></i> Error';
+        syncMessage.textContent = message;
+
+        syncActions.innerHTML = `
+            <button type="button" class="btn btn-sm btn-light px-4 rounded-pill fw-bold" onclick="closeSyncOverlay()">
+                Tutup
+            </button>
+        `;
+    }
+
+    async function cancelSync() {
+        try {
+            await fetch('/sync_mesin.php?action=cancel', { method: 'POST' });
+        } catch (e) {
+            console.error('Cancel error:', e);
+        }
+    }
+
+    function closeSyncOverlay() {
+        syncOverlay.classList.remove('active');
+        if (syncPollingTimer) {
+            clearInterval(syncPollingTimer);
+            syncPollingTimer = null;
+        }
+    }
+
+    // ─── AJAX Table Refresh ─────────────────────────────────────────────
+    async function refreshSantriTable() {
+        try {
+            // Ambil parameter filter yang sedang aktif
+            const urlParams = new URLSearchParams(window.location.search);
+            const search = urlParams.get('search') || '';
+            const kelas = urlParams.get('kelas') || '';
+            const page = urlParams.get('page') || '1';
+
+            const apiUrl = `{{ route('santri.api.list') }}?search=${encodeURIComponent(search)}&kelas=${encodeURIComponent(kelas)}&page=${page}`;
+            const resp = await fetch(apiUrl, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const result = await resp.json();
+
+            if (!result.success) return;
+
+            // Update stat cards
+            document.querySelectorAll('.card-stats .h3').forEach(el => {
+                el.textContent = result.total_santri;
+            });
+            const subCount = document.querySelector('.card-header .small.text-muted');
+            if (subCount) {
+                subCount.textContent = result.pagination.total + ' Santri Terdaftar';
+            }
+
+            // Re-render table body
+            const tbody = document.querySelector('table.table tbody');
+            if (!tbody) return;
+
+            if (result.data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="py-4">
+                                <i class="bi bi-person-exclamation text-muted" style="font-size: 4rem;"></i>
+                                <h5 class="mt-3 fw-bold text-dark">Belum Ada Data</h5>
+                                <p class="text-muted mb-4">Silakan daftarkan santri baru untuk mulai menggunakan sistem presensi.</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            const startNum = result.pagination.first_item || 1;
+            tbody.innerHTML = result.data.map((s, i) => {
+                const num = startNum + i;
+                const fotoHtml = s.foto
+                    ? `<a href="${s.foto}" target="_blank" title="Lihat Foto Penuh">
+                         <img src="${s.foto}" alt="${s.nama}" class="avatar-sm rounded-circle object-fit-cover"
+                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                         <div class="avatar-sm bg-light text-secondary rounded-circle align-items-center justify-content-center border" style="display: none;">
+                             <i class="bi bi-person fs-5"></i>
+                         </div>
+                       </a>`
+                    : `<div class="avatar-sm bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center border">
+                           <i class="bi bi-person fs-5"></i>
+                       </div>`;
+
+                let bioHtml = '';
+                if (s.face_count > 0 || s.finger_count > 0) {
+                    bioHtml = '<div class="d-flex gap-1 flex-wrap">';
+                    if (s.face_count > 0) {
+                        bioHtml += '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" title="Wajah Tersimpan"><i class="bi bi-person-bounding-box me-1"></i> Wajah</span>';
+                    }
+                    if (s.finger_count > 0) {
+                        bioHtml += `<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" title="Jari Tersimpan"><i class="bi bi-fingerprint me-1"></i> Jari (${s.finger_count})</span>`;
+                    }
+                    bioHtml += '</div>';
+                } else {
+                    bioHtml = '<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"><i class="bi bi-x-circle me-1"></i> Belum Rekam</span>';
+                }
+
+                return `<tr>
+                    <td class="text-center"><span class="text-muted fw-bold small">${num}</span></td>
+                    <td>${fotoHtml}</td>
+                    <td>
+                        <div class="fw-bold text-dark">${s.nama}</div>
+                        <div class="small text-muted">${s.email}</div>
+                    </td>
+                    <td><span class="badge badge-soft-success px-3 py-2 rounded-pill fw-bold" style="font-size: 0.7rem;">${s.kelas}</span></td>
+                    <td>${bioHtml}</td>
+                    <td>
+                        <div class="text-dark small">${s.created_at}</div>
+                        <div class="text-muted small" style="font-size: 0.75rem;">${s.created_time} WIB</div>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="${s.edit_url}" class="action-btn bg-info bg-opacity-10 text-info" title="Edit">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <form action="${s.delete_url}" method="POST" class="d-inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data santri ini?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="action-btn bg-danger bg-opacity-10 text-danger border-0" title="Hapus">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            // Update footer pagination text
+            const footerText = document.querySelector('.card-footer .small.text-muted');
+            if (footerText && result.pagination) {
+                const p = result.pagination;
+                footerText.textContent = `Menampilkan ${p.first_item} sampai ${p.last_item} dari ${p.total} data santri.`;
+            }
+
+        } catch (error) {
+            console.error('Table refresh error:', error);
+        }
+    }
+
+    // ─── Cek apakah ada sync yang sedang berjalan saat page load ────────
+    (async function checkOngoingSync() {
+        try {
+            const resp = await fetch('/sync_mesin.php?action=status');
+            const progress = await resp.json();
+            if (progress.status === 'running') {
+                const btn = document.getElementById('btn-sync-mesin');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Menyinkronkan...';
+                showSyncOverlay();
+                updateSyncUI(progress);
+                startProgressPolling();
+            }
+        } catch (e) { /* ignore */ }
+    })();
 </script>
 @endpush
