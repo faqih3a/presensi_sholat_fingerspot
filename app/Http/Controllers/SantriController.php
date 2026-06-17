@@ -76,6 +76,58 @@ class SantriController extends Controller
         return view('santri.index', compact('santris'));
     }
 
+    /**
+     * API endpoint: Returns santri data as JSON for AJAX table refresh.
+     * Used by the sync mesin feature to reload table without full page reload.
+     */
+    public function apiList(Request $request)
+    {
+        $search = $request->input('search');
+        $kelas = $request->input('kelas');
+        $page = $request->input('page', 1);
+
+        $query = Santri::with('user');
+
+        $query->when($search, function ($q) use ($search) {
+            return $q->where('nama', 'like', '%' . $search . '%');
+        });
+
+        $query->when($kelas, function ($q) use ($kelas) {
+            return $q->where('kelas', $kelas);
+        });
+
+        $santris = $query->orderBy('nama', 'asc')->paginate(15)->withQueryString();
+
+        return response()->json([
+            'success' => true,
+            'data' => $santris->map(function ($santri) {
+                return [
+                    'id'             => $santri->id,
+                    'nama'           => $santri->nama,
+                    'email'          => $santri->user->email ?? '-',
+                    'kelas'          => $santri->kelas,
+                    'foto'           => $santri->display_photo,
+                    'face_count'     => $santri->face_count ?? 0,
+                    'finger_count'   => $santri->finger_count ?? 0,
+                    'created_at'     => $santri->created_at->format('d M Y'),
+                    'created_time'   => $santri->created_at->format('H:i'),
+                    'edit_url'       => route('santri.edit', $santri),
+                    'delete_url'     => route('santri.destroy', $santri),
+                ];
+            }),
+            'pagination' => [
+                'current_page' => $santris->currentPage(),
+                'last_page'    => $santris->lastPage(),
+                'per_page'     => $santris->perPage(),
+                'total'        => $santris->total(),
+                'first_item'   => $santris->firstItem(),
+                'last_item'    => $santris->lastItem(),
+            ],
+            'total_santri' => Santri::count(),
+        ]);
+    }
+
+
     public function edit(Santri $santri)
     {
         return view('santri.edit', compact('santri'));

@@ -41,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kehadiran-sholat/export', [DashboardController::class, 'exportKehadiran'])->name('dashboard.kehadiran.export');
         
         Route::get('/santri', [SantriController::class, 'adminList'])->name('santri.index');
+        Route::get('/santri/api/list', [SantriController::class, 'apiList'])->name('santri.api.list');
         Route::get('/santri/register', [SantriController::class, 'create'])->name('santri.create');
         Route::post('/santri/register', [SantriController::class, 'store'])->name('santri.store');
         Route::get('/santri/{santri}/edit', [SantriController::class, 'edit'])->name('santri.edit');
