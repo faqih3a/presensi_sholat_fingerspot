@@ -3,59 +3,90 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Hash;
 use App\Models\Santri;
-use App\Models\User;
+use App\Actions\Santri\CreateSantriAction;
+use App\Actions\Santri\UpdateSantriAction;
+use App\Actions\Santri\DeleteSantriAction;
+use App\Actions\Santri\SyncSantriFromMesinAction;
 
+/**
+ * Controller untuk manajemen data Santri.
+ *
+ * Controller ini mengikuti prinsip "Thin Controller" — hanya bertanggung jawab untuk:
+ * 1. Menerima dan memvalidasi HTTP Request.
+ * 2. Mendelegasikan logika bisnis ke Action Class yang sesuai.
+ * 3. Mengembalikan HTTP Response (view, JSON, atau redirect).
+ *
+ * Semua logika bisnis (create, update, delete, sync) telah dipindahkan
+ * ke folder `app/Actions/Santri/`.
+ *
+ * @see \App\Actions\Santri\CreateSantriAction
+ * @see \App\Actions\Santri\UpdateSantriAction
+ * @see \App\Actions\Santri\DeleteSantriAction
+ * @see \App\Actions\Santri\SyncSantriFromMesinAction
+ */
 class SantriController extends Controller
 {
+    /**
+     * Menampilkan halaman form registrasi santri baru.
+     *
+     * @return \Illuminate\View\View
+     */
     public function create()
     {
         return view('santri.register');
     }
 
-    public function store(Request $request)
+    /**
+     * Menyimpan data santri baru ke database.
+     *
+     * Validasi request dilakukan di sini, lalu logika penyimpanan
+     * didelegasikan ke CreateSantriAction.
+     *
+     * @param  \Illuminate\Http\Request          $request
+     * @param  \App\Actions\Santri\CreateSantriAction  $action
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function store(Request $request, CreateSantriAction $action)
     {
-        $request->validate([
-            'nama' => 'required|string|max:255',
-            'kelas' => 'required|string|max:50',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:5',
+        $validated = $request->validate([
+            'nama'           => 'required|string|max:255',
+            'kelas'          => 'required|string|max:50',
+            'email'          => 'required|string|email|max:255|unique:users',
+            'password'       => 'required|string|min:5',
             'foto_referensi' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $imagePath = $request->file('foto_referensi')->store('santri_fotos', 'public');
-        $fileName = basename($imagePath);
+        // Sertakan file upload ke dalam validated data
+        $validated['foto_referensi'] = $request->file('foto_referensi');
 
-        // Buat akun User untuk santri
-        $user = User::create([
-            'name' => $request->nama,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'santri',
-        ]);
-
-        $santri = Santri::create([
-            'user_id' => $user->id,
-            'nama' => $request->nama,
-            'kelas' => $request->kelas,
-            'foto_referensi' => $fileName,
-        ]);
+        $santri = $action->execute($validated);
 
         return response()->json([
             'success' => true,
             'message' => 'Data santri dan akun berhasil didaftarkan.',
-            'data' => $santri
+            'data'    => $santri,
         ]);
     }
 
+    /**
+     * Mengembalikan seluruh data santri dalam format JSON.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function index()
     {
         $santris = Santri::all();
         return response()->json($santris);
     }
 
+    /**
+     * Menampilkan halaman daftar santri untuk admin dengan fitur
+     * pencarian dan filter berdasarkan kelas.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
     public function adminList(Request $request)
     {
         $search = $request->input('search');
@@ -128,136 +159,92 @@ class SantriController extends Controller
     }
 
 
+    /**
+     * Menampilkan halaman form edit santri.
+     *
+     * @param  \App\Models\Santri  $santri
+     * @return \Illuminate\View\View
+     */
     public function edit(Santri $santri)
     {
         return view('santri.edit', compact('santri'));
     }
 
-    public function update(Request $request, Santri $santri)
+    /**
+     * Memperbarui data santri yang sudah ada.
+     *
+     * Validasi request dilakukan di sini, lalu logika update
+     * didelegasikan ke UpdateSantriAction.
+     *
+     * @param  \Illuminate\Http\Request               $request
+     * @param  \App\Models\Santri                     $santri
+     * @param  \App\Actions\Santri\UpdateSantriAction  $action
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function update(Request $request, Santri $santri, UpdateSantriAction $action)
     {
-        $request->validate([
-            'nama' => 'required|string|max:255',
-            'kelas' => 'required|string|max:50',
+        $validated = $request->validate([
+            'nama'           => 'required|string|max:255',
+            'kelas'          => 'required|string|max:50',
             'foto_referensi' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $data = [
-            'nama' => $request->nama,
-            'kelas' => $request->kelas,
-        ];
-
+        // Sertakan file upload jika ada
         if ($request->hasFile('foto_referensi')) {
-            if ($santri->foto_referensi && Storage::disk('public')->exists('santri_fotos/' . $santri->foto_referensi)) {
-                Storage::disk('public')->delete('santri_fotos/' . $santri->foto_referensi);
-            }
-            $imagePath = $request->file('foto_referensi')->store('santri_fotos', 'public');
-            $data['foto_referensi'] = basename($imagePath);
+            $validated['foto_referensi'] = $request->file('foto_referensi');
         }
 
-        $santri->update($data);
+        $santri = $action->execute($santri, $validated);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Data santri berhasil diperbarui.',
-                'data' => $santri
+                'data'    => $santri,
             ]);
         }
 
         return redirect()->route('santri.index')->with('success', 'Data santri berhasil diperbarui.');
     }
 
-    public function destroy(Santri $santri)
+    /**
+     * Menghapus data santri beserta akun user terkait.
+     *
+     * Logika penghapusan didelegasikan ke DeleteSantriAction.
+     *
+     * @param  \App\Models\Santri                     $santri
+     * @param  \App\Actions\Santri\DeleteSantriAction  $action
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy(Santri $santri, DeleteSantriAction $action)
     {
-        if ($santri->foto_referensi && Storage::disk('public')->exists('santri_fotos/' . $santri->foto_referensi)) {
-            Storage::disk('public')->delete('santri_fotos/' . $santri->foto_referensi);
-        }
+        $action->execute($santri);
 
-        $user = $santri->user;
-        $santri->delete();
-        
-        if ($user) {
-            $user->delete();
-        }
         return redirect()->route('santri.index')->with('success', 'Data santri berhasil dihapus.');
     }
 
-    public function syncMesin(Request $request)
+    /**
+     * Sinkronisasi data santri dari mesin absensi Fingerspot.
+     *
+     * Logika sinkronisasi didelegasikan ke SyncSantriFromMesinAction.
+     *
+     * @param  \Illuminate\Http\Request                        $request
+     * @param  \App\Actions\Santri\SyncSantriFromMesinAction   $action
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function syncMesin(Request $request, SyncSantriFromMesinAction $action)
     {
-        $apiUrl = 'https://developer.fingerspot.io/api/get_userlist';
-        $apiToken = 'DWJ7LY8ZJQ6CD5NN';
-        $cloudId = 'S118001290';
-
         try {
-            // Langkah 1: Tarik Daftar PIN Valid menggunakan get_userlist
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $apiToken
-            ])->post($apiUrl, [
-                'trans_id' => (string) rand(100000, 999999999),
-                'cloud_id' => $cloudId,
-            ]);
+            $result = $action->execute();
 
-            if (!$response->successful() || !$response->json('success')) {
-                $errMessage = $response->json('message') ?? 'Gagal menghubungi Fingerspot Cloud API.';
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Langkah 1 Gagal: ' . $errMessage
-                ], 400);
-            }
+            $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
+            unset($result['status']);
 
-            $dataList = $response->json('data') ?? [];
-            if (!is_array($dataList)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Langkah 1 Gagal: Format data respons tidak valid.'
-                ], 400);
-            }
-
-            // Ekstrak PIN valid dari daftar user
-            $pins = [];
-            foreach ($dataList as $item) {
-                $pin = $item['pin'] ?? $item['user_id'] ?? $item['emp_pin'] ?? null;
-                if ($pin !== null) {
-                    $pins[] = (string) $pin;
-                }
-            }
-
-            if (empty($pins)) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Tidak ada PIN pengguna yang terdaftar di mesin.',
-                    'count' => 0
-                ]);
-            }
-
-            // Langkah 2: Kirim get_userinfo untuk setiap PIN valid (secara paralel menggunakan Pool)
-            $infoUrl = 'https://developer.fingerspot.io/api/get_userinfo';
-            
-            \Illuminate\Support\Facades\Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($pins, $cloudId, $apiToken, $infoUrl) {
-                foreach ($pins as $pin) {
-                    $pool->timeout(2)->connectTimeout(2)->withHeaders([
-                        'Content-Type' => 'application/json',
-                        'Authorization' => 'Bearer ' . $apiToken
-                    ])->post($infoUrl, [
-                        'trans_id' => (string) rand(100000, 999999999),
-                        'cloud_id' => $cloudId,
-                        'pin'      => (string) $pin,
-                    ]);
-                }
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Berhasil mengirim perintah sinkronisasi untuk ' . count($pins) . ' santri terdaftar di mesin.',
-                'count' => count($pins),
-                'pins' => $pins
-            ]);
-
+            return response()->json($result, $statusCode);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat sinkronisasi: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan saat sinkronisasi: ' . $e->getMessage(),
             ], 500);
         }
     }
