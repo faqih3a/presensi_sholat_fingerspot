@@ -4,11 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
+use App\Actions\Admin\CreateAdminAction;
+use App\Actions\Admin\UpdateAdminAction;
+use App\Actions\Admin\DeleteAdminAction;
 
+/**
+ * Controller untuk manajemen akun Asatidz (Pengurus Masjid).
+ *
+ * Controller ini menggunakan Action Classes yang sama dengan AdminController
+ * (CreateAdminAction, UpdateAdminAction, DeleteAdminAction) karena logika
+ * CRUD-nya identik — hanya dibedakan oleh parameter role ('asatidz').
+ *
+ * @see \App\Actions\Admin\CreateAdminAction
+ * @see \App\Actions\Admin\UpdateAdminAction
+ * @see \App\Actions\Admin\DeleteAdminAction
+ */
 class AsatidzController extends Controller
 {
+    /**
+     * Menampilkan daftar semua asatidz.
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         $asatidz = User::where('role', 'asatidz')->latest()->get();
@@ -16,34 +33,38 @@ class AsatidzController extends Controller
         return view('asatidz.index', compact('asatidz', 'totalAsatidz'));
     }
 
-    public function store(Request $request)
+    /**
+     * Menyimpan akun asatidz baru.
+     *
+     * @param  \Illuminate\Http\Request                  $request
+     * @param  \App\Actions\Admin\CreateAdminAction       $action
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request, CreateAdminAction $action)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+        $validated = $request->validate([
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|string|email|max:255|unique:users',
             'wa_number' => 'nullable|string|max:20',
-            'password' => 'required|string|min:5|confirmed',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'wa_number' => $request->wa_number,
-            'role' => 'asatidz',
-            'password' => Hash::make($request->password),
+            'password'  => 'required|string|min:5|confirmed',
+            'avatar'    => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar');
-            $filename = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('storage/avatars'), $filename);
-            $user->update(['avatar' => $filename]);
+            $validated['avatar'] = $request->file('avatar');
         }
+
+        $action->execute($validated, 'asatidz');
 
         return redirect()->route('asatidz.index')->with('success', 'Akun Asatidz berhasil dibuat.');
     }
 
+    /**
+     * Menampilkan halaman edit asatidz.
+     *
+     * @param  \App\Models\User  $asatidz
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
     public function edit(User $asatidz)
     {
         if ($asatidz->role !== 'asatidz') {
@@ -52,59 +73,49 @@ class AsatidzController extends Controller
         return view('asatidz.edit', compact('asatidz'));
     }
 
-    public function update(Request $request, User $asatidz)
+    /**
+     * Memperbarui data asatidz.
+     *
+     * @param  \Illuminate\Http\Request                  $request
+     * @param  \App\Models\User                          $asatidz
+     * @param  \App\Actions\Admin\UpdateAdminAction       $action
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function update(Request $request, User $asatidz, UpdateAdminAction $action)
     {
         if ($asatidz->role !== 'asatidz') {
             return redirect()->route('asatidz.index')->with('error', 'User bukan merupakan Asatidz.');
         }
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $asatidz->id,
+        $validated = $request->validate([
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|string|email|max:255|unique:users,email,' . $asatidz->id,
             'wa_number' => 'nullable|string|max:20',
-            'password' => 'nullable|string|min:5|confirmed',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'password'  => 'nullable|string|min:5|confirmed',
+            'avatar'    => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'wa_number' => $request->wa_number,
-        ];
-
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
-        }
-
         if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists
-            if ($asatidz->avatar && file_exists(public_path('storage/avatars/' . $asatidz->avatar))) {
-                @unlink(public_path('storage/avatars/' . $asatidz->avatar));
-            }
-            $file = $request->file('avatar');
-            $filename = time() . '_' . $asatidz->id . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('storage/avatars'), $filename);
-            $data['avatar'] = $filename;
+            $validated['avatar'] = $request->file('avatar');
         }
 
-        $asatidz->update($data);
+        $action->execute($asatidz, $validated);
 
         return redirect()->route('asatidz.index')->with('success', 'Data Asatidz berhasil diperbarui.');
     }
 
-    public function destroy(User $asatidz)
+    /**
+     * Menghapus akun asatidz dengan safeguard keamanan.
+     *
+     * @param  \App\Models\User                          $asatidz
+     * @param  \App\Actions\Admin\DeleteAdminAction       $action
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy(User $asatidz, DeleteAdminAction $action)
     {
-        if ($asatidz->role !== 'asatidz') {
-            return redirect()->route('asatidz.index')->with('error', 'User bukan merupakan Asatidz.');
-        }
+        $result = $action->execute($asatidz, 'asatidz');
 
-        // Delete avatar if exists
-        if ($asatidz->avatar && file_exists(public_path('storage/avatars/' . $asatidz->avatar))) {
-            @unlink(public_path('storage/avatars/' . $asatidz->avatar));
-        }
-
-        $asatidz->delete();
-
-        return redirect()->route('asatidz.index')->with('success', 'Akun Asatidz berhasil dihapus.');
+        $type = $result['success'] ? 'success' : 'error';
+        return redirect()->route('asatidz.index')->with($type, $result['message']);
     }
 }
