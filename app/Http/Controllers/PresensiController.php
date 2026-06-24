@@ -4,13 +4,31 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Presensi;
+use App\Actions\Presensi\UpdatePresensiAction;
+use App\Actions\Presensi\DeletePresensiAction;
 use Carbon\Carbon;
 
+/**
+ * Controller untuk manajemen data Presensi (kehadiran sholat).
+ *
+ * Controller ini mengikuti prinsip "Thin Controller" — hanya bertugas:
+ * 1. Menerima dan memvalidasi HTTP Request.
+ * 2. Mendelegasikan logika bisnis ke Action Class yang sesuai.
+ * 3. Mengembalikan HTTP Response (JSON atau redirect).
+ *
+ * Logika bisnis telah dipindahkan ke:
+ * @see \App\Actions\Presensi\StorePresensiAction   (digunakan di webhook store.php)
+ * @see \App\Actions\Presensi\UpdatePresensiAction
+ * @see \App\Actions\Presensi\DeletePresensiAction
+ */
 class PresensiController extends Controller
 {
     /**
      * API endpoint for polling: returns recent scan records.
      * Used by the kehadiran page to auto-detect new webhook scans.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function latestScans(Request $request)
     {
@@ -47,39 +65,39 @@ class PresensiController extends Controller
             });
 
         return response()->json([
-            'data'       => $records,
+            'data'        => $records,
             'server_time' => now()->toISOString(),
         ]);
     }
 
-    public function updateStatus(Request $request)
+    /**
+     * Update status kehadiran santri (manual oleh admin).
+     *
+     * @param  \Illuminate\Http\Request                       $request
+     * @param  \App\Actions\Presensi\UpdatePresensiAction     $action
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function updateStatus(Request $request, UpdatePresensiAction $action)
     {
-        $request->validate([
-            'santri_id' => 'required|exists:santris,id',
-            'tanggal' => 'required|date',
+        $validated = $request->validate([
+            'santri_id'    => 'required|exists:santris,id',
+            'tanggal'      => 'required|date',
             'waktu_sholat' => 'required|string',
-            'status' => 'required|in:Hadir,Izin,Alfa',
+            'status'       => 'required|in:Hadir,Izin,Alfa',
         ]);
 
-        $presensi = Presensi::updateOrCreate([
-            'santri_id' => $request->santri_id,
-            'tanggal' => $request->tanggal,
-            'waktu_sholat' => $request->waktu_sholat,
-        ], [
-            'status' => $request->status,
-            'waktu_hadir' => $request->status === 'Hadir' ? Carbon::now()->format('H:i') : null,
-        ]);
+        $presensi = $action->execute($validated);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Status kehadiran berhasil diperbarui.',
-                'data' => [
-                    'santri_id' => $presensi->santri_id,
-                    'tanggal' => $presensi->tanggal,
+                'data'    => [
+                    'santri_id'    => $presensi->santri_id,
+                    'tanggal'      => $presensi->tanggal,
                     'waktu_sholat' => $presensi->waktu_sholat,
-                    'status' => $presensi->status,
-                    'waktu_hadir' => $presensi->waktu_hadir,
+                    'status'       => $presensi->status,
+                    'waktu_hadir'  => $presensi->waktu_hadir,
                 ],
             ]);
         }
@@ -87,24 +105,40 @@ class PresensiController extends Controller
         return redirect()->back()->with('success', 'Status kehadiran berhasil diperbarui.');
     }
 
-    public function destroy(Presensi $presensi)
+    /**
+     * Menghapus satu record presensi berdasarkan model binding.
+     *
+     * @param  \App\Models\Presensi                           $presensi
+     * @param  \App\Actions\Presensi\DeletePresensiAction     $action
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy(Presensi $presensi, DeletePresensiAction $action)
     {
-        $presensi->delete();
+        $action->execute($presensi);
+
         return redirect()->back()->with('success', 'Data kehadiran berhasil dihapus.');
     }
 
-    public function deleteByParams(Request $request)
+    /**
+     * Menghapus presensi berdasarkan parameter santri_id + tanggal + waktu_sholat.
+     *
+     * @param  \Illuminate\Http\Request                       $request
+     * @param  \App\Actions\Presensi\DeletePresensiAction     $action
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function deleteByParams(Request $request, DeletePresensiAction $action)
     {
-        $request->validate([
-            'santri_id' => 'required|exists:santris,id',
-            'tanggal' => 'required|date',
+        $validated = $request->validate([
+            'santri_id'    => 'required|exists:santris,id',
+            'tanggal'      => 'required|date',
             'waktu_sholat' => 'required|string',
         ]);
 
-        $deleted = Presensi::where('santri_id', $request->santri_id)
-                ->where('tanggal', $request->tanggal)
-                ->where('waktu_sholat', $request->waktu_sholat)
-                ->delete();
+        $deleted = $action->executeByParams(
+            (int) $validated['santri_id'],
+            $validated['tanggal'],
+            $validated['waktu_sholat']
+        );
 
         if ($request->ajax() || $request->wantsJson()) {
             if ($deleted) {
@@ -116,29 +150,32 @@ class PresensiController extends Controller
         return redirect()->back()->with('success', 'Data presensi berhasil dihapus.');
     }
 
-    public function bulkDelete(Request $request)
+    /**
+     * Menghapus banyak record presensi sekaligus (bulk delete).
+     *
+     * @param  \Illuminate\Http\Request                       $request
+     * @param  \App\Actions\Presensi\DeletePresensiAction     $action
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function bulkDelete(Request $request, DeletePresensiAction $action)
     {
-        $request->validate([
-            'ids' => 'required|array',
+        $validated = $request->validate([
+            'ids'   => 'required|array',
             'ids.*' => 'exists:presensis,id',
         ]);
 
-        $deletedCount = Presensi::whereIn('id', $request->ids)->delete();
+        $deletedCount = $action->executeBulk($validated['ids']);
 
         if ($request->ajax() || $request->wantsJson()) {
             if ($deletedCount > 0) {
                 return response()->json([
-                    'success' => true, 
-                    'message' => $deletedCount . ' data presensi berhasil dihapus.'
+                    'success' => true,
+                    'message' => $deletedCount . ' data presensi berhasil dihapus.',
                 ]);
             }
-            return response()->json([
-                'success' => false, 
-                'message' => 'Data tidak ditemukan.'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.'], 404);
         }
 
         return redirect()->back()->with('success', $deletedCount . ' data presensi berhasil dihapus.');
     }
 }
-

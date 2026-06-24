@@ -166,233 +166,56 @@ exit;
 // =====================================================================
 // HANDLER: attlog (data absensi realtime)
 // =====================================================================
+// Logika bisnis telah dipindahkan ke: App\Actions\Presensi\StorePresensiAction
+// File ini hanya menangani: validasi payload, logging, dan response format.
+// =====================================================================
 function handleAttlog(array $decoded): void
 {
-$data = $decoded['data'] ?? null;
-if (!$data || !isset($data['pin']) || !isset($data['scan'])) {
-    logWebhook("ERROR: Missing data.pin or data.scan");
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Missing required data fields']);
-    exit;
-}
+    $data = $decoded['data'] ?? null;
+    if (!$data || !isset($data['pin']) || !isset($data['scan'])) {
+        logWebhook("ERROR: Missing data.pin or data.scan");
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Missing required data fields']);
+        exit;
+    }
 
-$pin       = $data['pin'];
-$scanStr   = $data['scan'];
-$verify    = $data['verify'] ?? null;
-$statusScan = $data['status_scan'] ?? null;
-$photoUrl  = $data['photo_url'] ?? null;
+    $pin       = $data['pin'];
+    $scanStr   = $data['scan'];
+    $verify    = $data['verify'] ?? null;
+    $statusScan = $data['status_scan'] ?? null;
 
-// Parse waktu scan
-try {
-    $scanTime = Carbon::parse($scanStr, 'Asia/Jakarta');
-} catch (\Exception $e) {
-    logWebhook("ERROR: Invalid scan datetime: $scanStr");
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Invalid scan datetime']);
-    exit;
-}
+    logWebhook("ATTLOG: pin=$pin, scan=$scanStr, verify=$verify, status_scan=$statusScan");
 
-$tanggal   = $scanTime->format('Y-m-d');
-$waktuHadir = $scanTime->format('H:i:s');
-
-// ─── Mapping PIN → Santri ───────────────────────────────────────────
-// PIN di mesin FingerSpot = ID santri di database
-$santri = Santri::find($pin);
-if (!$santri) {
+    // Delegasi seluruh logika bisnis ke StorePresensiAction
     try {
-        // Buat email dari kata pertama nama PIN (fallback: santriPIN@thursina.id)
-        $firstName = strtolower('santri' . $pin);
-        $email = $firstName . '@thursina.id';
-        $displayName = "Nama Belum Diatur (PIN: " . $pin . ")";
+        $action = app(\App\Actions\Presensi\StorePresensiAction::class);
+        $result = $action->executeFromWebhook([
+            'pin'         => $pin,
+            'scan'        => $scanStr,
+            'verify'      => $verify,
+            'status_scan' => $statusScan,
+            'photo_url'   => $data['photo_url'] ?? null,
+        ]);
 
-        $user = \App\Models\User::firstOrCreate(
-            ['email' => $email],
-            [
-                'name'     => $displayName,
-                'password' => \Illuminate\Support\Facades\Hash::make('santri'),
-                'role'     => 'santri',
-            ]
-        );
-
-        $santri = new Santri();
-        $santri->id             = $pin;
-        $santri->user_id        = $user->id;
-        $santri->nama           = $displayName;
-        $santri->kelas          = 'Belum Diatur';
-        $santri->foto_referensi = '';
-        $santri->finger_count   = 0;
-        $santri->face_count     = 1; // Otomatis tipe wajah
-        $santri->save();
-
-        logWebhook("AUTO-CREATE: Santri baru dari attlog - pin=$pin, email=$email");
-
-        // AUTO-FETCH NAME (FIRE & FORGET): Kirim request get_userinfo ke API Fingerspot
-        // Gunakan timeout rendah (1 detik) agar tidak menghambat webhook response (menghindari duplikasi/retry webhook).
-        try {
-            logWebhook("AUTO-FETCH-NAME: Memicu get_userinfo untuk PIN $pin (Fire & Forget)...");
-            Http::timeout(1)->connectTimeout(1)->withHeaders([
-                'Content-Type'  => 'application/json',
-                'Authorization' => 'Bearer DWJ7LY8ZJQ6CD5NN'
-            ])->post('https://developer.fingerspot.io/api/get_userinfo', [
-                'trans_id' => (string) rand(100000, 999999999),
-                'cloud_id' => 'S118001290',
-                'pin'      => (string) $pin,
-            ]);
-        } catch (\Exception $e) {
-            // Abaikan timeout/koneksi terputus karena ini bersifat fire-and-forget
-            logWebhook("AUTO-FETCH-NAME: Request sent for PIN $pin");
+        $httpCode = $result['http_code'] ?? 200;
+        if ($httpCode !== 200) {
+            http_response_code($httpCode);
         }
+
+        $action_taken = $result['data']['action'] ?? 'processed';
+        logWebhook("RESULT: pin=$pin, action=$action_taken, message={$result['message']}");
+
+        echo json_encode([
+            'status'  => $result['status'],
+            'message' => $result['message'],
+            'data'    => $result['data'],
+        ]);
+
     } catch (\Exception $e) {
-        logWebhook("ERROR: Gagal auto-create santri pin=$pin - " . $e->getMessage());
-        echo json_encode(['status' => 'error', 'message' => 'Gagal membuat santri: ' . $e->getMessage()]);
-        exit;
+        logWebhook("ERROR: Database error - " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
     }
-}
-
-// AUTO-CAPTURE FOTO: Jika santri belum punya foto atau masih foto default, ambil dari hasil scan presensi ini!
-if (!empty($photoUrl) && (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg')) {
-    $santri->foto_referensi = $photoUrl;
-    $santri->save();
-    logWebhook("AUTO-PHOTO: Menyimpan link foto profil otomatis untuk santri $pin");
-}
-
-// ─── Tentukan Waktu Sholat ──────────────────────────────────────────
-$jadwal = getJadwalSholat($scanTime);
-$waktuSholat = determineWaktuSholat($scanTime, $jadwal);
-
-if (!$waktuSholat) {
-    // Cek apakah fitur/halaman tes diaktifkan
-    $tesEnabled = Cache::get('tes_page_enabled', true);
-    if (!$tesEnabled) {
-        logWebhook("INFO: Scan diluar waktu sholat diabaikan karena pencatatan tes dinonaktifkan - pin=$pin, waktu=$scanStr");
-        echo json_encode([
-            'status'  => 'ok',
-            'message' => 'Scan outside prayer window ignored (testing disabled).'
-        ]);
-        exit;
-    }
-
-    $waktuSholat = 'Tes';
-    logWebhook("INFO: Scan diluar waktu sholat, dicatat sebagai Tes - pin=$pin, waktu=$scanStr");
-}
-
-// ─── Simpan ke Database (FIRST SCAN WINS) ───────────────────────────
-// Logika: Cek dulu apakah sudah ada record presensi untuk santri ini
-// pada tanggal & waktu sholat yang sama. Jika sudah ada dan berstatus
-// "Hadir", ABAIKAN scan baru (return OK agar mesin tidak kirim ulang).
-// Hanya buat record baru jika belum ada data sama sekali.
-// Untuk "Tes", setiap scan selalu membuat record baru (tidak ada constraint unik).
-try {
-    // --- Khusus Tes: langsung create baru setiap kali scan ---
-    if ($waktuSholat === 'Tes') {
-        $presensi = Presensi::create([
-            'santri_id'    => $santri->id,
-            'tanggal'      => $tanggal,
-            'waktu_sholat' => $waktuSholat,
-            'waktu_hadir'  => $waktuHadir,
-            'status'       => 'Tes',
-            'photo_url'    => $photoUrl,
-        ]);
-
-        logWebhook("SUCCESS: CREATED presensi Tes - santri_id={$santri->id}, nama={$santri->nama}, tanggal=$tanggal, waktu=$waktuHadir, verify=$verify, status_scan=$statusScan");
-
-        echo json_encode([
-            'status'  => 'ok',
-            'message' => "Presensi Tes recorded for {$santri->nama}",
-            'data'    => [
-                'santri_id'    => $santri->id,
-                'nama'         => $santri->nama,
-                'tanggal'      => $tanggal,
-                'waktu_sholat' => $waktuSholat,
-                'waktu_hadir'  => $waktuHadir,
-                'action'       => 'created',
-            ]
-        ]);
-        return;
-    }
-
-    // --- Presensi Sholat: First Scan Wins ---
-    // Cek apakah sudah ada record untuk santri + tanggal + waktu_sholat ini
-    $existing = Presensi::where('santri_id', $santri->id)
-        ->where('tanggal', $tanggal)
-        ->where('waktu_sholat', $waktuSholat)
-        ->first();
-
-    if ($existing && $existing->status === 'Hadir') {
-        // Record sudah ada & berstatus Hadir → ABAIKAN (jangan update/overwrite)
-        logWebhook("SKIP: Presensi sudah tercatat (First Scan Wins) - santri_id={$santri->id}, nama={$santri->nama}, tanggal=$tanggal, sholat=$waktuSholat, waktu_awal={$existing->waktu_hadir}, scan_baru=$waktuHadir");
-
-        echo json_encode([
-            'status'  => 'ok',
-            'message' => "Presensi $waktuSholat sudah tercatat sebelumnya untuk {$santri->nama} (scan diabaikan)",
-            'data'    => [
-                'santri_id'    => $santri->id,
-                'nama'         => $santri->nama,
-                'tanggal'      => $tanggal,
-                'waktu_sholat' => $waktuSholat,
-                'waktu_hadir'  => $existing->waktu_hadir,
-                'action'       => 'skipped',
-            ]
-        ]);
-        return;
-    }
-
-    if ($existing) {
-        // Record ada tapi statusnya bukan "Hadir" (misal: "Alfa" dari auto-generate)
-        // → Update ke "Hadir" karena santri ternyata hadir
-        $existing->update([
-            'waktu_hadir' => $waktuHadir,
-            'status'      => 'Hadir',
-            'photo_url'   => $photoUrl,
-        ]);
-
-        logWebhook("SUCCESS: UPDATED presensi (Alfa→Hadir) - santri_id={$santri->id}, nama={$santri->nama}, tanggal=$tanggal, sholat=$waktuSholat, waktu=$waktuHadir, verify=$verify, status_scan=$statusScan");
-
-        echo json_encode([
-            'status'  => 'ok',
-            'message' => "Presensi $waktuSholat updated to Hadir for {$santri->nama}",
-            'data'    => [
-                'santri_id'    => $santri->id,
-                'nama'         => $santri->nama,
-                'tanggal'      => $tanggal,
-                'waktu_sholat' => $waktuSholat,
-                'waktu_hadir'  => $waktuHadir,
-                'action'       => 'updated',
-            ]
-        ]);
-        return;
-    }
-
-    // Belum ada record sama sekali → Buat baru
-    $presensi = Presensi::create([
-        'santri_id'    => $santri->id,
-        'tanggal'      => $tanggal,
-        'waktu_sholat' => $waktuSholat,
-        'waktu_hadir'  => $waktuHadir,
-        'status'       => 'Hadir',
-        'photo_url'    => $photoUrl,
-    ]);
-
-    logWebhook("SUCCESS: CREATED presensi - santri_id={$santri->id}, nama={$santri->nama}, tanggal=$tanggal, sholat=$waktuSholat, waktu=$waktuHadir, verify=$verify, status_scan=$statusScan");
-
-    echo json_encode([
-        'status'  => 'ok',
-        'message' => "Presensi $waktuSholat recorded for {$santri->nama}",
-        'data'    => [
-            'santri_id'    => $santri->id,
-            'nama'         => $santri->nama,
-            'tanggal'      => $tanggal,
-            'waktu_sholat' => $waktuSholat,
-            'waktu_hadir'  => $waktuHadir,
-            'action'       => 'created',
-        ]
-    ]);
-
-} catch (\Exception $e) {
-    logWebhook("ERROR: Database error - " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
-}
 }
 
 // =====================================================================
