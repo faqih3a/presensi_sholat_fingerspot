@@ -33,10 +33,16 @@ class SyncSantriFromMesinAction
     private string $userInfoUrl = 'https://developer.fingerspot.io/api/get_userinfo';
 
     /** @var string API token untuk autentikasi ke Fingerspot Cloud. */
-    private string $apiToken = 'DWJ7LY8ZJQ6CD5NN';
+    private string $apiToken;
 
     /** @var string Cloud ID mesin Fingerspot yang terdaftar. */
-    private string $cloudId = 'S118001290';
+    private string $cloudId;
+
+    public function __construct()
+    {
+        $this->apiToken = config('services.fingerspot.token');
+        $this->cloudId  = config('services.fingerspot.cloud_id');
+    }
 
     /**
      * Menjalankan aksi sinkronisasi data santri dari mesin Fingerspot.

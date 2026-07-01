@@ -16,7 +16,7 @@ class WhatsAppService
      */
     public static function sendMessage($target, $message)
     {
-        $token = env('FONNTE_TOKEN');
+        $token = config('services.fonnte.token');
         
         if (!$token) {
             Log::warning('Fonnte token not set. WhatsApp message not sent.');

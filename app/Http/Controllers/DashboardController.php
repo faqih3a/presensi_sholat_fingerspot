@@ -65,18 +65,10 @@ class DashboardController extends Controller
         $tanggal_mulai = $resolvedDates['tanggal_mulai'];
         $tanggal_akhir = $resolvedDates['tanggal_akhir'];
 
-        $refDate = \Carbon\Carbon::parse($ref_date, 'Asia/Jakarta');
-        if ($mode === 'week') {
-            $prev_date    = $refDate->copy()->subWeek()->format('Y-m-d');
-            $next_date    = $refDate->copy()->addWeek()->format('Y-m-d');
-        } elseif ($mode === 'month') {
-            $prev_date    = $refDate->copy()->subMonth()->format('Y-m-d');
-            $next_date    = $refDate->copy()->addMonth()->format('Y-m-d');
-        } else {
-            $prev_date    = $refDate->copy()->subDay()->format('Y-m-d');
-            $next_date    = $refDate->copy()->addDay()->format('Y-m-d');
-        }
-        $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
+        $nav = $this->resolveNavigation($mode, $ref_date, $tanggal_mulai);
+        $prev_date    = $nav['prev_date'];
+        $next_date    = $nav['next_date'];
+        $display_date = $nav['display_date'];
 
         // --- Delegasi ke Action Classes ---
         $stats      = $statsAction->execute($tanggal_mulai, $tanggal_akhir, $waktuSholat);

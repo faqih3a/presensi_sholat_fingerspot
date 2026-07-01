@@ -4,127 +4,74 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
-use App\Models\Presensi;
-use App\Traits\DateAndPrayerHelper;
+use App\Actions\Dashboard\FetchSantriDashboardAction;
+use App\Actions\Dashboard\ExportSantriCsvAction;
 
+/**
+ * Controller untuk Dashboard Santri (halaman personal santri).
+ *
+ * Controller ini mengikuti prinsip "Thin Controller" — hanya bertugas:
+ * 1. Menerima HTTP Request dan memverifikasi profil santri.
+ * 2. Mendelegasikan logika bisnis ke Action Class yang sesuai.
+ * 3. Mengembalikan HTTP Response (view atau stream).
+ *
+ * @see \App\Actions\Dashboard\FetchSantriDashboardAction
+ * @see \App\Actions\Dashboard\ExportSantriCsvAction
+ */
 class SantriDashboardController extends Controller
 {
-    use DateAndPrayerHelper;
-    public function __construct()
-    {
-    }
-
-    public function index(Request $request)
+    /**
+     * Menampilkan halaman dashboard personal santri.
+     *
+     * @param  \Illuminate\Http\Request                               $request
+     * @param  \App\Actions\Dashboard\FetchSantriDashboardAction      $action
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
+    public function index(Request $request, FetchSantriDashboardAction $action)
     {
         $user = Auth::user();
-        
-        // Ensure user has a linked santri profile
+
+        // Pastikan user memiliki profil santri terhubung
         if (!$user->santri) {
             return redirect('/')->withErrors(['error' => 'Profil santri tidak ditemukan untuk akun ini.']);
         }
 
         $waktuSholat = $request->waktu_sholat;
-        $period = $request->get('period', 'today');
+        $period      = $request->get('period', 'today');
 
-        $today = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-        $startDate = $today;
-        $endDate = $today;
+        $data = $action->execute($user->santri->id, $period, $waktuSholat);
 
-        if ($period === 'week') {
-            $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(6)->format('Y-m-d');
-        } elseif ($period === 'month') {
-            $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(29)->format('Y-m-d');
-        }
-
-        // Get personal presensi history
-        $query = Presensi::where('santri_id', $user->santri->id)
-            ->whereBetween('tanggal', [$startDate, $endDate])
-            ->where('waktu_sholat', '!=', 'Tes')
-            ->where('status', '!=', 'Tes')
-            ->orderBy('tanggal', 'desc')
-            ->orderBy('waktu_hadir', 'desc');
-
-        if ($waktuSholat) {
-            $query->where('waktu_sholat', $waktuSholat);
-        }
-
-        $riwayatPresensi = $query->get();
-
-        // Calculate totals based on filtered results (case-insensitive and support both 'Alfa' and 'Alpha')
-        $totalHadir = $riwayatPresensi->filter(fn($p) => strtolower($p->status) === 'hadir')->count();
-        $totalAlpha = $riwayatPresensi->filter(fn($p) => in_array(strtolower($p->status), ['alfa', 'alpha']))->count();
-
-        return view('santri.dashboard', compact('riwayatPresensi', 'user', 'totalHadir', 'totalAlpha', 'period', 'waktuSholat'));
+        return view('santri.dashboard', [
+            'riwayatPresensi' => $data['riwayatPresensi'],
+            'user'            => $user,
+            'totalHadir'      => $data['totalHadir'],
+            'totalAlpha'      => $data['totalAlpha'],
+            'period'          => $period,
+            'waktuSholat'     => $waktuSholat,
+        ]);
     }
 
-    public function export(Request $request)
+    /**
+     * Export data kehadiran santri ke format CSV.
+     *
+     * @param  \Illuminate\Http\Request                           $request
+     * @param  \App\Actions\Dashboard\ExportSantriCsvAction       $action
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function export(Request $request, ExportSantriCsvAction $action)
     {
         $user = Auth::user();
-        
+
         if (!$user->santri) {
             return redirect('/')->withErrors(['error' => 'Profil santri tidak ditemukan untuk akun ini.']);
         }
 
-        $waktuSholat = $request->waktu_sholat;
-        $period = $request->get('period', 'today');
+        $export = $action->execute(
+            $user->santri->id,
+            $request->get('period', 'today'),
+            $request->waktu_sholat
+        );
 
-        $today = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-        $startDate = $today;
-        $endDate = $today;
-
-        if ($period === 'week') {
-            $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(6)->format('Y-m-d');
-        } elseif ($period === 'month') {
-            $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(29)->format('Y-m-d');
-        }
-
-        // Only sync today and yesterday to prevent API latency during dashboard loads
-
-
-        $query = Presensi::where('santri_id', $user->santri->id)
-            ->whereBetween('tanggal', [$startDate, $endDate])
-            ->where('waktu_sholat', '!=', 'Tes')
-            ->where('status', '!=', 'Tes')
-            ->orderBy('tanggal', 'desc')
-            ->orderBy('waktu_hadir', 'desc');
-            
-        if ($waktuSholat) {
-            $query->where('waktu_sholat', $waktuSholat);
-        }
-        
-        $presensis = $query->get();
-        
-        $filename = "rekap_kehadiran_saya_" . date('Y-m-d_H-i-s') . ".csv";
-        
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$filename",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
-        
-        $columns = ['No', 'Waktu Sholat', 'Tanggal', 'Waktu Hadir', 'Status'];
-        
-        $callback = function() use($presensis, $columns) {
-            $file = fopen('php://output', 'w');
-            fputs($file, $bom =(chr(0xEF) . chr(0xBB) . chr(0xBF)));
-            fputcsv($file, $columns);
-            
-            $no = 1;
-            foreach ($presensis as $presensi) {
-                fputcsv($file, [
-                    $no++,
-                    $presensi->waktu_sholat,
-                    \Carbon\Carbon::parse($presensi->tanggal)->format('d M Y'),
-                    $presensi->waktu_hadir ? \Carbon\Carbon::parse($presensi->waktu_hadir)->format('H:i:s') : '-',
-                    $presensi->status
-                ]);
-            }
-            fclose($file);
-        };
-        
-        return response()->stream($callback, 200, $headers);
+        return response()->stream($export['callback'], 200, $export['headers']);
     }
-
 }

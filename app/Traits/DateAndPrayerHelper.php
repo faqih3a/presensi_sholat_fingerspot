@@ -122,5 +122,39 @@ trait DateAndPrayerHelper
             'Isya' => Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta')->addMinutes(10),
         ];
     }
+
+    /**
+     * Menghitung prev_date, next_date, dan display_date berdasarkan mode navigasi.
+     *
+     * Mengeliminasi duplikasi kode navigasi tanggal yang sebelumnya
+     * di-copy-paste di DashboardController, IzinController, dan TesController.
+     *
+     * @param  string  $mode           Mode navigasi: 'day', 'week', atau 'month'.
+     * @param  string  $refDateStr     Tanggal referensi (Y-m-d).
+     * @param  string  $tanggalMulai   Tanggal awal range (Y-m-d), untuk display.
+     * @return array   ['prev_date', 'next_date', 'display_date']
+     */
+    protected function resolveNavigation(string $mode, string $refDateStr, string $tanggalMulai): array
+    {
+        $refDate = Carbon::parse($refDateStr, 'Asia/Jakarta');
+
+        return match ($mode) {
+            'week' => [
+                'prev_date'    => $refDate->copy()->subWeek()->format('Y-m-d'),
+                'next_date'    => $refDate->copy()->addWeek()->format('Y-m-d'),
+                'display_date' => $this->formatIndonesianDate($tanggalMulai, 'month'),
+            ],
+            'month' => [
+                'prev_date'    => $refDate->copy()->subMonth()->format('Y-m-d'),
+                'next_date'    => $refDate->copy()->addMonth()->format('Y-m-d'),
+                'display_date' => $this->formatIndonesianDate($tanggalMulai, 'month'),
+            ],
+            default => [
+                'prev_date'    => $refDate->copy()->subDay()->format('Y-m-d'),
+                'next_date'    => $refDate->copy()->addDay()->format('Y-m-d'),
+                'display_date' => $this->formatIndonesianDate($tanggalMulai, 'month'),
+            ],
+        };
+    }
 }
 

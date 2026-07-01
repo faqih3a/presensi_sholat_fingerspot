@@ -88,31 +88,16 @@ class IzinController extends Controller
      */
     public function manage(Request $request)
     {
-        // Allowed for both Admin and Asatidz (pengurus masjid)
-        if (!in_array(auth()->user()->role, ['admin', 'asatidz'])) {
-            abort(403);
-        }
-
         $resolvedDates = $this->resolveDateRange($request);
         $mode          = $resolvedDates['mode'];
         $ref_date      = $resolvedDates['ref_date'];
         $tanggal_mulai = $resolvedDates['tanggal_mulai'];
         $tanggal_akhir = $resolvedDates['tanggal_akhir'];
 
-        $refDate = \Carbon\Carbon::parse($ref_date, 'Asia/Jakarta');
-        if ($mode === 'week') {
-            $prev_date    = $refDate->copy()->subWeek()->format('Y-m-d');
-            $next_date    = $refDate->copy()->addWeek()->format('Y-m-d');
-            $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
-        } elseif ($mode === 'month') {
-            $prev_date    = $refDate->copy()->subMonth()->format('Y-m-d');
-            $next_date    = $refDate->copy()->addMonth()->format('Y-m-d');
-            $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
-        } else {
-            $prev_date    = $refDate->copy()->subDay()->format('Y-m-d');
-            $next_date    = $refDate->copy()->addDay()->format('Y-m-d');
-            $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
-        }
+        $nav = $this->resolveNavigation($mode, $ref_date, $tanggal_mulai);
+        $prev_date    = $nav['prev_date'];
+        $next_date    = $nav['next_date'];
+        $display_date = $nav['display_date'];
 
         $izins = Izin::with('user.santri')
             ->where(function ($query) use ($tanggal_mulai, $tanggal_akhir) {
@@ -150,10 +135,6 @@ class IzinController extends Controller
         ApproveIzinAction $approveAction,
         RejectIzinAction $rejectAction
     ) {
-        if (!in_array(auth()->user()->role, ['admin', 'asatidz'])) {
-            abort(403);
-        }
-
         $validated = $request->validate([
             'status'           => 'required|in:Disetujui,Ditolak',
             'keterangan_admin' => 'nullable|string',

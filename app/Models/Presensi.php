@@ -7,8 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Presensi extends Model
 {
     protected $fillable = [
-        'santri_id',
-        'waktu_sholat',
+        'santri_id', 'waktu_sholat',
         'tanggal',
         'waktu_hadir',
         'status',

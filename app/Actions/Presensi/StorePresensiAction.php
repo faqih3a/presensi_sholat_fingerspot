@@ -36,11 +36,17 @@ class StorePresensiAction
 {
     use DateAndPrayerHelper;
 
-    /** @var string API token Fingerspot Cloud (untuk auto-fetch nama). */
-    private const API_TOKEN = 'DWJ7LY8ZJQ6CD5NN';
+    /** @var string API token Fingerspot Cloud (dari config/services.php). */
+    private string $apiToken;
 
-    /** @var string Cloud ID mesin Fingerspot. */
-    private const CLOUD_ID = 'S118001290';
+    /** @var string Cloud ID mesin Fingerspot (dari config/services.php). */
+    private string $cloudId;
+
+    public function __construct()
+    {
+        $this->apiToken = config('services.fingerspot.token');
+        $this->cloudId  = config('services.fingerspot.cloud_id');
+    }
 
     /**
      * Menyimpan data presensi dari webhook attlog mesin Fingerspot.
@@ -325,10 +331,10 @@ class StorePresensiAction
         try {
             Http::timeout(1)->connectTimeout(1)->withHeaders([
                 'Content-Type'  => 'application/json',
-                'Authorization' => 'Bearer ' . self::API_TOKEN,
+                'Authorization' => 'Bearer ' . $this->apiToken,
             ])->post('https://developer.fingerspot.io/api/get_userinfo', [
                 'trans_id' => (string) rand(100000, 999999999),
-                'cloud_id' => self::CLOUD_ID,
+                'cloud_id' => $this->cloudId,
                 'pin'      => (string) $pin,
             ]);
         } catch (\Exception $e) {
