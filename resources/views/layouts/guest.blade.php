@@ -8,18 +8,30 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: DM Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --font-body: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+            --font-display: 'Outfit', 'Helvetica Neue', Arial, sans-serif;
+            --color-bg: #F7F6F3;
+            --color-surface: #FFFFFF;
+            --color-border: #E8E6E0;
+            --color-text: #1E1D1B;
+            --color-muted: #7B7468;
+            --color-accent: #2A6B4F;
+        }
+        html { scroll-behavior: smooth; }
         body { 
-            font-family: 'Inter', sans-serif; 
+            font-family: var(--font-body);
             margin: 0;
             padding: 0;
             overflow-x: hidden;
-            background-color: #f8f9fa;
+            background-color: var(--color-bg);
         }
+        h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: -0.02em; }
         
         /* Page Loader Styles */
         .page-loader {

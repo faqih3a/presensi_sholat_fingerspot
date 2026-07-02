@@ -2,39 +2,38 @@
 @section('title', 'Dashboard')
 @push('styles')
 <style>
-.stat-card{border-radius:1rem;padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border:1px solid #edf2f9;transition:all .3s ease;background:#fff}
-.stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,.08)}
-.stat-card .icon-box{width:48px;height:48px;border-radius:.75rem;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
-.stat-card .stat-value{font-size:1.75rem;font-weight:800;line-height:1.2}
-.stat-card .stat-label{font-size:.8rem;font-weight:600;color:#8898aa;margin-bottom:.25rem}
-.stat-card .stat-sub{font-size:.7rem;color:#adb5bd}
-.prayer-section{border-radius:1rem;padding:1.5rem;border:1px solid #edf2f9;background:#fff}
-.prayer-card{border:2px solid #edf2f9;border-radius:.75rem;padding:.75rem 1rem;text-align:left;min-width:120px;position:relative;transition:all .2s}
-.prayer-card.next-prayer{border-color:#198754;background:rgba(25,135,84,.05)}
-.prayer-card .prayer-name{font-size:.8rem;color:#8898aa;font-weight:600;display:flex;align-items:center;gap:.35rem}
-.prayer-card .prayer-time{font-size:1.35rem;font-weight:800;color:#333}
-.prayer-card .next-badge{position:absolute;top:.4rem;right:.5rem;background:#198754;color:#fff;font-size:.55rem;font-weight:700;padding:.15rem .4rem;border-radius:.25rem;text-transform:uppercase}
-.chart-card{border-radius:1rem;padding:1.5rem;border:1px solid #edf2f9;background:#fff}
-.chart-card .chart-title{font-size:1rem;font-weight:700;color:#333}
-.chart-card .chart-sub{font-size:.75rem;color:#8898aa}
-.prayer-meta{display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:#8898aa;margin-top:1rem;padding:.75rem 1rem;background:#f8f9fa;border-radius:.5rem}
-.prayer-meta .live-dot{width:8px;height:8px;border-radius:50%;background:#198754;display:inline-block;animation:pulse-live 2s infinite}
-@keyframes pulse-live{0%,100%{box-shadow:0 0 0 0 rgba(25,135,84,.4)}50%{box-shadow:0 0 0 6px rgba(25,135,84,0)}}
-.refresh-btn{border:1px solid #edf2f9;border-radius:.5rem;background:#fff;color:#8898aa;font-size:.8rem;font-weight:600;padding:.4rem .75rem;cursor:pointer;transition:all .2s}
-.refresh-btn:hover{border-color:#198754;color:#198754}
-body.dark-mode .stat-card,body.dark-mode .prayer-section,body.dark-mode .chart-card{background:#1e1e1e;border-color:#333}
-body.dark-mode .stat-card .stat-value,body.dark-mode .prayer-card .prayer-time,body.dark-mode .chart-card .chart-title{color:#f8f9fa!important}
-body.dark-mode .prayer-card{border-color:#333}
-body.dark-mode .prayer-card.next-prayer{border-color:#198754;background:rgba(25,135,84,.1)}
-body.dark-mode .prayer-meta{background:#2c2c2c}
-body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
+.stat-card{border-radius:8px;padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--color-border);transition:box-shadow .2s ease,transform .2s ease;background:var(--color-surface)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(30,29,27,.06)}
+.stat-card .icon-box{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.stat-card .stat-value{font-size:1.8rem;font-weight:700;line-height:1.1;font-family:var(--font-display);letter-spacing:-0.03em;color:var(--color-text)}
+.stat-card .stat-label{font-size:.75rem;font-weight:500;color:var(--color-muted);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.05em}
+.stat-card .stat-sub{font-size:.72rem;color:var(--color-muted);margin-top:.25rem}
+.prayer-section{border-radius:8px;padding:1.5rem;border:1px solid var(--color-border);background:var(--color-surface)}
+.prayer-card{border:1px solid var(--color-border);border-radius:6px;padding:.75rem 1rem;text-align:left;min-width:110px;position:relative;transition:border-color .15s ease,background-color .15s ease}
+.prayer-card.next-prayer{border-color:var(--color-accent);background:var(--color-accent-light)}
+.prayer-card .prayer-name{font-size:.72rem;color:var(--color-muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:.3rem}
+.prayer-card .prayer-time{font-size:1.3rem;font-weight:700;color:var(--color-text);font-family:var(--font-display);letter-spacing:-0.02em;margin-top:.2rem;font-variant-numeric:tabular-nums}
+.prayer-card .next-badge{position:absolute;top:.35rem;right:.4rem;background:var(--color-accent);color:#fff;font-size:.55rem;font-weight:700;padding:.12rem .35rem;border-radius:3px;text-transform:uppercase;letter-spacing:.05em}
+.chart-card{border-radius:8px;padding:1.5rem;border:1px solid var(--color-border);background:var(--color-surface)}
+.chart-card .chart-title{font-size:.95rem;font-weight:600;color:var(--color-text);font-family:var(--font-display);letter-spacing:-0.01em}
+.chart-card .chart-sub{font-size:.72rem;color:var(--color-muted);margin-top:.15rem}
+.prayer-meta{display:flex;align-items:center;gap:.5rem;font-size:.72rem;color:var(--color-muted);margin-top:1rem;padding:.65rem 1rem;background:var(--color-bg);border-radius:6px;border:1px solid var(--color-border)}
+.prayer-meta .live-dot{width:7px;height:7px;border-radius:50%;background:var(--color-accent);display:inline-block;animation:pulse-live 2.5s infinite}
+@keyframes pulse-live{0%,100%{box-shadow:0 0 0 0 rgba(42,107,79,.4)}50%{box-shadow:0 0 0 5px rgba(42,107,79,0)}}
+.refresh-btn{border:1px solid var(--color-border);border-radius:5px;background:var(--color-surface);color:var(--color-muted);font-size:.78rem;font-weight:500;padding:.35rem .7rem;cursor:pointer;transition:all .15s ease;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem}
+.refresh-btn:hover{border-color:var(--color-accent);color:var(--color-accent)}
+body.dark-mode .stat-card,body.dark-mode .prayer-section,body.dark-mode .chart-card{background:var(--color-surface);border-color:var(--color-border)}
+body.dark-mode .prayer-card{border-color:var(--color-border)}
+body.dark-mode .prayer-card.next-prayer{border-color:var(--color-accent);background:var(--color-accent-light)}
+body.dark-mode .prayer-meta{background:var(--color-bg);border-color:var(--color-border)}
+body.dark-mode .refresh-btn{background:var(--color-surface);border-color:var(--color-border);color:var(--color-muted)}
 </style>
 @endpush
 @section('content')
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
     <div>
-        <h1 class="h3 mb-0 text-dark fw-bold">Dashboard</h1>
-        <p class="text-muted mb-0">Selamat datang di sistem presensi sholat</p>
+        <h1 class="h3 mb-0 fw-bold" style="color:var(--color-text);letter-spacing:-.03em">Dashboard</h1>
+        <p style="color:var(--color-muted);font-size:.85rem;margin-bottom:0;margin-top:.2rem">Rekap kehadiran sholat hari ini</p>
     </div>
     @include('partials.date-filter')
 </div>
@@ -44,41 +43,41 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
     <div class="col-xl-3 col-md-6">
         <div class="stat-card h-100">
             <div>
-                <div class="stat-label">Total Jamaah Terdaftar</div>
-                <div class="stat-value text-dark">{{ number_format($totalSantri) }}</div>
+                <div class="stat-label">Total Jamaah</div>
+                <div class="stat-value">{{ number_format($totalSantri) }}</div>
                 <div class="stat-sub">Santri terdaftar aktif</div>
             </div>
-            <div class="icon-box" style="background:rgba(25,135,84,.12)"><i class="bi bi-people-fill text-success"></i></div>
+            <div class="icon-box" style="background:rgba(42,107,79,.08);color:#2A6B4F"><i class="bi bi-people"></i></div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
         <div class="stat-card h-100">
             <div>
-                <div class="stat-label">Jamaah Hadir Hari Ini</div>
-                <div class="stat-value text-dark">{{ number_format($jamaahHadirHariIni) }}</div>
+                <div class="stat-label">Hadir Hari Ini</div>
+                <div class="stat-value">{{ number_format($jamaahHadirHariIni) }}</div>
                 <div class="stat-sub">{{ $totalSantri > 0 ? round(($jamaahHadirHariIni/$totalSantri)*100) : 0 }}% dari total jamaah</div>
             </div>
-            <div class="icon-box" style="background:rgba(25,135,84,.12)"><i class="bi bi-person-check-fill text-success"></i></div>
+            <div class="icon-box" style="background:rgba(42,107,79,.08);color:#2A6B4F"><i class="bi bi-person-check"></i></div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
         <div class="stat-card h-100">
             <div>
                 <div class="stat-label">Ketepatan Waktu</div>
-                <div class="stat-value text-dark">{{ $ketepatanWaktu }}%</div>
-                <div class="stat-sub">Hari ini</div>
+                <div class="stat-value">{{ $ketepatanWaktu }}<span style="font-size:1.1rem;font-weight:500">%</span></div>
+                <div class="stat-sub">Terhadap 5 waktu sholat</div>
             </div>
-            <div class="icon-box" style="background:rgba(25,135,84,.12)"><i class="bi bi-graph-up-arrow text-success"></i></div>
+            <div class="icon-box" style="background:rgba(100,87,64,.07);color:#6B5740"><i class="bi bi-graph-up"></i></div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
         <div class="stat-card h-100">
             <div>
-                <div class="stat-label">Total Scan Hari Ini</div>
-                <div class="stat-value text-dark">{{ number_format($totalScanHariIni) }}</div>
-                <div class="stat-sub">Semua scan hari ini</div>
+                <div class="stat-label">Scan Hari Ini</div>
+                <div class="stat-value">{{ number_format($totalScanHariIni) }}</div>
+                <div class="stat-sub">Total entri fingerspot</div>
             </div>
-            <div class="icon-box" style="background:rgba(25,135,84,.12)"><i class="bi bi-calendar-check-fill text-success"></i></div>
+            <div class="icon-box" style="background:rgba(100,87,64,.07);color:#6B5740"><i class="bi bi-fingerprint"></i></div>
         </div>
     </div>
 </div>
@@ -179,7 +178,10 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
                 <span class="badge bg-info bg-opacity-10 text-info small">{{ $izinTodayRecords->count() }} orang</span>
             </div>
             @else
-            <div class="text-center py-4 bg-light rounded-4"><i class="bi bi-emoji-smile fs-3 text-muted d-block mb-2"></i><p class="text-muted small mb-0">Tidak ada santri izin.</p></div>
+            <div class="text-center py-4" style="background:var(--color-bg);border-radius:6px;border:1px solid var(--color-border)">
+                <i class="bi bi-check-circle d-block mb-2" style="font-size:1.5rem;color:var(--color-muted)"></i>
+                <p style="color:var(--color-muted);font-size:.82rem;margin:0">Tidak ada santri izin pada periode ini.</p>
+            </div>
             @endif
         </div>
     </div>
@@ -204,7 +206,10 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
                 <span class="badge bg-danger bg-opacity-10 text-danger small">{{ $alfaTodayRecords->count() }} orang</span>
             </div>
             @else
-            <div class="text-center py-4 bg-light rounded-4"><i class="bi bi-check-circle fs-3 text-success d-block mb-2"></i><p class="text-muted small mb-0">Tidak ada santri alfa.</p></div>
+            <div class="text-center py-4" style="background:var(--color-bg);border-radius:6px;border:1px solid var(--color-border)">
+                <i class="bi bi-check-circle d-block mb-2" style="font-size:1.5rem;color:var(--color-muted)"></i>
+                <p style="color:var(--color-muted);font-size:.82rem;margin:0">Tidak ada santri alfa pada periode ini.</p>
+            </div>
             @endif
         </div>
     </div>
@@ -232,7 +237,10 @@ body.dark-mode .refresh-btn{background:#2c2c2c;border-color:#333;color:#adb5bd}
                 </div>
             </div>
             @empty
-            <div class="text-center py-4 bg-light rounded-4"><i class="bi bi-activity fs-3 text-muted d-block mb-2"></i><p class="text-muted small mb-0">Belum ada aktivitas.</p></div>
+            <div class="text-center py-4" style="background:var(--color-bg);border-radius:6px;border:1px solid var(--color-border)">
+                <i class="bi bi-clock-history d-block mb-2" style="font-size:1.5rem;color:var(--color-muted)"></i>
+                <p style="color:var(--color-muted);font-size:.82rem;margin:0">Belum ada aktivitas tercatat.</p>
+            </div>
             @endforelse
         </div>
     </div>

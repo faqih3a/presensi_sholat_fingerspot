@@ -4,18 +4,31 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>Presensi Thursina | @yield('title')</title>
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Outfit + DM Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
+        :root {
+            --font-body: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+            --font-display: 'Outfit', 'Helvetica Neue', Arial, sans-serif;
+            --color-bg: #F7F6F3;
+            --color-surface: #FFFFFF;
+            --color-border: #E8E6E0;
+            --color-text: #1E1D1B;
+            --color-muted: #7B7468;
+            --color-accent: #2A6B4F;
+            --color-accent-light: rgba(42, 107, 79, 0.08);
+        }
+        html { scroll-behavior: smooth; }
         body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f8f9fa; 
+            font-family: var(--font-body);
+            background-color: var(--color-bg);
+            color: var(--color-text);
         }
         #wrapper { overflow-x: hidden; }
         #sidebar-wrapper {
@@ -34,10 +47,12 @@
         }
         #sidebar-wrapper .sidebar-heading {
             padding: 1.5rem 1.25rem;
-            font-size: 1.1rem;
-            color: #333;
-            background-color: #ffffff;
+            font-size: 1rem;
+            color: var(--color-text);
+            background-color: var(--color-surface);
             font-weight: 700;
+            font-family: var(--font-display);
+            letter-spacing: -0.01em;
             white-space: nowrap;
             overflow: hidden;
             display: flex;
@@ -46,18 +61,19 @@
         #sidebar-wrapper .list-group { width: 100%; padding: 0.75rem; }
         #sidebar-wrapper .list-group-item {
             border: none;
-            padding: 0.85rem 1.25rem;
+            padding: 0.75rem 1rem;
             background-color: transparent;
-            color: #67748e;
+            color: var(--color-muted);
             display: flex;
             align-items: center;
-            gap: 1rem;
-            transition: background-color 0.2s, color 0.2s, padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 0.5rem;
-            margin-bottom: 0.25rem;
+            gap: 0.85rem;
+            transition: background-color 0.18s ease, color 0.18s ease, padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 6px;
+            margin-bottom: 2px;
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 0.88rem;
             white-space: nowrap;
+            letter-spacing: 0.01em;
         }
         #sidebar-wrapper .sidebar-text {
             transition: opacity 0.2s ease-in-out;
@@ -65,18 +81,19 @@
             display: inline-block;
         }
         #sidebar-wrapper .list-group-item i {
-            font-size: 1.1rem;
-            width: 20px;
+            font-size: 1rem;
+            width: 18px;
             text-align: center;
+            flex-shrink: 0;
         }
         #sidebar-wrapper .list-group-item:hover {
-            color: #333;
-            background-color: #f8f9fa;
+            color: var(--color-text);
+            background-color: var(--color-bg);
         }
         #sidebar-wrapper .list-group-item.active {
-            color: #fff;
-            background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            color: var(--color-accent);
+            background-color: var(--color-accent-light);
+            font-weight: 600;
         }
         #page-content-wrapper { 
             width: 100%;
@@ -135,7 +152,8 @@
                 width: auto !important;
             }
             body.sb-mini #sidebar-wrapper .list-group-item.active {
-                background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
+                background-color: var(--color-accent-light);
+                color: var(--color-accent);
             }
             body.sb-mini #sidebar-wrapper .mt-auto {
                 padding: 1rem 0 !important;
@@ -186,40 +204,50 @@
         }
         
         /* Dark Mode Styles */
-        body.dark-mode { background-color: #121212; color: #e0e0e0; }
-        body.dark-mode #sidebar-wrapper { background-color: #1e1e1e; border-right-color: #333; }
-        body.dark-mode #sidebar-wrapper .sidebar-heading { background-color: #1e1e1e; color: #fff; border-bottom-color: #333 !important; }
-        body.dark-mode #sidebar-wrapper .list-group-item { color: #adb5bd; }
-        body.dark-mode #sidebar-wrapper .list-group-item:hover { color: #fff; background-color: #2c2c2c; }
-        body.dark-mode .navbar { background-color: #1e1e1e !important; border-bottom-color: #333 !important; }
-        body.dark-mode .navbar-light .navbar-nav .nav-link { color: #adb5bd; }
-        body.dark-mode .navbar-light .navbar-nav .nav-link:hover { color: #fff; }
-        body.dark-mode .card { background-color: #1e1e1e; border-color: #333; }
-        body.dark-mode .card-header { background-color: #1e1e1e; border-bottom-color: #333; }
-        body.dark-mode .text-gray-800, body.dark-mode .text-dark, body.dark-mode .text-primary { color: #f8f9fa !important; }
+        body.dark-mode {
+            --color-bg: #141412;
+            --color-surface: #1C1B18;
+            --color-border: #2E2C27;
+            --color-text: #EAE8E0;
+            --color-muted: #8C8880;
+            --color-accent: #4DA37A;
+            --color-accent-light: rgba(77, 163, 122, 0.1);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+        body.dark-mode #sidebar-wrapper { background-color: var(--color-surface); border-right-color: var(--color-border); }
+        body.dark-mode #sidebar-wrapper .sidebar-heading { background-color: var(--color-surface); color: var(--color-text); border-bottom-color: var(--color-border) !important; }
+        body.dark-mode #sidebar-wrapper .list-group-item { color: var(--color-muted); }
+        body.dark-mode #sidebar-wrapper .list-group-item:hover { color: var(--color-text); background-color: rgba(255,255,255,0.04); }
+        body.dark-mode .navbar { background-color: var(--color-surface) !important; border-bottom-color: var(--color-border) !important; }
+        body.dark-mode .navbar-light .navbar-nav .nav-link { color: var(--color-muted); }
+        body.dark-mode .navbar-light .navbar-nav .nav-link:hover { color: var(--color-text); }
+        body.dark-mode .card { background-color: var(--color-surface); border-color: var(--color-border); }
+        body.dark-mode .card-header { background-color: var(--color-surface); border-bottom-color: var(--color-border); }
+        body.dark-mode .text-gray-800, body.dark-mode .text-dark, body.dark-mode .text-primary { color: var(--color-text) !important; }
         
         /* Comprehensive Table Dark Mode */
-        body.dark-mode .table { color: #e9ecef !important; border-color: #333 !important; }
-        body.dark-mode .table :not(caption) > * > * { background-color: transparent !important; color: inherit !important; border-color: #333 !important; }
-        body.dark-mode .table thead th, body.dark-mode thead.bg-light, body.dark-mode .bg-light { background-color: #2c2c2c !important; color: #f8f9fa !important; border-color: #333 !important; }
-        body.dark-mode .table-striped tbody tr:nth-of-type(odd) { --bs-table-accent-bg: rgba(255, 255, 255, 0.03) !important; color: #e9ecef !important; }
-        body.dark-mode .table-hover tbody tr:hover { --bs-table-accent-bg: rgba(255, 255, 255, 0.07) !important; color: #fff !important; }
-        body.dark-mode .table-bordered, body.dark-mode .table-bordered td, body.dark-mode .table-bordered th { border-color: #333 !important; }
-        body.dark-mode .card-footer { background-color: #1e1e1e !important; border-top-color: #333 !important; color: #adb5bd !important; }
+        body.dark-mode .table { color: var(--color-text) !important; border-color: var(--color-border) !important; }
+        body.dark-mode .table :not(caption) > * > * { background-color: transparent !important; color: inherit !important; border-color: var(--color-border) !important; }
+        body.dark-mode .table thead th, body.dark-mode thead.bg-light, body.dark-mode .bg-light { background-color: rgba(255,255,255,0.04) !important; color: var(--color-text) !important; border-color: var(--color-border) !important; }
+        body.dark-mode .table-striped tbody tr:nth-of-type(odd) { --bs-table-accent-bg: rgba(255, 255, 255, 0.025) !important; color: var(--color-text) !important; }
+        body.dark-mode .table-hover tbody tr:hover { --bs-table-accent-bg: rgba(255, 255, 255, 0.05) !important; color: var(--color-text) !important; }
+        body.dark-mode .table-bordered, body.dark-mode .table-bordered td, body.dark-mode .table-bordered th { border-color: var(--color-border) !important; }
+        body.dark-mode .card-footer { background-color: var(--color-surface) !important; border-top-color: var(--color-border) !important; color: var(--color-muted) !important; }
         
-        /* Buttons & Utilites in Dark Mode */
-        body.dark-mode .btn-light, body.dark-mode .btn-white { background-color: #2c2c2c !important; border-color: #444 !important; color: #f8f9fa !important; }
-        body.dark-mode .btn-light:hover, body.dark-mode .btn-white:hover { background-color: #3d3d3d !important; color: #fff !important; }
-        body.dark-mode .bg-light { background-color: #2c2c2c !important; }
-        body.dark-mode .bg-white { background-color: #1e1e1e !important; }
+        /* Buttons & Utilities in Dark Mode */
+        body.dark-mode .btn-light, body.dark-mode .btn-white { background-color: rgba(255,255,255,0.06) !important; border-color: var(--color-border) !important; color: var(--color-text) !important; }
+        body.dark-mode .btn-light:hover, body.dark-mode .btn-white:hover { background-color: rgba(255,255,255,0.1) !important; color: var(--color-text) !important; }
+        body.dark-mode .bg-light { background-color: rgba(255,255,255,0.04) !important; }
+        body.dark-mode .bg-white { background-color: var(--color-surface) !important; }
         
-        body.dark-mode .dropdown-menu { background-color: #1e1e1e; border-color: #333; }
-        body.dark-mode .dropdown-item { color: #e0e0e0; }
-        body.dark-mode .dropdown-item:hover { background-color: #2c2c2c; color: #fff; }
-        body.dark-mode .border-bottom { border-bottom-color: #333 !important; }
-        body.dark-mode .border-top { border-top-color: #333 !important; }
-        body.dark-mode .text-muted { color: #adb5bd !important; }
-        body.dark-mode .bg-white { background-color: #1e1e1e !important; }
+        body.dark-mode .dropdown-menu { background-color: var(--color-surface); border-color: var(--color-border); }
+        body.dark-mode .dropdown-item { color: var(--color-text); }
+        body.dark-mode .dropdown-item:hover { background-color: rgba(255,255,255,0.05); color: var(--color-text); }
+        body.dark-mode .border-bottom { border-bottom-color: var(--color-border) !important; }
+        body.dark-mode .border-top { border-top-color: var(--color-border) !important; }
+        body.dark-mode .text-muted { color: var(--color-muted) !important; }
+        body.dark-mode .bg-white { background-color: var(--color-surface) !important; }
         body.dark-mode .page-loader { background-color: #121212; }
         
         /* Form Elements for Dark Mode */
@@ -361,25 +389,21 @@
             border: 1px solid rgba(58, 176, 255, 0.2);
         }
         
-        body.dark-mode {
-            background-color: #1a1a1a;
-            color: #e9ecef;
-        }
         body.dark-mode .form-select {
-            background-color: #2c2c2c;
-            border-color: #444;
-            color: #adb5bd;
+            background-color: rgba(255,255,255,0.05);
+            border-color: var(--color-border);
+            color: var(--color-text);
         }
         body.dark-mode .dropdown-menu {
-            background-color: #2c2c2c;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
+            background-color: var(--color-surface);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35) !important;
         }
         body.dark-mode .dropdown-item {
-            color: #adb5bd;
+            color: var(--color-muted);
         }
         body.dark-mode .dropdown-item:hover {
-            background-color: rgba(25, 135, 84, 0.2);
-            color: #2dc57b;
+            background-color: var(--color-accent-light);
+            color: var(--color-accent);
         }
 
         body.dark-mode .btn-outline-secondary:hover { background-color: #333; color: #fff; }
@@ -388,6 +412,13 @@
         body.dark-mode .close, body.dark-mode .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
 
         /* Mobile Bottom Navigation Bar Styles */
+        /* Premium Utility Classes */
+        .font-display { font-family: var(--font-display); }
+        h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: -0.02em; }
+        .text-accent { color: var(--color-accent) !important; }
+        .bg-surface { background-color: var(--color-surface) !important; }
+        .border-theme { border-color: var(--color-border) !important; }
+
         .bottom-nav {
             position: fixed;
             bottom: 0;
