@@ -4,204 +4,398 @@
 
 @push('styles')
 <style>
-    .login-container {
-        min-height: 100vh;
-        background-color: #f8f9fa;
+    /* ─── Design Tokens (override/extend guest layout) ─── */
+    .login-wrap {
+        min-height: 100dvh;
+        display: flex;
     }
-    .left-panel {
-        background-color: #f8f9fa;
+
+    /* ─── Left Panel ─── */
+    .login-left {
+        flex: 0 0 100%;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 3rem 1.5rem;
+        background-color: var(--color-bg);
     }
+    @media (min-width: 992px) {
+        .login-left { flex: 0 0 50%; max-width: 50%; }
+    }
+
     .login-card {
-        max-width: 460px;
         width: 100%;
-        margin: 0 auto;
-        background-color: #ffffff;
-        border-radius: 1.5rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
-        border: 1px solid #edf2f9;
-        padding: 3rem 2.5rem;
+        max-width: 400px;
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        padding: 2.25rem 2rem;
     }
-    .text-success-gradient {
-        background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+
+    /* Brand Icon */
+    .brand-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background-color: rgba(42, 107, 79, 0.08);
+        color: #2A6B4F;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        margin-bottom: 1rem;
     }
-    .form-control {
-        border: 1px solid #edf2f9;
-        border-radius: 0.75rem;
-        padding: 0.75rem 1rem;
-        transition: all 0.2s;
+    .login-title {
+        font-family: var(--font-display);
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: var(--color-text);
+        margin: 0 0 .2rem;
     }
-    .form-control:focus {
-        border-color: #198754;
-        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.1);
+    .login-subtitle {
+        font-size: .83rem;
+        color: var(--color-muted);
+        margin: 0 0 1.75rem;
     }
-    .btn-gradient-success {
-        background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
+
+    /* Form Labels */
+    .field-label {
+        display: block;
+        font-size: .7rem;
+        font-weight: 600;
+        color: var(--color-muted);
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        margin-bottom: .35rem;
+    }
+    .field-row {
+        margin-bottom: 1.1rem;
+    }
+
+    /* Inputs */
+    .field-input {
+        width: 100%;
+        border: 1px solid var(--color-border);
+        border-radius: 7px;
+        padding: .62rem .85rem;
+        font-size: .88rem;
+        font-family: var(--font-body);
+        color: var(--color-text);
+        background-color: var(--color-surface);
+        transition: border-color .15s ease, box-shadow .15s ease;
+        outline: none;
+        box-sizing: border-box;
+    }
+    .field-input:focus {
+        border-color: #2A6B4F;
+        box-shadow: 0 0 0 3px rgba(42, 107, 79, .1);
+    }
+    .field-input::placeholder { color: var(--color-muted); opacity: .65; }
+
+    /* Password wrapper */
+    .pass-wrap { position: relative; }
+    .pass-wrap .field-input { padding-right: 2.5rem; }
+    .pass-toggle {
+        position: absolute;
+        right: .8rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
         border: none;
-        border-radius: 0.75rem;
+        padding: 0;
+        color: var(--color-muted);
+        cursor: pointer;
+        font-size: .9rem;
+        line-height: 1;
+        transition: color .15s;
+    }
+    .pass-toggle:hover { color: var(--color-text); }
+
+    /* Remember / forgot row */
+    .meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+    }
+    .meta-row label {
+        font-size: .8rem;
+        color: var(--color-muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+    .meta-row a {
+        font-size: .78rem;
+        color: #2A6B4F;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .meta-row a:hover { text-decoration: underline; }
+
+    /* Buttons */
+    .btn-primary-dark {
+        display: block;
+        width: 100%;
+        background-color: var(--color-text);
         color: #fff;
+        border: none;
+        border-radius: 7px;
+        padding: .7rem;
+        font-size: .88rem;
         font-weight: 600;
-        transition: all 0.2s;
-        box-shadow: 0 4px 7px -1px rgba(0,0,0,0.11), 0 2px 4px -1px rgba(0,0,0,0.07);
+        font-family: var(--font-body);
+        cursor: pointer;
+        transition: background-color .15s ease;
+        text-align: center;
     }
-    .btn-gradient-success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 7px 14px rgba(0,0,0,0.1), 0 3px 6px rgba(0,0,0,0.08);
-        color: #fff;
+    .btn-primary-dark:hover { background-color: #333; }
+    .btn-primary-dark:active { transform: scale(0.985); }
+
+    .btn-secondary-outline {
+        display: block;
+        width: 100%;
+        background-color: transparent;
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 7px;
+        padding: .65rem;
+        font-size: .86rem;
+        font-weight: 500;
+        font-family: var(--font-body);
+        cursor: pointer;
+        transition: border-color .15s, background-color .15s;
+        text-decoration: none;
+        text-align: center;
     }
-    .btn-outline-soft {
-        border: 1px solid #edf2f9;
-        border-radius: 0.75rem;
-        color: #67748e;
-        font-weight: 600;
-        transition: all 0.2s;
+    .btn-secondary-outline:hover {
+        border-color: #2A6B4F;
+        color: #2A6B4F;
+        background-color: rgba(42,107,79,.04);
     }
-    .btn-outline-soft:hover {
-        background-color: #f8f9fa;
-        color: #198754;
-        border-color: #198754;
+
+    /* Divider */
+    .divider-or {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        margin: .9rem 0;
     }
-    .right-panel {
-        background: linear-gradient(rgba(25, 135, 84, 0.7), rgba(25, 135, 84, 0.8)), url('{{ asset('images/bg-thursina.png') }}');
+    .divider-or::before, .divider-or::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background-color: var(--color-border);
+    }
+    .divider-or span {
+        font-size: .7rem;
+        color: var(--color-muted);
+        font-weight: 500;
+        letter-spacing: .06em;
+    }
+
+    /* Alerts */
+    .flash-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: .55rem;
+        border-radius: 7px;
+        border: 1px solid;
+        padding: .6rem .85rem;
+        font-size: .82rem;
+        margin-bottom: 1.1rem;
+        line-height: 1.45;
+    }
+    .flash-alert i { flex-shrink: 0; margin-top: 1px; }
+    .flash-error  { background: #FDEBEC; border-color: #F5C6CB; color: #9F2F2D; }
+    .flash-success { background: #EDF3EC; border-color: #B7D9BA; color: #346538; }
+
+    /* ─── Right Panel ─── */
+    .login-right {
+        display: none;
+        flex: 0 0 50%;
+        max-width: 50%;
+        position: relative;
+        background-image: url('{{ asset('images/bg-thursina.png') }}');
         background-size: cover;
         background-position: center;
-        display: flex;
         align-items: center;
         justify-content: center;
         text-align: center;
-        color: #fff;
         padding: 3rem;
     }
-    .glass-effect {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 1.5rem;
-        padding: 3rem;
+    @media (min-width: 992px) { .login-right { display: flex; } }
+    .login-right::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(16, 32, 22, 0.74);
+    }
+    .right-content {
+        position: relative;
+        z-index: 1;
+        max-width: 380px;
+        color: #fff;
+    }
+    .live-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 5px;
+        padding: .28rem .65rem;
+        font-size: .73rem;
+        font-weight: 500;
+        color: rgba(255,255,255,.88);
+        margin-bottom: 1.25rem;
+    }
+    .live-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #4DA37A;
+        animation: pulse-live 2s infinite;
+    }
+    @keyframes pulse-live {
+        0%,100% { box-shadow: 0 0 0 0 rgba(77,163,122,.4); }
+        50% { box-shadow: 0 0 0 5px rgba(77,163,122,0); }
+    }
+    .right-content h2 {
+        font-family: var(--font-display);
+        font-size: 1.85rem;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 1.15;
+        margin-bottom: .75rem;
+    }
+    .right-content p {
+        font-size: .88rem;
+        opacity: .68;
+        line-height: 1.65;
+    }
+
+    /* Footer */
+    .login-footer {
+        margin-top: 1.25rem;
+        text-align: center;
+        font-size: .74rem;
+        color: var(--color-muted);
     }
 </style>
 @endpush
 
 @section('content')
-<div class="container-fluid p-0 overflow-hidden">
-    <div class="row g-0 login-container">
-        <!-- Left Panel: Form -->
-        <div class="col-lg-6 d-flex flex-column justify-content-center px-4 py-5 left-panel">
-            <div class="login-card-wrapper" style="max-width: 460px; width: 100%; margin: 0 auto;">
-                <div class="login-card">
-                    <div class="text-center mb-4">
-                        <div class="bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 64px; height: 64px;">
-                            <i class="bi bi-shield-check fs-1 text-success"></i>
+<div class="login-wrap">
+    {{-- Left: Form --}}
+    <div class="login-left">
+        <div style="width:100%;max-width:400px">
+            <div class="login-card">
+                {{-- Brand --}}
+                <div class="brand-icon">
+                    <i class="bi bi-fingerprint"></i>
+                </div>
+                <h2 class="login-title">Presensi Thursina</h2>
+                <p class="login-subtitle">Masuk untuk memantau kehadiran sholat santri.</p>
+
+                {{-- Flash Messages --}}
+                @if (session('error'))
+                    <div class="flash-alert flash-error">
+                        <i class="bi bi-x-circle-fill"></i>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                @endif
+                @if (session('success'))
+                    <div class="flash-alert flash-success">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                @endif
+                @if ($errors->any())
+                    <div class="flash-alert flash-error">
+                        <i class="bi bi-x-circle-fill"></i>
+                        <div>
+                            @foreach ($errors->all() as $error)
+                                <div>{{ $error }}</div>
+                            @endforeach
                         </div>
-                        <h2 class="fw-800 text-dark mb-1" style="letter-spacing: -1px;">PRESENSI THURSINA</h2>
-                        <p class="text-muted">Masuk untuk mengelola kehadiran santri.</p>
+                    </div>
+                @endif
+
+                {{-- Form --}}
+                <form action="{{ route('login') }}" method="POST">
+                    @csrf
+
+                    <div class="field-row">
+                        <label class="field-label" for="email">Email</label>
+                        <input type="email" class="field-input" id="email" name="email"
+                            placeholder="nama@thursina.sch.id"
+                            value="{{ old('email') }}" required autofocus>
                     </div>
 
-                    @if (session('error'))
-                        <div class="alert alert-danger border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            <div>{{ session('error') }}</div>
+                    <div class="field-row">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem">
+                            <label class="field-label mb-0" for="password">Password</label>
+                            <a href="#" style="font-size:.76rem;color:#2A6B4F;text-decoration:none;font-weight:500">Lupa password?</a>
                         </div>
-                    @endif
+                        <div class="pass-wrap">
+                            <input type="password" class="field-input" id="password" name="password"
+                                placeholder="••••••••" required>
+                            <button type="button" class="pass-toggle" id="togglePassword" aria-label="Tampilkan password">
+                                <i class="bi bi-eye-slash" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
 
-                    @if (session('success'))
-                        <div class="alert alert-success border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
-                            <i class="bi bi-check-circle-fill me-2"></i>
-                            <div>{{ session('success') }}</div>
-                        </div>
-                    @endif
+                    <div class="meta-row">
+                        <label for="rememberMe">
+                            <input type="checkbox" id="rememberMe" name="remember"
+                                style="cursor:pointer;accent-color:#2A6B4F;border-radius:3px">
+                            Ingat saya
+                        </label>
+                    </div>
 
-                    @if ($errors->any())
-                        <div class="alert alert-danger border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            <div class="mb-0">
-                                @foreach ($errors->all() as $error)
-                                    <span>{{ $error }}</span>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
+                    <button type="submit" class="btn-primary-dark mb-2">Masuk</button>
 
-                    <form action="{{ route('login') }}" method="POST">
-                        @csrf
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Email Address</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-0 ps-3 pe-2 text-muted" style="border-radius: 0.75rem 0 0 0.75rem;">
-                                    <i class="bi bi-envelope"></i>
-                                </span>
-                                <input type="email" class="form-control border-0 bg-light py-2" style="border-radius: 0 0.75rem 0.75rem 0;" name="email" placeholder="Masukkan Email Anda" required autofocus>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Password</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-0 ps-3 pe-2 text-muted" style="border-radius: 0.75rem 0 0 0.75rem;">
-                                    <i class="bi bi-lock"></i>
-                                </span>
-                                <input type="password" class="form-control border-0 bg-light py-2" style="border-radius: 0;" id="password" name="password" placeholder="Masukkan Password Anda" required>
-                                <span class="input-group-text bg-light border-0 pe-3 ps-2 text-muted" id="togglePassword" style="cursor: pointer; border-radius: 0 0.75rem 0.75rem 0;">
-                                    <i class="bi bi-eye-slash"></i>
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="rememberMe" style="cursor: pointer;">
-                                <label class="form-check-label text-muted small" for="rememberMe" style="cursor: pointer;">Ingat Saya</label>
-                            </div>
-                            <a href="#" class="text-success small fw-bold text-decoration-none">Lupa Password?</a>
-                        </div>
-                        
-                        <div class="d-grid gap-3">
-                            <button type="submit" class="btn btn-gradient-success py-2 fs-6">Masuk Ke Sistem</button>
-                            <div class="text-center position-relative my-2">
-                                <hr class="text-muted opacity-25">
-                                <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">ATAU</span>
-                            </div>
-                            <a href="{{ route('santri.create') }}" class="btn btn-outline-soft py-2 fs-6">Daftar Akun Santri</a>
-                        </div>
-                    </form>
-                </div>
+                    <div class="divider-or"><span>atau</span></div>
 
-                <div class="mt-4 text-center">
-                    <p class="text-muted small mb-0">© 2026 Thursina IIBS. All rights reserved.</p>
-                </div>
+                    <a href="{{ route('santri.create') }}" class="btn-secondary-outline">Daftar akun santri baru</a>
+                </form>
             </div>
+
+            <p class="login-footer">© 2026 Thursina IIBS. All rights reserved.</p>
         </div>
-        
-        <!-- Right Panel: Visual -->
-        <div class="col-lg-6 d-none d-lg-flex right-panel">
-            <div class="glass-effect">
-                <h1 class="display-4 fw-800 mb-3" style="letter-spacing: -2px;">Digital Attendance System</h1>
-                <p class="lead mb-4 opacity-75">Sistem presensi berbasis Face Recognition untuk kemudahan pemantauan ibadah santri di lingkungan Thursina.</p>
-                <div class="d-flex justify-content-center gap-4 mt-2">
-                    <div class="text-center">
-                        <h4 class="fw-bold mb-0">Live</h4>
-                        <p class="small opacity-50 mb-0">Reports</p>
-                    </div>
-                </div>
+    </div>
+
+    {{-- Right: Visual --}}
+    <div class="login-right">
+        <div class="right-content">
+            <div class="live-badge">
+                <span class="live-dot"></span>
+                Sistem aktif
             </div>
+            <h2>Pantau ibadah santri secara real-time</h2>
+            <p>Presensi sholat berbasis fingerspot terintegrasi. Data hadir, izin, dan alfa tercatat otomatis untuk setiap waktu sholat.</p>
         </div>
     </div>
 </div>
 
 @push('scripts')
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const togglePassword = document.querySelector('#togglePassword');
-        const password = document.querySelector('#password');
+    document.addEventListener("DOMContentLoaded", function () {
+        const btn = document.getElementById('togglePassword');
+        const input = document.getElementById('password');
+        const icon = document.getElementById('toggleIcon');
 
-        if (togglePassword && password) {
-            togglePassword.addEventListener('click', function (e) {
-                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-                password.setAttribute('type', type);
-                const icon = this.querySelector('i');
-                icon.classList.toggle('bi-eye');
-                icon.classList.toggle('bi-eye-slash');
+        if (btn && input && icon) {
+            btn.addEventListener('click', function () {
+                const isPass = input.type === 'password';
+                input.type = isPass ? 'text' : 'password';
+                icon.className = isPass ? 'bi bi-eye' : 'bi bi-eye-slash';
             });
         }
     });
