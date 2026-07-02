@@ -508,6 +508,36 @@
                 -webkit-overflow-scrolling: touch;
             }
         }
+        /* Page Loader */
+        #page-loader {
+            position: fixed;
+            inset: 0;
+            background-color: var(--color-bg, #F7F6F3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.25s ease-out, visibility 0.25s ease-out;
+        }
+        #page-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .page-loader-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--color-accent, #2A6B4F);
+            animation: loader-bounce 1.2s ease-in-out infinite both;
+        }
+        .page-loader-dot:nth-child(1) { animation-delay: -0.32s; }
+        .page-loader-dot:nth-child(2) { animation-delay: -0.16s; margin: 0 8px; }
+        @keyframes loader-bounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        body.dark-mode #page-loader { background-color: var(--color-bg, #141412); }
     </style>
     @stack('styles')
 </head>
@@ -518,6 +548,14 @@
             document.body.classList.add('dark-mode');
         }
     </script>
+    <!-- Page Loader -->
+    <div id="page-loader">
+        <div style="display:flex;align-items:center">
+            <div class="page-loader-dot"></div>
+            <div class="page-loader-dot"></div>
+            <div class="page-loader-dot"></div>
+        </div>
+    </div>
     <!-- Global Page Content -->
     <div class="d-flex" id="wrapper">
         <!-- Overlay -->
@@ -801,12 +839,39 @@
         // Handle Content Fade-in
         window.addEventListener('load', function() {
             document.body.classList.add('loaded');
+            // Hide page loader
+            const loader = document.getElementById('page-loader');
+            if (loader) loader.classList.add('hidden');
+        });
+
+        // Show page loader on navigation
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('a');
+            if (!target || !target.href) return;
+            const href = target.getAttribute('href');
+            const hasToggle = target.hasAttribute('data-bs-toggle');
+            const hasNoLoader = target.closest('.no-loader') || target.classList.contains('no-loader');
+            if (href && !href.startsWith('#') && !href.startsWith('javascript') &&
+                target.target !== '_blank' && !hasToggle && !hasNoLoader &&
+                target.hostname === window.location.hostname) {
+                const loader = document.getElementById('page-loader');
+                if (loader) loader.classList.remove('hidden');
+            }
+        });
+
+        // Show loader on form submit (kecuali no-loader)
+        document.addEventListener('submit', function(e) {
+            if (e.target.classList.contains('no-loader')) return;
+            const loader = document.getElementById('page-loader');
+            if (loader) loader.classList.remove('hidden');
         });
 
         // Handle browser back button (bfcache)
         window.addEventListener('pageshow', function(e) {
             if (e.persisted) {
                 document.body.classList.add('loaded');
+                const loader = document.getElementById('page-loader');
+                if (loader) loader.classList.add('hidden');
             }
         });
     </script>
