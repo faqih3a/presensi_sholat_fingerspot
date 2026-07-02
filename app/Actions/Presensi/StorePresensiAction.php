@@ -88,8 +88,12 @@ class StorePresensiAction
         }
         $santri = $santriResult['santri'];
 
-        // 3. Auto-capture foto profil
-        $this->autoCapturePhoto($santri, $photoUrl);
+        // 3. Auto-capture foto profil jika belum ada
+        if (!empty($photoUrl) && (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg')) {
+            $santri->foto_referensi = $photoUrl;
+            $santri->save();
+            Log::info("AUTO-PHOTO: Foto profil otomatis untuk santri {$santri->id}");
+        }
 
         // 4. Tentukan waktu sholat
         $jadwal      = $this->getJadwalSholat($scanTime);
@@ -185,21 +189,7 @@ class StorePresensiAction
         }
     }
 
-    /**
-     * Auto-capture foto profil dari scan jika santri belum punya foto.
-     *
-     * @param  \App\Models\Santri  $santri    Instance santri.
-     * @param  string|null         $photoUrl  URL foto dari scan.
-     * @return void
-     */
-    private function autoCapturePhoto(Santri $santri, ?string $photoUrl): void
-    {
-        if (!empty($photoUrl) && (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg')) {
-            $santri->foto_referensi = $photoUrl;
-            $santri->save();
-            Log::info("AUTO-PHOTO: Foto profil otomatis untuk santri {$santri->id}");
-        }
-    }
+
 
     /**
      * Simpan presensi dengan logika First Scan Wins.

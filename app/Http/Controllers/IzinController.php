@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Izin;
 use App\Actions\Izin\CreateIzinAction;
-use App\Actions\Izin\ApproveIzinAction;
-use App\Actions\Izin\RejectIzinAction;
+use App\Actions\Izin\UpdateIzinStatusAction;
 use App\Traits\DateAndPrayerHelper;
 
 /**
@@ -18,8 +17,7 @@ use App\Traits\DateAndPrayerHelper;
  * 3. Mengembalikan HTTP Response (view atau redirect).
  *
  * @see \App\Actions\Izin\CreateIzinAction
- * @see \App\Actions\Izin\ApproveIzinAction
- * @see \App\Actions\Izin\RejectIzinAction
+ * @see \App\Actions\Izin\UpdateIzinStatusAction
  */
 class IzinController extends Controller
 {
@@ -129,22 +127,14 @@ class IzinController extends Controller
      * @param  \App\Actions\Izin\RejectIzinAction      $rejectAction
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function updateStatus(
-        Request $request,
-        Izin $izin,
-        ApproveIzinAction $approveAction,
-        RejectIzinAction $rejectAction
-    ) {
+    public function updateStatus(Request $request, Izin $izin, UpdateIzinStatusAction $action)
+    {
         $validated = $request->validate([
             'status'           => 'required|in:Disetujui,Ditolak',
             'keterangan_admin' => 'nullable|string',
         ]);
 
-        if ($validated['status'] === 'Disetujui') {
-            $approveAction->execute($izin, $validated['keterangan_admin'] ?? null);
-        } else {
-            $rejectAction->execute($izin, $validated['keterangan_admin'] ?? null);
-        }
+        $action->execute($izin, $validated['status'], $validated['keterangan_admin'] ?? null);
 
         return redirect()->back()->with('success', 'Status permohonan izin berhasil diperbarui.');
     }
