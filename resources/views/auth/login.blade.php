@@ -296,8 +296,9 @@
         <div style="width:100%;max-width:400px">
             <div class="login-card">
                 {{-- Brand --}}
-                <div class="brand-icon">
-                    <i class="bi bi-fingerprint"></i>
+                <div class="mb-3">
+                    <img src="{{ asset('images/logo-thursina.png') }}" alt="Logo Presensi Thursina"
+                        style="width: 52px; height: 52px; border-radius: 10px; object-fit: contain; background: rgba(42,107,79,.07); padding: 4px;">
                 </div>
                 <h2 class="login-title">Presensi Thursina</h2>
                 <p class="login-subtitle">Masuk untuk memantau kehadiran sholat santri.</p>

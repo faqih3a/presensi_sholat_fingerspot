@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-thursina.png') }}" />
     <title>Presensi Thursina | @yield('title')</title>
     <!-- Google Fonts: Outfit + DM Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -565,8 +566,9 @@
         <div id="sidebar-wrapper">
             <div class="sidebar-heading border-bottom d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-shield-check text-success fs-4"></i>
-                    <span class="sidebar-text">Presensi</span>
+                    <img src="{{ asset('images/logo-thursina.png') }}" alt="Logo"
+                        style="width:32px;height:32px;border-radius:7px;object-fit:contain;background:rgba(42,107,79,.07);padding:3px;flex-shrink:0">
+                    <span class="sidebar-text" style="font-family:var(--font-display);font-weight:700;letter-spacing:-0.02em;color:var(--color-text)">Presensi</span>
                 </div>
                 <button class="btn btn-link text-muted p-0 d-none d-md-block" id="miniSidebarToggle">
                     <i class="bi bi-chevron-left" id="miniSidebarIcon"></i>
