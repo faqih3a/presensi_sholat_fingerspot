@@ -105,55 +105,6 @@
                                             <i class="bi bi-check2-circle"></i> Proses
                                         </button>
                                     </div>
-
-                                    <!-- Action Modal -->
-                                    <div class="modal fade" id="actionModal{{ $izin->id }}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content border-0 shadow-lg rounded-4">
-                                                <div class="modal-header border-bottom py-3">
-                                                    <h5 class="modal-title fw-bold">Proses Izin: {{ $izin->user->name }}</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <form action="{{ route('izin.update-status', $izin->id) }}" method="POST">
-                                                    @csrf
-                                                    <div class="modal-body p-4 text-start">
-                                                        <div class="bg-light p-3 rounded-3 mb-4">
-                                                            <div class="small text-muted mb-1 text-uppercase fw-bold">Detail Pengajuan</div>
-                                                            <div class="fw-bold mb-1">{{ $izin->jenis_izin }} ({{ $izin->tanggal_mulai->format('d M') }} - {{ $izin->tanggal_selesai->format('d M Y') }})</div>
-                                                            @if($izin->waktu_sholat && $izin->waktu_sholat !== 'Full Day')
-                                                                <div class="badge bg-success text-white mb-2">{{ $izin->waktu_sholat }}</div>
-                                                            @endif
-                                                            <div class="small text-muted">{{ $izin->keterangan }}</div>
-                                                        </div>
-
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-bold">Keputusan</label>
-                                                            <div class="premium-select-wrapper">
-                                                                <button class="premium-select-btn dropdown-toggle" type="button" id="statusDropdown{{ $izin->id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                    <span id="selected-status-text{{ $izin->id }}">{{ $izin->status == 'Disetujui' ? 'Setujui' : ($izin->status == 'Ditolak' ? 'Tolak' : 'Pilih Keputusan') }}</span>
-                                                                    <i class="bi bi-chevron-down small text-muted"></i>
-                                                                </button>
-                                                                <ul class="dropdown-menu shadow border-0" aria-labelledby="statusDropdown{{ $izin->id }}">
-                                                                    <li><a class="dropdown-item py-2 {{ $izin->status == 'Disetujui' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateManageStatus({{ $izin->id }}, 'Disetujui', 'Setujui')">Setujui</a></li>
-                                                                    <li><a class="dropdown-item py-2 {{ $izin->status == 'Ditolak' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateManageStatus({{ $izin->id }}, 'Ditolak', 'Tolak')">Tolak</a></li>
-                                                                </ul>
-                                                                <input type="hidden" name="status" id="status_input{{ $izin->id }}" value="{{ $izin->status }}" required>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="mb-0">
-                                                            <label class="form-label fw-bold">Keterangan Admin (Opsional)</label>
-                                                            <textarea name="keterangan_admin" rows="3" class="form-control rounded-3" placeholder="Tambahkan catatan atau alasan penolakan...">{{ $izin->keterangan_admin }}</textarea>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer border-top p-3">
-                                                        <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Batal</button>
-                                                        <button type="submit" class="btn btn-success rounded-3 px-4">Simpan Perubahan</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -260,6 +211,57 @@
         </div>
     </div>
 </div>
+
+@foreach($izins as $izin)
+    <!-- Action Modal -->
+    <div class="modal fade" id="actionModal{{ $izin->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom py-3">
+                    <h5 class="modal-title fw-bold">Proses Izin: {{ $izin->user->name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('izin.update-status', $izin->id) }}" method="POST">
+                    @csrf
+                    <div class="modal-body p-4 text-start">
+                        <div class="bg-light p-3 rounded-3 mb-4">
+                            <div class="small text-muted mb-1 text-uppercase fw-bold">Detail Pengajuan</div>
+                            <div class="fw-bold mb-1">{{ $izin->jenis_izin }} ({{ $izin->tanggal_mulai->format('d M') }} - {{ $izin->tanggal_selesai->format('d M Y') }})</div>
+                            @if($izin->waktu_sholat && $izin->waktu_sholat !== 'Full Day')
+                                <div class="badge bg-success text-white mb-2">{{ $izin->waktu_sholat }}</div>
+                            @endif
+                            <div class="small text-muted">{{ $izin->keterangan }}</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Keputusan</label>
+                            <div class="premium-select-wrapper">
+                                <button class="premium-select-btn dropdown-toggle" type="button" id="statusDropdown{{ $izin->id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span id="selected-status-text{{ $izin->id }}">{{ $izin->status == 'Disetujui' ? 'Setujui' : ($izin->status == 'Ditolak' ? 'Tolak' : 'Pilih Keputusan') }}</span>
+                                    <i class="bi bi-chevron-down small text-muted"></i>
+                                </button>
+                                <ul class="dropdown-menu shadow border-0" aria-labelledby="statusDropdown{{ $izin->id }}">
+                                    <li><a class="dropdown-item py-2 {{ $izin->status == 'Disetujui' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateManageStatus({{ $izin->id }}, 'Disetujui', 'Setujui')">Setujui</a></li>
+                                    <li><a class="dropdown-item py-2 {{ $izin->status == 'Ditolak' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateManageStatus({{ $izin->id }}, 'Ditolak', 'Tolak')">Tolak</a></li>
+                                </ul>
+                                <input type="hidden" name="status" id="status_input{{ $izin->id }}" value="{{ $izin->status }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">Keterangan Admin (Opsional)</label>
+                            <textarea name="keterangan_admin" rows="3" class="form-control rounded-3" placeholder="Tambahkan catatan atau alasan penolakan...">{{ $izin->keterangan_admin }}</textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top p-3">
+                        <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-success rounded-3 px-4">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endforeach
 
 <style>
     .x-small { font-size: 0.75rem; }
