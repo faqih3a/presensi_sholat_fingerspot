@@ -509,6 +509,22 @@
                 -webkit-overflow-scrolling: touch;
             }
         }
+        
+        /* Mobile Dropdown Fix to prevent pushing page content down */
+        @media (max-width: 991.98px) {
+            .navbar-nav .nav-item.dropdown {
+                position: relative !important;
+            }
+            .navbar-nav .dropdown-menu {
+                position: absolute !important;
+                float: none;
+                right: 0 !important;
+                left: auto !important;
+                top: 100% !important;
+                z-index: 1060 !important;
+            }
+        }
+
         /* Page Loader */
         #page-loader {
             position: fixed;
