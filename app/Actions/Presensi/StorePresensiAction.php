@@ -2,13 +2,12 @@
 
 namespace App\Actions\Presensi;
 
+use App\Actions\Santri\FindOrCreateSantriAction;
 use App\Models\Presensi;
 use App\Models\Santri;
-use App\Models\User;
 use App\Traits\DateAndPrayerHelper;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -42,10 +41,14 @@ class StorePresensiAction
     /** @var string Cloud ID mesin Fingerspot (dari config/services.php). */
     private string $cloudId;
 
-    public function __construct()
+    /** @var FindOrCreateSantriAction Shared action untuk resolve/create santri. */
+    private FindOrCreateSantriAction $findOrCreateSantri;
+
+    public function __construct(FindOrCreateSantriAction $findOrCreateSantri)
     {
         $this->apiToken = config('services.fingerspot.token');
         $this->cloudId  = config('services.fingerspot.cloud_id');
+        $this->findOrCreateSantri = $findOrCreateSantri;
     }
 
     /**
@@ -82,17 +85,17 @@ class StorePresensiAction
         $waktuHadir = $scanTime->format('H:i:s');
 
         // 2. Resolve santri dari PIN (auto-create jika perlu)
-        $santriResult = $this->resolveOrCreateSantri($pin, $photoUrl);
+        //    Menggunakan FindOrCreateSantriAction yang atomic (concurrency-safe).
+        //    Foto dari scan otomatis dijadikan foto profil jika santri belum punya.
+        $santriResult = $this->findOrCreateSantri->execute($pin, null, $photoUrl);
         if (!$santriResult['success']) {
             return $this->result('error', $santriResult['message'], [], 500);
         }
         $santri = $santriResult['santri'];
 
-        // 3. Auto-capture foto profil jika belum ada
-        if (!empty($photoUrl) && (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg')) {
-            $santri->foto_referensi = $photoUrl;
-            $santri->save();
-            Log::info("AUTO-PHOTO: Foto profil otomatis untuk santri {$santri->id}");
+        // Jika santri baru dibuat via attlog, trigger get_userinfo untuk ambil nama asli
+        if ($santriResult['action'] === 'created') {
+            $this->fireAndForgetUserInfo($pin);
         }
 
         // 4. Tentukan waktu sholat
@@ -137,56 +140,6 @@ class StorePresensiAction
                 'waktu_hadir' => $data['status'] === 'Hadir' ? Carbon::now()->format('H:i') : null,
             ]
         );
-    }
-
-    /**
-     * Resolve santri dari PIN atau auto-create jika belum ada.
-     *
-     * @param  string|int   $pin       PIN dari mesin.
-     * @param  string|null  $photoUrl  URL foto dari scan (opsional).
-     * @return array  ['success' => bool, 'santri' => Santri|null, 'message' => string].
-     */
-    private function resolveOrCreateSantri($pin, ?string $photoUrl): array
-    {
-        $santri = Santri::find($pin);
-
-        if ($santri) {
-            return ['success' => true, 'santri' => $santri, 'message' => 'found'];
-        }
-
-        try {
-            $email       = strtolower('santri' . $pin) . '@thursina.id';
-            $displayName = "Nama Belum Diatur (PIN: {$pin})";
-
-            $user = User::firstOrCreate(
-                ['email' => $email],
-                [
-                    'name'     => $displayName,
-                    'password' => Hash::make('santri'),
-                    'role'     => 'santri',
-                ]
-            );
-
-            $santri = new Santri();
-            $santri->id             = $pin;
-            $santri->user_id        = $user->id;
-            $santri->nama           = $displayName;
-            $santri->kelas          = 'Belum Diatur';
-            $santri->foto_referensi = '';
-            $santri->finger_count   = 0;
-            $santri->face_count     = 1;
-            $santri->save();
-
-            Log::info("AUTO-CREATE: Santri baru dari attlog - pin=$pin, email=$email");
-
-            // Fire & forget: trigger get_userinfo untuk ambil nama
-            $this->fireAndForgetUserInfo($pin);
-
-            return ['success' => true, 'santri' => $santri, 'message' => 'created'];
-        } catch (\Exception $e) {
-            Log::error("Gagal auto-create santri pin=$pin - " . $e->getMessage());
-            return ['success' => false, 'santri' => null, 'message' => 'Gagal membuat santri: ' . $e->getMessage()];
-        }
     }
 
 

@@ -256,14 +256,6 @@ function handleGetUserinfo(array $decoded): void
 
     $pin       = $data['pin'] ?? '-';
     $nameInput = trim($data['name'] ?? '');
-    
-    // Gunakan fallback jika nama kosong atau berisi tanda '-'
-    if ($nameInput === '' || $nameInput === '-') {
-        $displayName = "Nama Belum Diatur (PIN: " . $pin . ")";
-    } else {
-        $displayName = $nameInput;
-    }
-    
     $privilege = $data['privilege'] ?? '-';
     $finger    = $data['finger'] ?? '0';
     $face      = $data['face'] ?? '0';
@@ -279,49 +271,29 @@ function handleGetUserinfo(array $decoded): void
     // Log detail lengkap
     logWebhook("USERINFO: trans_id=$transId, cloud_id=$cloudId, pin=$pin, name=$nameInput, privilege=$privLabel, finger=$finger, face=$face, rfid=" . ($rfid ?: '(kosong)') . ", vein=$vein, template_length=" . strlen($template));
 
-    // ─── Pengecekan & Sinkronisasi Data (Upsert dengan updateOrCreate) ───
+    // ─── Delegasi ke FindOrCreateSantriAction (Concurrency-Safe) ───
+    // Menggunakan Action Class yang sama dengan jalur attlog (Metode 2),
+    // sehingga TIDAK MUNGKIN terjadi duplikasi data meskipun kedua jalur
+    // berjalan bersamaan.
     try {
-        // Tentukan email default untuk User (firstOrCreate)
-        $cleanNameForEmail = ($nameInput === '' || $nameInput === '-') ? '' : $nameInput;
-        $firstName = strtolower(explode(' ', trim($cleanNameForEmail))[0] ?? '');
-        if ($firstName === '' || $firstName === '-') $firstName = 'santri' . $pin;
-        $email = $firstName . '@thursina.id';
-
-        // Buat atau cari User terkait
-        $user = \App\Models\User::firstOrCreate(
-            ['email' => $email],
-            [
-                'name'     => $displayName,
-                'password' => \Illuminate\Support\Facades\Hash::make('santri'),
-                'role'     => 'santri',
+        $action = app(\App\Actions\Santri\FindOrCreateSantriAction::class);
+        $result = $action->execute(
+            pin:       $pin,
+            name:      $nameInput ?: null,
+            photoUrl:  null, // get_userinfo tidak membawa foto scan
+            biometric: [
+                'finger'   => $finger,
+                'face'     => $face,
+                'template' => $template,
             ]
         );
 
-        // Ambil santri yang sudah ada jika ada (untuk pertahankan kelas & foto_referensi)
-        $existingSantri = \App\Models\Santri::find($pin);
-        $isUpdate = ($existingSantri !== null);
-
-        // Upsert menggunakan updateOrCreate
-        $santri = \App\Models\Santri::updateOrCreate(
-            ['id' => $pin],
-            [
-                'user_id'        => $user->id,
-                'nama'           => $displayName,
-                'kelas'          => $isUpdate ? $existingSantri->kelas : 'Belum Diatur',
-                'foto_referensi' => $isUpdate ? $existingSantri->foto_referensi : '',
-                'finger_count'   => 0,
-                'face_count'     => 1, // Otomatis diset ke status "Wajah" (1)
-                'template'       => $template,
-            ]
-        );
-
-        // Pastikan nama akun User yang terhubung juga sinkron/ter-update
-        if ($santri->user && $santri->user->name !== $displayName) {
-            $santri->user->update(['name' => $displayName]);
-        }
+        $santri = $result['santri'];
+        $actionTaken = $result['action']; // 'found', 'created', atau 'updated'
 
         // AUTO-FOTO: Jika santri belum punya foto, coba ambil dari presensi terakhir
-        if (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg') {
+        // (foto ini mungkin sudah ada jika Metode 2 / attlog lebih dulu berjalan)
+        if ($santri && (empty($santri->foto_referensi) || $santri->foto_referensi === 'default.jpg')) {
             $latestPhoto = \App\Models\Presensi::where('santri_id', $santri->id)
                 ->whereNotNull('photo_url')
                 ->where('photo_url', '!=', '')
@@ -333,42 +305,25 @@ function handleGetUserinfo(array $decoded): void
             }
         }
 
-        if ($isUpdate) {
-            logWebhook("UPDATED: Nama santri PIN $pin diperbarui menjadi '$displayName'");
-            echo json_encode([
-                'status'  => 'ok',
-                'message' => "Data santri PIN $pin berhasil diperbarui",
-                'data'    => [
-                    'trans_id'       => $transId,
-                    'pin'            => $pin,
-                    'action'         => 'updated',
-                    'matched_santri' => [
-                        'id'    => $santri->id,
-                        'nama'  => $santri->nama,
-                        'kelas' => $santri->kelas,
-                    ],
-                ],
-            ]);
-        } else {
-            logWebhook("CREATED: Santri baru berhasil dibuat → santri_id={$santri->id}, nama={$santri->nama}, email=$email");
-            echo json_encode([
-                'status'  => 'ok',
-                'message' => "Santri baru berhasil dibuat untuk PIN $pin ($displayName)",
-                'data'    => [
-                    'trans_id'       => $transId,
-                    'pin'            => $pin,
-                    'action'         => 'created',
-                    'matched_santri' => [
-                        'id'    => $santri->id,
-                        'nama'  => $santri->nama,
-                        'kelas' => $santri->kelas,
-                    ],
-                ],
-            ]);
-        }
+        logWebhook("RESULT: PIN $pin action=$actionTaken, message={$result['message']}");
+
+        echo json_encode([
+            'status'  => 'ok',
+            'message' => $result['message'],
+            'data'    => [
+                'trans_id'       => $transId,
+                'pin'            => $pin,
+                'action'         => $actionTaken,
+                'matched_santri' => $santri ? [
+                    'id'    => $santri->id,
+                    'nama'  => $santri->nama,
+                    'kelas' => $santri->kelas,
+                ] : null,
+            ],
+        ]);
 
     } catch (\Exception $e) {
-        logWebhook("ERROR: Gagal memproses updateOrCreate untuk PIN $pin - " . $e->getMessage());
+        logWebhook("ERROR: Gagal memproses data untuk PIN $pin - " . $e->getMessage());
         echo json_encode([
             'status'  => 'error',
             'message' => "Gagal memproses data: " . $e->getMessage(),
