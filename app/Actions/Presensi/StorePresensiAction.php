@@ -54,11 +54,12 @@ class StorePresensiAction
     /**
      * Menyimpan data presensi dari webhook attlog mesin Fingerspot.
      *
-     * Alur Proses:
-     * 1. Resolve santri dari PIN (auto-create jika belum ada).
-     * 2. Auto-capture foto profil dari scan jika belum ada.
-     * 3. Tentukan waktu sholat dari jam scan.
-     * 4. Simpan dengan logika First Scan Wins.
+     * Alur Proses (Zero-Click Auto-Registration):
+     * 1. Parse waktu scan.
+     * 2. Resolve santri dari PIN (auto-create + foto jika PIN baru).
+     * 3. Auto-fetch nama asli dari mesin jika santri baru (Zero-Click).
+     * 4. Tentukan waktu sholat dari jam scan.
+     * 5. Simpan dengan logika First Scan Wins.
      *
      * @param  array  $data  Data attlog dari mesin. Berisi:
      *   - 'pin'        (string): PIN santri di mesin.
@@ -93,7 +94,7 @@ class StorePresensiAction
         }
         $santri = $santriResult['santri'];
 
-        // Jika santri baru dibuat via attlog, trigger get_userinfo untuk ambil nama asli
+        // 3. Zero-Click: Jika santri baru dibuat, tarik nama asli dari mesin
         if ($santriResult['action'] === 'created') {
             $this->fireAndForgetUserInfo($pin);
         }
@@ -264,15 +265,25 @@ class StorePresensiAction
     }
 
     /**
-     * Fire & forget: kirim request get_userinfo ke Fingerspot API.
+     * Zero-Click Auto-Fetch: Tarik nama asli santri dari mesin Fingerspot.
      *
-     * @param  string|int  $pin  PIN santri.
+     * Dipanggil otomatis saat PIN baru terdeteksi dari webhook attlog.
+     * Mengirim 1x HTTP POST `get_userinfo` ke Fingerspot Cloud API untuk
+     * PIN tersebut. Hasilnya akan dikirim mesin via webhook `get_userinfo`
+     * ke store.php → handleGetUserinfo() → FindOrCreateSantriAction (update nama).
+     *
+     * Alur lengkap Zero-Click:
+     * 1. attlog masuk (PIN baru) → auto-create santri (nama placeholder + foto)
+     * 2. Method ini menembak get_userinfo ke API (1 request, 1 PIN, tanpa loop)
+     * 3. Mesin mengirim webhook get_userinfo → nama asli di-update otomatis
+     *
+     * @param  string|int  $pin  PIN santri yang baru didaftarkan.
      * @return void
      */
     private function fireAndForgetUserInfo($pin): void
     {
         try {
-            Http::timeout(1)->connectTimeout(1)->withHeaders([
+            $response = Http::timeout(5)->connectTimeout(3)->withHeaders([
                 'Content-Type'  => 'application/json',
                 'Authorization' => 'Bearer ' . $this->apiToken,
             ])->post('https://developer.fingerspot.io/api/get_userinfo', [
@@ -280,8 +291,12 @@ class StorePresensiAction
                 'cloud_id' => $this->cloudId,
                 'pin'      => (string) $pin,
             ]);
+
+            $success = $response->json('success') ?? false;
+            Log::info("ZERO-CLICK: get_userinfo sent for PIN {$pin} — API responded: " . ($success ? 'OK' : 'FAIL'));
         } catch (\Exception $e) {
-            Log::info("AUTO-FETCH-NAME: Request sent for PIN $pin (fire & forget)");
+            // Tidak fatal — nama akan ter-update saat admin sync manual atau scan berikutnya
+            Log::warning("ZERO-CLICK: get_userinfo failed for PIN {$pin} — " . $e->getMessage());
         }
     }
 

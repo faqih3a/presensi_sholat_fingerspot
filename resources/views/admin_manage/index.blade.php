@@ -4,113 +4,95 @@
 
 @push('styles')
 <style>
-    .btn-gradient-success {
-        background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
-        border: none;
-        color: #fff;
-        box-shadow: 0 4px 7px -1px rgba(0,0,0,0.11), 0 2px 4px -1px rgba(0,0,0,0.07);
-        transition: all 0.15s ease-in;
-    }
-    .btn-gradient-success:hover {
-        transform: scale(1.02);
-        color: #fff;
-    }
     .card-stats {
-        border-radius: 1rem;
-        border: none;
-        box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s ease;
+        border-radius: 8px;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .card-stats:hover {
         transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(30,29,27,0.06);
     }
     .table th {
-        font-weight: 700;
+        font-weight: 600;
         text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-        color: #67748e;
-        padding: 1rem;
-        border-bottom: 2px solid #edf2f9;
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        color: var(--color-muted);
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--color-border);
     }
     .table td {
-        padding: 1rem;
-        color: #495057;
+        padding: 0.9rem 1rem;
+        color: var(--color-text);
         font-size: 0.875rem;
-        border-bottom: 1px solid #edf2f9;
+        border-bottom: 1px solid var(--color-border);
     }
     .avatar-sm {
         width: 42px;
         height: 42px;
-        border: 2px solid #fff;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
-    .badge-soft-primary {
-        background-color: rgba(13, 110, 253, 0.1);
-        color: #0d6efd;
-        border: 1px solid rgba(13, 110, 253, 0.15);
+        border: 2px solid var(--color-border);
     }
     .action-btn {
-        width: 34px;
-        height: 34px;
+        width: 32px;
+        height: 32px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border-radius: 0.6rem;
-        transition: all 0.2s ease-in-out;
+        border-radius: 6px;
+        transition: transform 0.15s ease, opacity 0.15s ease;
     }
-    .action-btn:hover {
-        transform: scale(1.1);
-    }
-    
-    body.dark-mode .table td {
-        border-bottom-color: #333;
-        color: #c1c9d2;
-    }
-    body.dark-mode .table th {
-        border-bottom-color: #444;
-        color: #adb5bd;
-    }
-    body.dark-mode .table-light {
-        background-color: #2c2c2c !important;
-    }
-    body.dark-mode .avatar-sm {
-        border-color: #444;
-    }
-    
-    /* Form & Preview Styles */
+    .action-btn:hover { transform: translateY(-1px); opacity: 0.85; }
+
     .form-control {
-        border: 1px solid #edf2f9;
-        border-radius: 0.75rem;
-        padding: 0.6rem 1rem;
-        font-size: 0.9rem;
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        padding: 0.55rem 1rem;
+        font-size: 0.875rem;
+        color: var(--color-text);
+        background-color: var(--color-surface);
     }
     .form-control:focus {
-        border-color: #198754;
-        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.1);
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-light);
+        outline: 0;
     }
     .preview-container {
         max-width: 100%;
         margin: 0 auto;
         position: relative;
-        border-radius: 0.75rem;
+        border-radius: 8px;
         overflow: hidden;
-        background: #f8f9fa;
+        background: var(--color-bg);
         min-height: 200px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 2px dashed #dee2e6;
+        border: 1px dashed var(--color-border);
     }
     #image-preview {
         width: 100%;
         display: none;
-        border-radius: 0.75rem;
+        border-radius: 8px;
     }
-    body.dark-mode .preview-container {
-        background: #2c2c2c;
-        border-color: #444;
+    .initials-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background-color: var(--color-accent-light);
+        color: var(--color-accent);
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--color-border);
     }
+    body.dark-mode .table td { border-bottom-color: var(--color-border); color: var(--color-text); }
+    body.dark-mode .table th { border-bottom-color: var(--color-border); color: var(--color-muted); }
+    body.dark-mode .table-light { background-color: rgba(255,255,255,0.04) !important; }
+    body.dark-mode .preview-container { background: rgba(255,255,255,0.04); border-color: var(--color-border); }
 </style>
 @endpush
 
@@ -123,7 +105,7 @@
             <p class="text-muted small mb-0">Daftar semua akun administrator sistem yang terdaftar di sistem.</p>
         </div>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-gradient-success px-4 py-2 fw-bold d-flex align-items-center gap-2" style="border-radius: 0.75rem;" data-bs-toggle="modal" data-bs-target="#tambahAdminModal">
+            <button type="button" class="btn btn-solid px-4 py-2 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#tambahAdminModal">
                 <i class="bi bi-person-plus-fill"></i> Tambah Admin
             </button>
         </div>
@@ -153,13 +135,13 @@
     <!-- Stats Cards -->
     <div class="row g-3 mb-4">
         <div class="col-12">
-            <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
+            <div class="card card-stats p-3 d-flex flex-row align-items-center justify-content-between">
                 <div>
-                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Admin</span>
-                    <span class="h3 fw-bold text-dark mb-0">{{ $totalAdmins }}</span>
+                    <span class="text-muted small fw-semibold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.06em;">Total Admin</span>
+                    <span class="h3 fw-bold mb-0" style="color: var(--color-text);">{{ $totalAdmins }}</span>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center text-primary" style="width: 48px; height: 48px; background-color: rgba(13, 110, 253, 0.1);">
-                    <i class="bi bi-shield-lock-fill fs-5"></i>
+                <div class="d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; border-radius: 8px; background: rgba(42,107,79,0.08); color: var(--color-accent);">
+                    <i class="bi bi-shield-lock-fill" style="font-size: 1.1rem;"></i>
                 </div>
             </div>
         </div>
@@ -205,9 +187,7 @@
                                             $initials = strtoupper(substr($u->name, 0, 2));
                                         }
                                     @endphp
-                                    <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="background: linear-gradient(310deg, #0d6efd 0%, #0dcaf0 100%); font-size: 0.85rem;">
-                                        {{ $initials ?: 'A' }}
-                                    </div>
+                                    <div class="initials-avatar">{{ $initials ?: 'A' }}</div>
                                 @endif
                             </td>
                             <td>
@@ -348,10 +328,10 @@
                     </div>
                     
                     <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-gradient-success flex-grow-1 py-2 fw-bold">
+                        <button type="submit" class="btn btn-solid flex-grow-1 py-2">
                             <i class="bi bi-check-circle-fill me-2"></i>Simpan Data Admin
                         </button>
-                        <button type="button" class="btn btn-light px-4 py-2 fw-bold text-muted" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-light px-4 py-2 fw-medium text-muted" data-bs-dismiss="modal">Batal</button>
                     </div>
                 </form>
             </div>

@@ -206,10 +206,10 @@
                     </div>
 
                     <div class="d-flex gap-2 mt-4 pt-3 border-top">
-                        <button type="submit" class="btn btn-success px-4 rounded-3 fw-semibold">
+                        <button type="submit" class="btn btn-solid px-4">
                             <i class="bi bi-send-fill me-2"></i> Ajukan Izin
                         </button>
-                        <a href="{{ route('izin.index') }}" class="btn btn-light px-4 rounded-3 fw-semibold">
+                        <a href="{{ route('izin.index') }}" class="btn btn-light px-4 fw-medium">
                             Batal
                         </a>
                     </div>

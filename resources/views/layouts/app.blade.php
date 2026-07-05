@@ -42,7 +42,7 @@
             left: 0;
             top: 0;
             z-index: 1050;
-            border-right: 1px solid #edf2f9;
+            border-right: 1px solid var(--color-border);
             display: flex;
             flex-direction: column;
         }
@@ -197,6 +197,27 @@
         .dropdown-toggle::after {
             display: none !important;
         }
+
+        /* ── Solid Primary Button (pengganti btn-gradient-success) ── */
+        .btn-solid {
+            background-color: var(--color-accent);
+            border: 1px solid var(--color-accent);
+            color: #fff;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: background-color 0.18s ease, transform 0.12s ease;
+        }
+        .btn-solid:hover {
+            background-color: #235c42;
+            color: #fff;
+        }
+        .btn-solid:active {
+            transform: scale(0.98);
+        }
+        body.dark-mode .btn-solid {
+            background-color: var(--color-accent);
+            border-color: var(--color-accent);
+        }
         
         /* Page Transitions */
         /* Content Fade-in */
@@ -271,125 +292,112 @@
         }
         
         /* Premium Select Styles */
-        .premium-select-wrapper {
-            position: relative;
-        }
+        .premium-select-wrapper { position: relative; }
         .premium-select-btn {
-            background-color: #fff;
-            border: 1px solid #edf2f9;
-            border-radius: 0.8rem;
-            padding: 0.6rem 1rem;
-            font-size: 0.9rem;
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 0.55rem 1rem;
+            font-size: 0.875rem;
             font-weight: 500;
-            color: #4d5157;
+            color: var(--color-text);
             text-align: left;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: all 0.2s;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
             cursor: pointer;
             width: 100%;
         }
         .premium-select-btn:hover {
-            border-color: #198754;
-            background-color: #f8f9fa;
+            border-color: var(--color-accent);
+            background-color: var(--color-surface);
         }
         .premium-select-btn:focus, .premium-select-btn.show {
-            border-color: #198754;
-            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px var(--color-accent-light);
             outline: 0;
         }
-        .premium-select-btn::after {
-            display: none !important;
-        }
-        .premium-select-wrapper .dropdown-menu {
-            width: 100%;
-            margin-top: 5px !important;
-        }
-        .premium-select-wrapper .dropdown-item.active, 
+        .premium-select-btn::after { display: none !important; }
+        .premium-select-wrapper .dropdown-menu { width: 100%; margin-top: 4px !important; }
+        .premium-select-wrapper .dropdown-item.active,
         .premium-select-wrapper .dropdown-item:active {
-            background-color: rgba(25, 135, 84, 0.1);
-            color: #198754;
+            background-color: var(--color-accent-light);
+            color: var(--color-accent);
         }
-        
         body.dark-mode .premium-select-btn {
-            background-color: #2c2c2c;
-            border-color: #444;
-            color: #adb5bd;
+            background-color: rgba(255,255,255,0.05);
+            border-color: var(--color-border);
+            color: var(--color-text);
         }
-        body.dark-mode .premium-select-btn:hover {
-            background-color: #333;
-        }
-        body.dark-mode .premium-select-wrapper .dropdown-menu {
-            background-color: #2c2c2c;
-        }
+        body.dark-mode .premium-select-btn:hover { background-color: rgba(255,255,255,0.08); }
 
         /* Modern Select Styles */
         .form-select {
-            border: 1px solid #edf2f9;
-            border-radius: 0.6rem;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
             padding: 0.5rem 2.25rem 0.5rem 1rem;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             font-weight: 500;
-            color: #4d5157;
-            transition: all 0.2s;
+            color: var(--color-text);
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
             cursor: pointer;
-            background-color: #fff;
+            background-color: var(--color-surface);
         }
         .form-select:focus {
-            border-color: #198754;
-            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px var(--color-accent-light);
             outline: 0;
         }
-        
+
         /* Modern Dropdown Styles */
         .dropdown-menu {
-            border: none;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
-            border-radius: 1rem !important;
-            padding: 0.5rem;
-            margin-top: 10px !important;
-            animation: dropdownFade 0.2s ease-out;
+            border: 1px solid var(--color-border) !important;
+            box-shadow: 0 8px 24px rgba(30,29,27,0.08) !important;
+            border-radius: 8px !important;
+            padding: 0.375rem;
+            margin-top: 8px !important;
+            animation: dropdownFade 0.15s ease-out;
         }
         @keyframes dropdownFade {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .dropdown-item {
-            border-radius: 0.5rem;
-            padding: 0.6rem 1rem;
+            border-radius: 5px;
+            padding: 0.55rem 0.9rem;
             font-size: 0.85rem;
             font-weight: 500;
-            color: #67748e;
-            transition: all 0.2s;
+            color: var(--color-muted);
+            transition: background-color 0.15s ease, color 0.15s ease;
         }
         .dropdown-item:hover {
-            background-color: rgba(25, 135, 84, 0.1);
-            color: #198754;
-            transform: translateX(5px);
+            background-color: var(--color-accent-light);
+            color: var(--color-accent);
         }
-        .dropdown-item i {
-            font-size: 1rem;
-            margin-right: 0.75rem;
+        .dropdown-item.active, .dropdown-item:active {
+            background-color: var(--color-accent-light);
+            color: var(--color-accent);
         }
+        .dropdown-item i { font-size: 0.95rem; margin-right: 0.6rem; }
         
         /* Badge Soft Styles */
         .badge-soft-success {
-            background-color: rgba(25, 135, 84, 0.1);
-            color: #198754;
-            border: 1px solid rgba(25, 135, 84, 0.2);
+            background-color: rgba(42, 107, 79, 0.1);
+            color: var(--color-accent);
+            border: 1px solid rgba(42, 107, 79, 0.2);
         }
         .badge-soft-danger {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.2);
+            background-color: rgba(180, 50, 50, 0.08);
+            color: #9f2f2d;
+            border: 1px solid rgba(180, 50, 50, 0.15);
         }
         .badge-soft-info {
-            background-color: rgba(58, 176, 255, 0.1);
-            color: #3ab0ff;
-            border: 1px solid rgba(58, 176, 255, 0.2);
+            background-color: rgba(31, 108, 159, 0.08);
+            color: #1f6c9f;
+            border: 1px solid rgba(31, 108, 159, 0.15);
         }
-        
+
         body.dark-mode .form-select {
             background-color: rgba(255,255,255,0.05);
             border-color: var(--color-border);
@@ -397,11 +405,10 @@
         }
         body.dark-mode .dropdown-menu {
             background-color: var(--color-surface);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.35) !important;
+            border-color: var(--color-border) !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35) !important;
         }
-        body.dark-mode .dropdown-item {
-            color: var(--color-muted);
-        }
+        body.dark-mode .dropdown-item { color: var(--color-muted); }
         body.dark-mode .dropdown-item:hover {
             background-color: var(--color-accent-light);
             color: var(--color-accent);
@@ -426,9 +433,9 @@
             left: 0;
             right: 0;
             height: 65px;
-            background-color: #ffffff;
-            border-top: 1px solid #edf2f9;
-            box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.05);
+            background-color: var(--color-surface);
+            border-top: 1px solid var(--color-border);
+            box-shadow: 0 -2px 12px rgba(30,29,27,0.06);
             z-index: 1040;
             padding-bottom: env(safe-area-inset-bottom);
         }
@@ -446,46 +453,31 @@
             align-items: center;
             justify-content: center;
             text-decoration: none;
-            color: #67748e;
+            color: var(--color-muted);
             font-size: 0.65rem;
-            font-weight: 700;
+            font-weight: 600;
             width: 20%;
             height: 100%;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: color 0.18s ease;
             position: relative;
         }
         .bottom-nav-item i {
             font-size: 1.2rem;
             margin-bottom: 2px;
-            padding: 4px 16px;
-            border-radius: 20px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 4px 14px;
+            border-radius: 16px;
+            transition: background-color 0.18s ease, color 0.18s ease;
         }
-        .bottom-nav-item:hover {
-            color: #198754;
-        }
-        .bottom-nav-item.active {
-            color: #198754;
-        }
+        .bottom-nav-item:hover { color: var(--color-accent); }
+        .bottom-nav-item.active { color: var(--color-accent); }
         .bottom-nav-item.active i {
-            background-color: rgba(25, 135, 84, 0.1);
-            color: #198754;
-            transform: scale(1.05);
+            background-color: var(--color-accent-light);
+            color: var(--color-accent);
         }
         body.dark-mode .bottom-nav {
-            background-color: #1e1e1e;
-            border-top-color: #333;
-            box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.3);
-        }
-        body.dark-mode .bottom-nav-item {
-            color: #adb5bd;
-        }
-        body.dark-mode .bottom-nav-item:hover, body.dark-mode .bottom-nav-item.active {
-            color: #2dc57b;
-        }
-        body.dark-mode .bottom-nav-item.active i {
-            background-color: rgba(45, 197, 123, 0.15);
-            color: #2dc57b;
+            background-color: var(--color-surface);
+            border-top-color: var(--color-border);
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
         }
 
         /* Responsiveness & Safe Area */
@@ -688,10 +680,10 @@
                                         @endphp
                                         
                                         @if($navAvatarUrl)
-                                            <img src="{{ $navAvatarUrl }}" alt="Profile" class="rounded-circle shadow-sm" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #198754;">
+                                            <img src="{{ $navAvatarUrl }}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid var(--color-border);">
                                         @else
-                                            <div class="bg-success rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm" style="width: 40px; height: 40px;">
-                                                <i class="bi bi-person-fill" style="font-size: 1.2rem;"></i>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; background-color: var(--color-accent);">
+                                                <i class="bi bi-person-fill" style="font-size: 1.1rem;"></i>
                                             </div>
                                         @endif
                                         <span class="fw-semibold d-none d-sm-inline text-dark ms-1" style="font-size: 0.95rem;">{{ auth()->user()->name }}</span>

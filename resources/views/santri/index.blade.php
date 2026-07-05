@@ -4,37 +4,27 @@
 
 @push('styles')
 <style>
-    .btn-gradient-success {
-        background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
-        border: none;
-        color: #fff;
-        box-shadow: 0 4px 7px -1px rgba(0,0,0,0.11), 0 2px 4px -1px rgba(0,0,0,0.07);
-        transition: all 0.15s ease-in;
-    }
-    .btn-gradient-success:hover {
-        transform: scale(1.02);
-        color: #fff;
-    }
     .card-stats {
-        border-radius: 1rem;
-        border: none;
-        box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s ease;
+        border-radius: 8px;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .card-stats:hover {
         transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(30,29,27,0.06);
     }
     .table th {
-        font-weight: 700;
+        font-weight: 600;
         text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-        color: #67748e;
-        padding: 1rem;
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        color: var(--color-muted);
+        padding: 0.85rem 1rem;
     }
     .table td {
-        padding: 1rem;
-        color: #67748e;
+        padding: 0.9rem 1rem;
+        color: var(--color-text);
         font-size: 0.875rem;
     }
     .avatar-sm {
@@ -236,10 +226,10 @@
             <p class="text-muted small mb-0">Kelola daftar santri yang terdaftar dalam sistem presensi wajah.</p>
         </div>
         <div class="d-flex gap-2">
-            <button type="button" id="btn-sync-mesin" class="btn btn-light border shadow-sm px-4 py-2 fw-bold text-dark" onclick="syncMesin()">
+            <button type="button" id="btn-sync-mesin" class="btn btn-light border px-4 py-2 fw-medium" onclick="syncMesin()">
                 <i class="bi bi-arrow-repeat me-2"></i> Sinkronisasi Mesin
             </button>
-            <button type="button" class="btn btn-gradient-success px-4 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#registerModal">
+            <button type="button" class="btn btn-solid px-4 py-2" data-bs-toggle="modal" data-bs-target="#registerModal">
                 <i class="bi bi-person-plus-fill me-2"></i> Tambah Santri
             </button>
         </div>
@@ -268,10 +258,10 @@
     <!-- Stats Cards -->
     <div class="row g-3 mb-4">
         <div class="col-12">
-            <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
+            <div class="card card-stats p-3 d-flex flex-row align-items-center justify-content-between">
                 <div>
-                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Santri</span>
-                    <span class="h3 fw-bold text-dark mb-0">
+                    <span class="text-muted small fw-semibold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.06em;">Total Santri</span>
+                    <span class="h3 fw-bold mb-0" style="color: var(--color-text);">
                         @if(method_exists($santris, 'total'))
                             {{ $santris->total() }}
                         @else
@@ -279,8 +269,8 @@
                         @endif
                     </span>
                 </div>
-                <div class="rounded-circle d-flex align-items-center justify-content-center text-success" style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1);">
-                    <i class="bi bi-people-fill fs-5"></i>
+                <div class="d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; border-radius: 8px; background: rgba(42,107,79,0.08); color: var(--color-accent);">
+                    <i class="bi bi-people-fill" style="font-size: 1.1rem;"></i>
                 </div>
             </div>
         </div>
@@ -303,7 +293,7 @@
             <form action="{{ route('santri.index') }}" method="GET" class="d-flex flex-wrap gap-2 align-items-center w-100 w-md-auto">
                 <!-- Dropdown Filter Kelas -->
                 <div style="min-width: 150px;">
-                    <select name="kelas" class="form-select border-0 bg-light rounded-pill px-3 py-2 fw-bold text-dark" onchange="this.form.submit()">
+                    <select name="kelas" class="form-select" onchange="this.form.submit()">
                         <option value="">Semua Kelas</option>
                         <option value="7 MTs" {{ request('kelas') == '7 MTs' ? 'selected' : '' }}>7 MTs</option>
                         <option value="8 MTs" {{ request('kelas') == '8 MTs' ? 'selected' : '' }}>8 MTs</option>
@@ -315,13 +305,13 @@
                 </div>
 
                 <!-- Input Search -->
-                <div class="input-group" style="min-width: 250px;">
-                    <input type="text" name="search" class="form-control border-0 bg-light rounded-start-pill px-3 py-2" placeholder="Cari nama santri..." value="{{ request('search') }}">
-                    <button class="btn btn-light border-0 bg-light rounded-end-pill px-3" type="submit">
+                <div class="input-group" style="min-width: 230px; max-width: 280px;">
+                    <input type="text" name="search" class="form-control" placeholder="Cari nama santri..." value="{{ request('search') }}" style="border-right: none;">
+                    <button class="btn btn-light" type="submit" style="border: 1px solid var(--color-border); border-left: none;">
                         <i class="bi bi-search text-muted"></i>
                     </button>
                     @if(request('search') || request('kelas'))
-                        <a href="{{ route('santri.index') }}" class="btn btn-danger rounded-pill ms-2 px-3 d-flex align-items-center justify-content-center" title="Reset Filter">
+                        <a href="{{ route('santri.index') }}" class="btn ms-2 d-flex align-items-center justify-content-center" style="border: 1px solid var(--color-border); border-radius: 6px; color: var(--color-muted); padding: 0 0.7rem;" title="Reset Filter">
                             <i class="bi bi-x-lg"></i>
                         </a>
                     @endif
@@ -540,10 +530,10 @@
 
 
                     <div class="d-flex gap-2 mt-4">
-                        <button type="submit" id="submit-btn" class="btn btn-gradient-success flex-grow-1 py-2 fw-bold" disabled>
+                        <button type="submit" id="submit-btn" class="btn btn-solid flex-grow-1 py-2" disabled>
                             <i class="bi bi-check-circle-fill me-2"></i>Simpan Data Santri
                         </button>
-                        <button type="button" class="btn btn-light px-4 py-2 fw-bold text-muted" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-light px-4 py-2 fw-medium text-muted" data-bs-dismiss="modal">Batal</button>
                     </div>
                 </form>
             </div>
