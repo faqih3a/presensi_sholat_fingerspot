@@ -78,27 +78,27 @@ function determineWaktuSholat(Carbon $scanTime, array $jadwal): ?string
     $date = $scanTime->format('Y-m-d');
 
     // Definisi rentang waktu presensi setiap sholat:
-    // Mulai = 30 menit sebelum adzan, Selesai = 10 menit setelah adzan
+    // Mulai = 15 menit sebelum adzan, Selesai = 15 menit setelah adzan
     $ranges = [
         'Subuh'   => [
-            'start' => Carbon::parse($date . ' ' . $jadwal['Fajr'], 'Asia/Jakarta')->subMinutes(30),
-            'end'   => Carbon::parse($date . ' ' . $jadwal['Fajr'], 'Asia/Jakarta')->addMinutes(10),
+            'start' => Carbon::parse($date . ' ' . $jadwal['Fajr'], 'Asia/Jakarta')->subMinutes(15),
+            'end'   => Carbon::parse($date . ' ' . $jadwal['Fajr'], 'Asia/Jakarta')->addMinutes(15),
         ],
         'Dzuhur'  => [
-            'start' => Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta')->subMinutes(30),
-            'end'   => Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta')->addMinutes(10),
+            'start' => Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta')->subMinutes(15),
+            'end'   => Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta')->addMinutes(15),
         ],
         'Ashar'   => [
-            'start' => Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta')->subMinutes(30),
-            'end'   => Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta')->addMinutes(10),
+            'start' => Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta')->subMinutes(15),
+            'end'   => Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta')->addMinutes(15),
         ],
         'Maghrib' => [
-            'start' => Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta')->subMinutes(30),
-            'end'   => Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta')->addMinutes(10),
+            'start' => Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta')->subMinutes(15),
+            'end'   => Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta')->addMinutes(15),
         ],
         'Isya'    => [
-            'start' => Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta')->subMinutes(30),
-            'end'   => Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta')->addMinutes(10),
+            'start' => Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta')->subMinutes(15),
+            'end'   => Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta')->addMinutes(15),
         ],
     ];
 
@@ -108,6 +108,7 @@ function determineWaktuSholat(Carbon $scanTime, array $jadwal): ?string
         }
     }
 
+    // fallback
     return null;
 }
 

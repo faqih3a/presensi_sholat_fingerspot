@@ -231,7 +231,7 @@ class StorePresensiAction
     /**
      * Tentukan waktu sholat berdasarkan jam scan dan jadwal.
      *
-     * Rentang presensi: 30 menit sebelum adzan s/d 10 menit setelah adzan.
+     * Rentang presensi: 15 menit sebelum adzan s/d 15 menit setelah adzan.
      *
      * @param  \Carbon\Carbon  $scanTime  Waktu scan.
      * @param  array           $jadwal    Jadwal sholat dari API.
@@ -253,8 +253,8 @@ class StorePresensiAction
             if (!isset($jadwal[$config['key']])) continue;
 
             $adzanTime = Carbon::parse($date . ' ' . $jadwal[$config['key']], 'Asia/Jakarta');
-            $start     = $adzanTime->copy()->subMinutes(30);
-            $end       = $adzanTime->copy()->addMinutes(10);
+            $start     = $adzanTime->copy()->subMinutes(15);
+            $end       = $adzanTime->copy()->addMinutes(15);
 
             if ($scanTime->between($start, $end)) {
                 return $sholat;
