@@ -85,3 +85,13 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/admin-manage/{admin}', [AdminController::class, 'destroy'])->name('admin-manage.destroy');
     });
 });
+
+Route::get('/buat-storage-link', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        return 'Storage link successfully created!';
+    } catch (\Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+});
+

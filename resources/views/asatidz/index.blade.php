@@ -209,7 +209,7 @@
                             </td>
                             <td>
                                 @if($u->avatar)
-                                    <img src="{{ asset('storage/avatars/' . $u->avatar) }}" alt="{{ $u->name }}" class="avatar-sm rounded-circle object-fit-cover">
+                                    <img src="{{ asset('storage/avatars/' . $u->avatar) }}" alt="{{ $u->name }}" class="w-10 h-10 rounded-full object-cover shadow-sm">
                                 @else
                                     @php
                                         // Create name initials
@@ -221,7 +221,7 @@
                                             $initials = strtoupper(substr($u->name, 0, 2));
                                         }
                                     @endphp
-                                    <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="background: linear-gradient(310deg, #198754 0%, #2dc57b 100%); font-size: 0.85rem;">
+                                    <div class="w-10 h-10 rounded-full d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="background: linear-gradient(310deg, #198754 0%, #2dc57b 100%); font-size: 0.85rem;">
                                         {{ $initials ?: 'A' }}
                                     </div>
                                 @endif
