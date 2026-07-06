@@ -90,6 +90,29 @@
         background: #2c2c2c;
     }
 
+    /* Edit modal styles */
+    .edit-preview-container {
+        max-width: 100%;
+        margin: 0 auto;
+        position: relative;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        background: #f8f9fa;
+        min-height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed #dee2e6;
+    }
+    .edit-preview-container img {
+        width: 100%;
+        border-radius: 0.75rem;
+    }
+    body.dark-mode .edit-preview-container {
+        background: #2c2c2c;
+        border-color: #444;
+    }
+
     /* ─── Sync Overlay ────────────────────────────────────── */
     .sync-overlay {
         position: fixed;
@@ -394,9 +417,13 @@
                             </td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
-                                    <a href="{{ route('santri.edit', $santri) }}" class="action-btn bg-info bg-opacity-10 text-info" title="Edit">
+                                    <button type="button" class="action-btn bg-info bg-opacity-10 text-info border-0 btn-edit-santri" title="Edit"
+                                        data-id="{{ $santri->id }}"
+                                        data-nama="{{ $santri->nama }}"
+                                        data-kelas="{{ $santri->kelas }}"
+                                        data-foto="{{ $santri->display_photo }}">
                                         <i class="bi bi-pencil-square"></i>
-                                    </a>
+                                    </button>
                                     <form action="{{ route('santri.destroy', $santri) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data santri ini? Semua data presensi terkait juga akan dihapus.');">
                                         @csrf
                                         @method('DELETE')
@@ -584,6 +611,78 @@
             <button type="button" class="btn btn-sm btn-outline-danger px-4 rounded-pill" id="syncCancelBtn" onclick="cancelSync()">
                 <i class="bi bi-x-lg me-1"></i> Batalkan
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Santri (Single Reusable) -->
+<div class="modal fade" id="editSantriModal" tabindex="-1" aria-labelledby="editSantriModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 1.25rem;">
+            <div class="modal-header bg-white border-bottom-0 pb-0 pt-4 px-4">
+                <div class="text-center w-100">
+                    <h4 class="fw-bold text-dark mb-1" id="editSantriModalLabel">
+                        <i class="bi bi-pencil-square text-info me-2"></i>Edit Profil Santri
+                    </h4>
+                    <p class="text-muted small">Perbarui informasi dasar dan foto profil santri.</p>
+                </div>
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="editSantriForm" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Nama Lengkap</label>
+                                <input type="text" name="nama" id="edit_nama" class="form-control py-2" required placeholder="Masukkan nama lengkap">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Kelas</label>
+                                <div class="premium-select-wrapper">
+                                    <button class="premium-select-btn dropdown-toggle py-2" type="button" id="editKelasDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 40px;">
+                                        <span id="edit-selected-kelas-text">-- Pilih Kelas --</span>
+                                        <i class="bi bi-chevron-down small text-muted"></i>
+                                    </button>
+                                    <ul class="dropdown-menu shadow border-0" aria-labelledby="editKelasDropdown" style="width: 100%;">
+                                        <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectEditKelas('7 MTs')">7 MTs</a></li>
+                                        <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectEditKelas('8 MTs')">8 MTs</a></li>
+                                        <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectEditKelas('9 MTs')">9 MTs</a></li>
+                                        <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectEditKelas('10 MA')">10 MA</a></li>
+                                        <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectEditKelas('11 MA')">11 MA</a></li>
+                                        <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectEditKelas('12 MA')">12 MA</a></li>
+                                    </ul>
+                                    <input type="hidden" name="kelas" id="edit_kelas_input" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Ganti Foto Profil (Opsional)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0"><i class="bi bi-camera text-muted"></i></span>
+                                    <input type="file" class="form-control border-start-0" id="edit_foto_referensi" name="foto_referensi" accept="image/jpeg, image/png, image/jpg">
+                                </div>
+                                <div class="form-text small mt-2">Kosongkan jika tidak ingin mengubah foto profil.</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="edit-preview-container shadow-sm">
+                                    <img id="edit-foto-preview" src="#" alt="Preview" style="display: none;" />
+                                    <div id="edit-no-photo" class="text-center text-muted small">Belum ada foto profil</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-solid flex-grow-1 py-2">
+                            <i class="bi bi-check-circle-fill me-2"></i>Simpan Perubahan
+                        </button>
+                        <button type="button" class="btn btn-light px-4 py-2 fw-medium text-muted" data-bs-dismiss="modal">Batal</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -933,6 +1032,92 @@
         document.getElementById('filter_kelas_input').value = val;
         document.getElementById('selected-filter-kelas-text').innerText = val ? val : 'Semua Kelas';
         document.getElementById('filter-kelas-form').submit();
+    }
+
+    // ─── Edit Modal: Kelas Dropdown ──────────────────────────────────────
+    function selectEditKelas(val) {
+        document.getElementById('edit_kelas_input').value = val;
+        document.getElementById('edit-selected-kelas-text').innerText = val;
+        
+        const items = document.querySelectorAll('#editKelasDropdown + .dropdown-menu .dropdown-item');
+        items.forEach(item => {
+            if (item.innerText === val) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
+    // ─── Edit Modal: Populate & Open ────────────────────────────────────
+    const editSantriForm = document.getElementById('editSantriForm');
+    const editSantriModal = document.getElementById('editSantriModal');
+    const editFotoInput = document.getElementById('edit_foto_referensi');
+    const editFotoPreview = document.getElementById('edit-foto-preview');
+    const editNoPhoto = document.getElementById('edit-no-photo');
+
+    document.querySelectorAll('.btn-edit-santri').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const nama = this.dataset.nama;
+            const kelas = this.dataset.kelas;
+            const foto = this.dataset.foto;
+
+            // Set form action dynamically
+            editSantriForm.action = `/santri/${id}`;
+
+            // Populate fields
+            document.getElementById('edit_nama').value = nama;
+            document.getElementById('edit_kelas_input').value = kelas;
+            document.getElementById('edit-selected-kelas-text').innerText = kelas || '-- Pilih Kelas --';
+
+            // Update active state in kelas dropdown
+            const kelasItems = document.querySelectorAll('#editKelasDropdown + .dropdown-menu .dropdown-item');
+            kelasItems.forEach(item => {
+                if (item.innerText === kelas) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
+            // Reset file input
+            editFotoInput.value = '';
+
+            // Show current photo or placeholder
+            if (foto) {
+                editFotoPreview.src = foto;
+                editFotoPreview.style.display = 'block';
+                editNoPhoto.style.display = 'none';
+            } else {
+                editFotoPreview.style.display = 'none';
+                editNoPhoto.style.display = 'block';
+            }
+
+            // Open the modal
+            const bsModal = new bootstrap.Modal(editSantriModal);
+            bsModal.show();
+        });
+    });
+
+    // ─── Edit Modal: Image Preview ───────────────────────────────────────
+    if (editFotoInput) {
+        editFotoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const imgUrl = URL.createObjectURL(file);
+            editFotoPreview.src = imgUrl;
+            editFotoPreview.style.display = 'block';
+            editNoPhoto.style.display = 'none';
+        });
+    }
+
+    // ─── Edit Modal: Reset on close ──────────────────────────────────────
+    if (editSantriModal) {
+        editSantriModal.addEventListener('hidden.bs.modal', function() {
+            editFotoInput.value = '';
+        });
     }
 
     // No ongoing sync check needed as sync is synchronous now
