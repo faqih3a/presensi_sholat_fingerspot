@@ -59,19 +59,7 @@ class AsatidzController extends Controller
         return redirect()->route('asatidz.index')->with('success', 'Akun Asatidz berhasil dibuat.');
     }
 
-    /**
-     * Menampilkan halaman edit asatidz.
-     *
-     * @param  \App\Models\User  $asatidz
-     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
-     */
-    public function edit(User $asatidz)
-    {
-        if ($asatidz->role !== 'asatidz') {
-            return redirect()->route('asatidz.index')->with('error', 'User bukan merupakan Asatidz.');
-        }
-        return view('asatidz.edit', compact('asatidz'));
-    }
+
 
     /**
      * Memperbarui data asatidz.

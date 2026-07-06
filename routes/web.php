@@ -44,7 +44,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/santri/api/list', [SantriController::class, 'apiList'])->name('santri.api.list');
         Route::get('/santri/register', [SantriController::class, 'create'])->name('santri.create');
         Route::post('/santri/register', [SantriController::class, 'store'])->name('santri.store');
-        Route::get('/santri/{santri}/edit', [SantriController::class, 'edit'])->name('santri.edit');
         Route::put('/santri/{santri}', [SantriController::class, 'update'])->name('santri.update');
         Route::delete('/santri/{santri}', [SantriController::class, 'destroy'])->name('santri.destroy');
         Route::post('/santri/sync-mesin', [SantriController::class, 'syncMesin'])->name('santri.sync-mesin');
@@ -75,7 +74,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/asatidz', [AsatidzController::class, 'index'])->name('asatidz.index');
         Route::get('/asatidz/create', [AsatidzController::class, 'create'])->name('asatidz.create');
         Route::post('/asatidz', [AsatidzController::class, 'store'])->name('asatidz.store');
-        Route::get('/asatidz/{asatidz}/edit', [AsatidzController::class, 'edit'])->name('asatidz.edit');
         Route::put('/asatidz/{asatidz}', [AsatidzController::class, 'update'])->name('asatidz.update');
         Route::delete('/asatidz/{asatidz}', [AsatidzController::class, 'destroy'])->name('asatidz.destroy');
 
@@ -83,7 +81,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin-manage', [AdminController::class, 'index'])->name('admin-manage.index');
         Route::get('/admin-manage/create', [AdminController::class, 'create'])->name('admin-manage.create');
         Route::post('/admin-manage', [AdminController::class, 'store'])->name('admin-manage.store');
-        Route::get('/admin-manage/{admin}/edit', [AdminController::class, 'edit'])->name('admin-manage.edit');
         Route::put('/admin-manage/{admin}', [AdminController::class, 'update'])->name('admin-manage.update');
         Route::delete('/admin-manage/{admin}', [AdminController::class, 'destroy'])->name('admin-manage.destroy');
     });

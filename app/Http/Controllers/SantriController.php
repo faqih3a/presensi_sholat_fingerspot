@@ -142,7 +142,7 @@ class SantriController extends Controller
                     'finger_count'   => $santri->finger_count ?? 0,
                     'created_at'     => $santri->created_at->format('d M Y'),
                     'created_time'   => $santri->created_at->format('H:i'),
-                    'edit_url'       => route('santri.edit', $santri),
+                    'edit_url'       => '#',
                     'delete_url'     => route('santri.destroy', $santri),
                 ];
             }),
@@ -156,18 +156,6 @@ class SantriController extends Controller
             ],
             'total_santri' => Santri::count(),
         ]);
-    }
-
-
-    /**
-     * Menampilkan halaman form edit santri.
-     *
-     * @param  \App\Models\Santri  $santri
-     * @return \Illuminate\View\View
-     */
-    public function edit(Santri $santri)
-    {
-        return view('santri.edit', compact('santri'));
     }
 
     /**

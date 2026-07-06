@@ -64,19 +64,7 @@ class AdminController extends Controller
         return redirect()->route('admin-manage.index')->with('success', 'Akun Admin berhasil dibuat.');
     }
 
-    /**
-     * Menampilkan halaman edit admin.
-     *
-     * @param  \App\Models\User  $admin
-     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
-     */
-    public function edit(User $admin)
-    {
-        if ($admin->role !== 'admin') {
-            return redirect()->route('admin-manage.index')->with('error', 'User bukan merupakan Admin.');
-        }
-        return view('admin_manage.edit', compact('admin'));
-    }
+
 
     /**
      * Memperbarui data admin.
