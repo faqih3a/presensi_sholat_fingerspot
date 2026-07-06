@@ -90,43 +90,6 @@
         background: #2c2c2c;
     }
 
-    /* Edit modal avatar preview */
-    .edit-avatar-current {
-        width: 80px;
-        height: 80px;
-        border-radius: 0.75rem;
-        object-fit: cover;
-        border: 2px solid #edf2f9;
-    }
-    .edit-avatar-new {
-        width: 80px;
-        height: 80px;
-        border-radius: 0.75rem;
-        object-fit: cover;
-        border: 2px solid #198754;
-    }
-    .edit-preview-container {
-        max-width: 100%;
-        margin: 0 auto;
-        position: relative;
-        border-radius: 0.75rem;
-        overflow: hidden;
-        background: #f8f9fa;
-        min-height: 180px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px dashed #dee2e6;
-    }
-    .edit-preview-container img {
-        width: 100%;
-        border-radius: 0.75rem;
-    }
-    body.dark-mode .edit-preview-container {
-        background: #2c2c2c;
-        border-color: #444;
-    }
-
     /* ─── Sync Overlay ────────────────────────────────────── */
     .sync-overlay {
         position: fixed;
@@ -431,9 +394,9 @@
                             </td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
-                                    <button type="button" class="action-btn bg-info bg-opacity-10 text-info border-0" title="Edit" data-bs-toggle="modal" data-bs-target="#editSantriModal{{ $santri->id }}">
+                                    <a href="{{ route('santri.edit', $santri) }}" class="action-btn bg-info bg-opacity-10 text-info" title="Edit">
                                         <i class="bi bi-pencil-square"></i>
-                                    </button>
+                                    </a>
                                     <form action="{{ route('santri.destroy', $santri) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data santri ini? Semua data presensi terkait juga akan dihapus.');">
                                         @csrf
                                         @method('DELETE')
@@ -444,80 +407,6 @@
                                 </div>
                             </td>
                         </tr>
-
-                        <!-- Modal Edit Santri #{{ $santri->id }} -->
-                        <div class="modal fade" id="editSantriModal{{ $santri->id }}" tabindex="-1" aria-labelledby="editSantriModalLabel{{ $santri->id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                <div class="modal-content border-0 shadow-lg" style="border-radius: 1.25rem;">
-                                    <div class="modal-header bg-white border-bottom-0 pb-0 pt-4 px-4">
-                                        <div class="text-center w-100">
-                                            <h4 class="fw-bold text-dark mb-1" id="editSantriModalLabel{{ $santri->id }}">
-                                                <i class="bi bi-pencil-square text-info me-2"></i>Edit Profil Santri
-                                            </h4>
-                                            <p class="text-muted small">Perbarui informasi dasar dan foto profil santri.</p>
-                                        </div>
-                                        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body p-4">
-                                        <form action="{{ route('santri.update', $santri) }}" method="POST" enctype="multipart/form-data">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold small text-muted text-uppercase">Nama Lengkap</label>
-                                                        <input type="text" name="nama" class="form-control py-2" value="{{ $santri->nama }}" required placeholder="Masukkan nama lengkap">
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold small text-muted text-uppercase">Kelas</label>
-                                                        <div class="premium-select-wrapper">
-                                                            <button class="premium-select-btn dropdown-toggle py-2" type="button" id="editKelasDropdown{{ $santri->id }}" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 40px;">
-                                                                <span id="edit-selected-kelas-text-{{ $santri->id }}">{{ $santri->kelas ?: '-- Pilih Kelas --' }}</span>
-                                                                <i class="bi bi-chevron-down small text-muted"></i>
-                                                            </button>
-                                                            <ul class="dropdown-menu shadow border-0" aria-labelledby="editKelasDropdown{{ $santri->id }}" style="width: 100%;">
-                                                                @foreach(['7 MTs', '8 MTs', '9 MTs', '10 MA', '11 MA', '12 MA'] as $kelasOption)
-                                                                    <li><a class="dropdown-item py-2 {{ $santri->kelas == $kelasOption ? 'active' : '' }}" href="javascript:void(0)" onclick="selectEditKelas('{{ $santri->id }}', '{{ $kelasOption }}')">{{ $kelasOption }}</a></li>
-                                                                @endforeach
-                                                            </ul>
-                                                            <input type="hidden" name="kelas" id="edit_kelas_input_{{ $santri->id }}" value="{{ $santri->kelas }}" required>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold small text-muted text-uppercase">Ganti Foto Profil (Opsional)</label>
-                                                        <div class="input-group">
-                                                            <span class="input-group-text bg-light border-0"><i class="bi bi-camera text-muted"></i></span>
-                                                            <input type="file" class="form-control border-start-0 edit-foto-input" name="foto_referensi" accept="image/jpeg, image/png, image/jpg">
-                                                        </div>
-                                                        <div class="form-text small mt-2">Kosongkan jika tidak ingin mengubah foto profil.</div>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <div class="edit-preview-container shadow-sm">
-                                                            @if($santri->display_photo)
-                                                                <img class="edit-foto-preview" src="{{ $santri->display_photo }}" alt="Foto Saat Ini" />
-                                                            @else
-                                                                <img class="edit-foto-preview" src="#" alt="Preview" style="display: none;" />
-                                                                <div class="edit-no-photo text-center text-muted small">Belum ada foto profil</div>
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="d-flex gap-2 mt-4">
-                                                <button type="submit" class="btn btn-solid flex-grow-1 py-2">
-                                                    <i class="bi bi-check-circle-fill me-2"></i>Simpan Perubahan
-                                                </button>
-                                                <button type="button" class="btn btn-light px-4 py-2 fw-medium text-muted" data-bs-dismiss="modal">Batal</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         @empty
                         <tr>
                             <td colspan="6" class="text-center py-5">
@@ -893,8 +782,8 @@
             </button>
         `;
 
-        // Reload page to re-render edit modals for new/updated data
-        setTimeout(() => location.reload(), 1500);
+        // Refresh tabel data di background
+        refreshSantriTable();
 
         // Reset tombol sync
         const btn = document.getElementById('btn-sync-mesin');
@@ -1045,42 +934,6 @@
         document.getElementById('selected-filter-kelas-text').innerText = val ? val : 'Semua Kelas';
         document.getElementById('filter-kelas-form').submit();
     }
-
-    // Edit modal: kelas dropdown selection
-    function selectEditKelas(santriId, val) {
-        document.getElementById('edit_kelas_input_' + santriId).value = val;
-        document.getElementById('edit-selected-kelas-text-' + santriId).innerText = val;
-        
-        const items = document.querySelectorAll('#editKelasDropdown' + santriId + ' + .dropdown-menu .dropdown-item');
-        items.forEach(item => {
-            if (item.innerText === val) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        });
-    }
-
-    // Edit modals: image preview for each edit modal
-    document.querySelectorAll('.edit-foto-input').forEach(function(input) {
-        input.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const modal = this.closest('.modal');
-            const previewImg = modal.querySelector('.edit-foto-preview');
-            const noPhotoDiv = modal.querySelector('.edit-no-photo');
-            
-            if (!file) return;
-
-            const imgUrl = URL.createObjectURL(file);
-            if (previewImg) {
-                previewImg.src = imgUrl;
-                previewImg.style.display = 'block';
-            }
-            if (noPhotoDiv) {
-                noPhotoDiv.style.display = 'none';
-            }
-        });
-    });
 
     // No ongoing sync check needed as sync is synchronous now
 </script>

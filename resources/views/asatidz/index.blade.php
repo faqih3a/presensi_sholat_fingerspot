@@ -111,22 +111,6 @@
         background: #2c2c2c;
         border-color: #444;
     }
-
-    /* Edit modal avatar preview */
-    .edit-avatar-current {
-        width: 80px;
-        height: 80px;
-        border-radius: 0.75rem;
-        object-fit: cover;
-        border: 2px solid #edf2f9;
-    }
-    .edit-avatar-new {
-        width: 80px;
-        height: 80px;
-        border-radius: 0.75rem;
-        object-fit: cover;
-        border: 2px solid #198754;
-    }
 </style>
 @endpush
 
@@ -245,9 +229,9 @@
                             </td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
-                                    <button type="button" class="action-btn bg-info bg-opacity-10 text-info border-0" title="Edit" data-bs-toggle="modal" data-bs-target="#editAsatidzModal{{ $u->id }}">
+                                    <a href="{{ route('asatidz.edit', $u->id) }}" class="action-btn bg-info bg-opacity-10 text-info" title="Edit">
                                         <i class="bi bi-pencil-square"></i>
-                                    </button>
+                                    </a>
                                     <form action="{{ route('asatidz.destroy', $u->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus asatidz ini?')">
                                         @csrf
                                         @method('DELETE')
@@ -258,93 +242,6 @@
                                 </div>
                             </td>
                         </tr>
-
-                        <!-- Modal Edit Asatidz #{{ $u->id }} -->
-                        <div class="modal fade" id="editAsatidzModal{{ $u->id }}" tabindex="-1" aria-labelledby="editAsatidzModalLabel{{ $u->id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                <div class="modal-content border-0 shadow-lg" style="border-radius: 1.25rem;">
-                                    <div class="modal-header bg-white border-bottom-0 pb-0 pt-4 px-4">
-                                        <div class="text-center w-100">
-                                            <h4 class="fw-bold text-dark mb-1" id="editAsatidzModalLabel{{ $u->id }}">
-                                                <i class="bi bi-pencil-square text-info me-2"></i>Edit Data Asatidz
-                                            </h4>
-                                            <p class="text-muted small">Perbarui informasi akun Asatidz.</p>
-                                        </div>
-                                        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body p-4">
-                                        <form action="{{ route('asatidz.update', $u->id) }}" method="POST" enctype="multipart/form-data">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold small text-muted text-uppercase">Nama Lengkap</label>
-                                                        <input type="text" name="name" class="form-control py-2" value="{{ $u->name }}" required>
-                                                    </div>
-                                                    
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold small text-muted text-uppercase">Alamat Email</label>
-                                                        <input type="email" name="email" class="form-control py-2" value="{{ $u->email }}" required>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold small text-muted text-uppercase">Nomor WhatsApp</label>
-                                                        <input type="text" name="wa_number" class="form-control py-2" value="{{ $u->wa_number }}" placeholder="Contoh: 628123456789">
-                                                        <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">Gunakan format kode negara (628...)</small>
-                                                    </div>
-                                                    
-                                                    <div class="alert alert-info border-0 rounded-3 small mb-3 py-2">
-                                                        <i class="bi bi-info-circle me-1"></i> Kosongkan password jika tidak ingin diubah.
-                                                    </div>
-
-                                                    <div class="row mb-3">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label fw-bold small text-muted text-uppercase">Password Baru</label>
-                                                            <input type="password" name="password" class="form-control py-2 edit-password-input" placeholder="Kosongkan jika tetap">
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label fw-bold small text-muted text-uppercase">Konfirmasi</label>
-                                                            <input type="password" name="password_confirmation" class="form-control py-2" placeholder="Ulangi password">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold small text-muted text-uppercase">Foto Profil (Opsional)</label>
-                                                        <input type="file" name="avatar" class="form-control py-2 edit-avatar-input" accept="image/*">
-                                                    </div>
-                                                    
-                                                    <div class="mb-3">
-                                                        <div class="d-flex align-items-center gap-3">
-                                                            @if($u->avatar)
-                                                                <div class="text-center">
-                                                                    <label class="d-block small text-muted mb-1">Foto Saat Ini</label>
-                                                                    <img src="{{ asset('storage/avatars/' . $u->avatar) }}" alt="Avatar" class="edit-avatar-current">
-                                                                </div>
-                                                            @endif
-                                                            <div class="edit-preview-box" style="display: none;">
-                                                                <label class="d-block small text-muted mb-1">Foto Baru</label>
-                                                                <img src="#" alt="Preview" class="edit-avatar-new edit-preview-img">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="d-flex gap-2 mt-4">
-                                                <button type="submit" class="btn btn-gradient-success flex-grow-1 py-2 fw-bold">
-                                                    <i class="bi bi-check-circle-fill me-2"></i>Simpan Perubahan
-                                                </button>
-                                                <button type="button" class="btn btn-light px-4 py-2 fw-bold text-muted" data-bs-dismiss="modal">Batal</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         @empty
                         <tr>
                             <td colspan="7" class="text-center py-5">
@@ -460,54 +357,29 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Tambah modal: toggle password
         const passwordInput = document.getElementById('password');
         const confirmInput = document.getElementById('password_confirmation');
         const toggleBtn = document.querySelector('.toggle-password-btn');
         
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function() {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                confirmInput.setAttribute('type', type);
-                this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
-            });
-        }
+        toggleBtn.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            confirmInput.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+        });
 
-        // Tambah modal: image preview
         const fotoInput = document.getElementById('avatar');
         const imagePreview = document.getElementById('image-preview');
         const previewPlaceholder = document.getElementById('preview-placeholder');
 
-        if (fotoInput) {
-            fotoInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
+        fotoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-                const imgUrl = URL.createObjectURL(file);
-                imagePreview.src = imgUrl;
-                imagePreview.style.display = 'block';
-                previewPlaceholder.classList.add('d-none');
-            });
-        }
-
-        // Edit modals: image preview for each edit modal
-        document.querySelectorAll('.edit-avatar-input').forEach(function(input) {
-            input.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                const modal = this.closest('.modal');
-                const previewBox = modal.querySelector('.edit-preview-box');
-                const previewImg = modal.querySelector('.edit-preview-img');
-                
-                if (!file) {
-                    if (previewBox) previewBox.style.display = 'none';
-                    return;
-                }
-
-                const imgUrl = URL.createObjectURL(file);
-                if (previewImg) previewImg.src = imgUrl;
-                if (previewBox) previewBox.style.display = 'block';
-            });
+            const imgUrl = URL.createObjectURL(file);
+            imagePreview.src = imgUrl;
+            imagePreview.style.display = 'block';
+            previewPlaceholder.classList.add('d-none');
         });
     });
 </script>
