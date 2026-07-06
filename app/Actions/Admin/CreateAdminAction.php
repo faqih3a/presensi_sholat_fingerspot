@@ -5,6 +5,8 @@ namespace App\Actions\Admin;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
+use Illuminate\Support\Facades\Storage;
+
 /**
  * Aksi: Membuat Akun Staff Baru (Admin / Asatidz)
  *
@@ -33,7 +35,7 @@ class CreateAdminAction
         if (!empty($validatedData['avatar'])) {
             $file     = $validatedData['avatar'];
             $filename = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('storage/avatars'), $filename);
+            $file->storeAs('avatars', $filename, 'public');
             $user->update(['avatar' => $filename]);
         }
 

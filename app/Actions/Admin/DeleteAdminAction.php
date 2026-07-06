@@ -5,6 +5,8 @@ namespace App\Actions\Admin;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
+use Illuminate\Support\Facades\Storage;
+
 /**
  * Aksi: Menghapus Akun Staff (Admin / Asatidz)
  *
@@ -32,8 +34,8 @@ class DeleteAdminAction
             return ['success' => false, 'message' => 'Anda tidak dapat menghapus akun Anda sendiri.'];
         }
 
-        if ($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar))) {
-            @unlink(public_path('storage/avatars/' . $user->avatar));
+        if ($user->avatar) {
+            Storage::disk('public')->delete('avatars/' . $user->avatar);
         }
 
         $user->delete();

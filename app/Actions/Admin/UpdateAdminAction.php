@@ -5,6 +5,8 @@ namespace App\Actions\Admin;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
+use Illuminate\Support\Facades\Storage;
+
 /**
  * Aksi: Memperbarui Profil Akun Staff (Admin / Asatidz)
  *
@@ -33,13 +35,13 @@ class UpdateAdminAction
         }
 
         if (!empty($validatedData['avatar'])) {
-            // Hapus avatar lama
-            if ($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar))) {
-                @unlink(public_path('storage/avatars/' . $user->avatar));
+            // Hapus avatar lama menggunakan Storage facade jika ada
+            if ($user->avatar) {
+                Storage::disk('public')->delete('avatars/' . $user->avatar);
             }
             $file     = $validatedData['avatar'];
             $filename = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('storage/avatars'), $filename);
+            $file->storeAs('avatars', $filename, 'public');
             $data['avatar'] = $filename;
         }
 
