@@ -299,6 +299,8 @@
                     </button>
                     <ul class="dropdown-menu shadow border-0" aria-labelledby="filterKelasDropdown" style="width: 100%;">
                         <li><a class="dropdown-item py-2 {{ request('kelas') == '' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('')">Semua Kelas</a></li>
+                        <li><a class="dropdown-item py-2 {{ request('kelas') == 'Belum Diatur' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('Belum Diatur')"><i class="bi bi-exclamation-circle text-warning me-1"></i> Belum Diatur</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
                         <li><a class="dropdown-item py-2 {{ request('kelas') == '7 MTs' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('7 MTs')">7 MTs</a></li>
                         <li><a class="dropdown-item py-2 {{ request('kelas') == '8 MTs' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('8 MTs')">8 MTs</a></li>
                         <li><a class="dropdown-item py-2 {{ request('kelas') == '9 MTs' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('9 MTs')">9 MTs</a></li>
