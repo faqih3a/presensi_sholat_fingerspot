@@ -290,18 +290,23 @@
                 </div>
             </div>
             
-            <form action="{{ route('santri.index') }}" method="GET" class="d-flex flex-wrap gap-2 align-items-center w-100 w-md-auto">
+            <form action="{{ route('santri.index') }}" method="GET" class="d-flex flex-wrap gap-2 align-items-center w-100 w-md-auto" id="filter-kelas-form">
                 <!-- Dropdown Filter Kelas -->
-                <div style="min-width: 150px;">
-                    <select name="kelas" class="form-select" onchange="this.form.submit()">
-                        <option value="">Semua Kelas</option>
-                        <option value="7 MTs" {{ request('kelas') == '7 MTs' ? 'selected' : '' }}>7 MTs</option>
-                        <option value="8 MTs" {{ request('kelas') == '8 MTs' ? 'selected' : '' }}>8 MTs</option>
-                        <option value="9 MTs" {{ request('kelas') == '9 MTs' ? 'selected' : '' }}>9 MTs</option>
-                        <option value="10 MA" {{ request('kelas') == '10 MA' ? 'selected' : '' }}>10 MA</option>
-                        <option value="11 MA" {{ request('kelas') == '11 MA' ? 'selected' : '' }}>11 MA</option>
-                        <option value="12 MA" {{ request('kelas') == '12 MA' ? 'selected' : '' }}>12 MA</option>
-                    </select>
+                <div class="premium-select-wrapper" style="min-width: 160px;">
+                    <button class="premium-select-btn dropdown-toggle py-2" type="button" id="filterKelasDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 38px;">
+                        <span id="selected-filter-kelas-text">{{ request('kelas') ?: 'Semua Kelas' }}</span>
+                        <i class="bi bi-chevron-down small text-muted ms-2"></i>
+                    </button>
+                    <ul class="dropdown-menu shadow border-0" aria-labelledby="filterKelasDropdown" style="width: 100%;">
+                        <li><a class="dropdown-item py-2 {{ request('kelas') == '' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('')">Semua Kelas</a></li>
+                        <li><a class="dropdown-item py-2 {{ request('kelas') == '7 MTs' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('7 MTs')">7 MTs</a></li>
+                        <li><a class="dropdown-item py-2 {{ request('kelas') == '8 MTs' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('8 MTs')">8 MTs</a></li>
+                        <li><a class="dropdown-item py-2 {{ request('kelas') == '9 MTs' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('9 MTs')">9 MTs</a></li>
+                        <li><a class="dropdown-item py-2 {{ request('kelas') == '10 MA' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('10 MA')">10 MA</a></li>
+                        <li><a class="dropdown-item py-2 {{ request('kelas') == '11 MA' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('11 MA')">11 MA</a></li>
+                        <li><a class="dropdown-item py-2 {{ request('kelas') == '12 MA' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('12 MA')">12 MA</a></li>
+                    </ul>
+                    <input type="hidden" name="kelas" id="filter_kelas_input" value="{{ request('kelas') }}">
                 </div>
 
                 <!-- Input Search -->
@@ -920,6 +925,12 @@
         } catch (error) {
             console.error('Table refresh error:', error);
         }
+    }
+
+    function selectFilterKelas(val) {
+        document.getElementById('filter_kelas_input').value = val;
+        document.getElementById('selected-filter-kelas-text').innerText = val ? val : 'Semua Kelas';
+        document.getElementById('filter-kelas-form').submit();
     }
 
     // No ongoing sync check needed as sync is synchronous now

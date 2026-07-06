@@ -109,15 +109,22 @@
                             <input type="text" class="form-control" id="nama" name="nama" value="{{ old('nama', $santri->nama) }}" required placeholder="Masukkan nama lengkap">
                         </div>
                         <div class="col-md-4">
-                            <label for="kelas" class="form-label fw-bold small text-muted text-uppercase">Kelas</label>
-                            <select class="form-select" id="kelas" name="kelas" required>
-                                <option value="7 MTs" {{ $santri->kelas == '7 MTs' ? 'selected' : '' }}>7 MTs</option>
-                                <option value="8 MTs" {{ $santri->kelas == '8 MTs' ? 'selected' : '' }}>8 MTs</option>
-                                <option value="9 MTs" {{ $santri->kelas == '9 MTs' ? 'selected' : '' }}>9 MTs</option>
-                                <option value="10 MA" {{ $santri->kelas == '10 MA' ? 'selected' : '' }}>10 MA</option>
-                                <option value="11 MA" {{ $santri->kelas == '11 MA' ? 'selected' : '' }}>11 MA</option>
-                                <option value="12 MA" {{ $santri->kelas == '12 MA' ? 'selected' : '' }}>12 MA</option>
-                            </select>
+                            <label class="form-label fw-bold small text-muted text-uppercase">Kelas</label>
+                            <div class="premium-select-wrapper">
+                                <button class="premium-select-btn dropdown-toggle py-2" type="button" id="kelasDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 40px;">
+                                    <span id="selected-kelas-text">{{ old('kelas', $santri->kelas) ?: '-- Pilih Kelas --' }}</span>
+                                    <i class="bi bi-chevron-down small text-muted"></i>
+                                </button>
+                                <ul class="dropdown-menu shadow border-0" aria-labelledby="kelasDropdown" style="width: 100%;">
+                                    <li><a class="dropdown-item py-2 {{ old('kelas', $santri->kelas) == '7 MTs' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectKelas('7 MTs')">7 MTs</a></li>
+                                    <li><a class="dropdown-item py-2 {{ old('kelas', $santri->kelas) == '8 MTs' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectKelas('8 MTs')">8 MTs</a></li>
+                                    <li><a class="dropdown-item py-2 {{ old('kelas', $santri->kelas) == '9 MTs' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectKelas('9 MTs')">9 MTs</a></li>
+                                    <li><a class="dropdown-item py-2 {{ old('kelas', $santri->kelas) == '10 MA' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectKelas('10 MA')">10 MA</a></li>
+                                    <li><a class="dropdown-item py-2 {{ old('kelas', $santri->kelas) == '11 MA' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectKelas('11 MA')">11 MA</a></li>
+                                    <li><a class="dropdown-item py-2 {{ old('kelas', $santri->kelas) == '12 MA' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectKelas('12 MA')">12 MA</a></li>
+                                </ul>
+                                <input type="hidden" name="kelas" id="kelas_input" value="{{ old('kelas', $santri->kelas) }}" required>
+                            </div>
                         </div>
                     </div>
 
@@ -186,5 +193,20 @@
         extractionStatus.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> Foto profil terpilih!';
         extractionStatus.className = 'text-success mt-2 small fw-bold';
     });
+
+    function selectKelas(val) {
+        document.getElementById('kelas_input').value = val;
+        document.getElementById('selected-kelas-text').innerText = val;
+        
+        // Update active state
+        const items = document.querySelectorAll('#kelasDropdown + .dropdown-menu .dropdown-item');
+        items.forEach(item => {
+            if (item.innerText === val) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
 </script>
 @endpush
