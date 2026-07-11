@@ -547,6 +547,84 @@
             40% { transform: scale(1); opacity: 1; }
         }
         body.dark-mode #page-loader { background-color: var(--color-bg, #141412); }
+
+        /* ── Custom Pagination ─────────────────────────────────── */
+        .app-pagination {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .app-page-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            height: 34px;
+            padding: 0 0.6rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--color-muted);
+            background-color: transparent;
+            border: 1px solid transparent;
+            text-decoration: none;
+            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+            cursor: pointer;
+        }
+        .app-page-link:hover {
+            background-color: var(--color-accent-light);
+            color: var(--color-accent);
+            border-color: transparent;
+        }
+        .app-page-item--active .app-page-link {
+            background-color: var(--color-accent);
+            color: #fff;
+            border-color: var(--color-accent);
+        }
+        .app-page-item--active .app-page-link:hover {
+            background-color: var(--color-accent);
+            color: #fff;
+        }
+        .app-page-item--disabled .app-page-link {
+            color: var(--color-border);
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        /* Mobile prev/next buttons */
+        .app-page-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--color-muted);
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            text-decoration: none;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .app-page-btn:hover {
+            background-color: var(--color-accent-light);
+            color: var(--color-accent);
+        }
+        .app-page-btn--disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        body.dark-mode .app-page-btn {
+            background-color: var(--color-surface);
+            border-color: var(--color-border);
+            color: var(--color-muted);
+        }
+        body.dark-mode .app-page-item--disabled .app-page-link {
+            color: var(--color-border);
+        }
     </style>
     @stack('styles')
 </head>

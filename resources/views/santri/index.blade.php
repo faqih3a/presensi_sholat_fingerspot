@@ -453,12 +453,16 @@
             </div>
         </div>
         @if(count($santris) > 0)
-        <div class="card-footer bg-white border-top py-3 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <div class="small text-muted">
+        <div class="card-footer border-top py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3"
+             style="background: var(--color-surface); border-color: var(--color-border) !important;">
+            <div class="small" style="color: var(--color-muted);">
                 @if(method_exists($santris, 'firstItem'))
-                    Menampilkan {{ $santris->firstItem() }} sampai {{ $santris->lastItem() }} dari {{ $santris->total() }} data santri.
+                    Menampilkan <strong style="color: var(--color-text);">{{ $santris->firstItem() }}</strong>
+                    &ndash;
+                    <strong style="color: var(--color-text);">{{ $santris->lastItem() }}</strong>
+                    dari <strong style="color: var(--color-text);">{{ $santris->total() }}</strong> santri
                 @else
-                    Menampilkan 1 sampai {{ count($santris) }} dari {{ count($santris) }} data santri.
+                    Menampilkan <strong style="color: var(--color-text);">{{ count($santris) }}</strong> santri
                 @endif
             </div>
             @if(method_exists($santris, 'links'))
