@@ -300,10 +300,13 @@
     </div>
 
     <div class="card card-stats overflow-hidden">
-        <div class="card-header bg-white py-3 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div class="card-header py-3 px-4 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3"
+             style="background: var(--color-surface); border-color: var(--color-border) !important;">
             <div>
-                <h6 class="m-0 fw-bold text-dark"><i class="bi bi-people-fill text-success me-2"></i>Daftar Santri</h6>
-                <div class="small text-muted">
+                <h6 class="m-0 fw-bold" style="color: var(--color-text); font-family: var(--font-display);">
+                    <i class="bi bi-people-fill me-2" style="color: var(--color-accent);"></i>Daftar Santri
+                </h6>
+                <div class="small mt-1" style="color: var(--color-muted); font-size: 0.78rem;">
                     @if(method_exists($santris, 'total'))
                         {{ $santris->total() }}
                     @else
@@ -312,13 +315,13 @@
                     Santri Terdaftar
                 </div>
             </div>
-            
+
             <form action="{{ route('santri.index') }}" method="GET" class="d-flex flex-wrap gap-2 align-items-center w-100 w-md-auto" id="filter-kelas-form">
                 <!-- Dropdown Filter Kelas -->
-                <div class="premium-select-wrapper" style="min-width: 160px;">
-                    <button class="premium-select-btn dropdown-toggle py-2" type="button" id="filterKelasDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 38px;">
+                <div class="premium-select-wrapper" style="min-width: 150px;">
+                    <button class="premium-select-btn dropdown-toggle" type="button" id="filterKelasDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 36px; font-size: 0.82rem;">
                         <span id="selected-filter-kelas-text">{{ request('kelas') ?: 'Semua Kelas' }}</span>
-                        <i class="bi bi-chevron-down small text-muted ms-2"></i>
+                        <i class="bi bi-chevron-down" style="font-size: 0.7rem; color: var(--color-muted);"></i>
                     </button>
                     <ul class="dropdown-menu shadow border-0" aria-labelledby="filterKelasDropdown" style="width: 100%;">
                         <li><a class="dropdown-item py-2 {{ request('kelas') == '' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectFilterKelas('')">Semua Kelas</a></li>
@@ -335,14 +338,24 @@
                 </div>
 
                 <!-- Input Search -->
-                <div class="input-group" style="min-width: 230px; max-width: 280px;">
-                    <input type="text" name="search" class="form-control" placeholder="Cari nama santri..." value="{{ request('search') }}" style="border-right: none;">
-                    <button class="btn btn-light" type="submit" style="border: 1px solid var(--color-border); border-left: none;">
-                        <i class="bi bi-search text-muted"></i>
-                    </button>
+                <div class="d-flex align-items-center gap-1" style="min-width: 220px; max-width: 260px;">
+                    <div class="input-group" style="height: 36px;">
+                        <span class="input-group-text" style="background: var(--color-surface); border: 1px solid var(--color-border); border-right: none; border-radius: 6px 0 0 6px; color: var(--color-muted); padding: 0 0.6rem;">
+                            <i class="bi bi-search" style="font-size: 0.8rem;"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control" placeholder="Cari nama santri..."
+                               value="{{ request('search') }}"
+                               style="border-left: none; border-radius: 0 6px 6px 0; font-size: 0.82rem; height: 36px; border-color: var(--color-border);">
+                        <button type="submit" style="display:none;"></button>
+                    </div>
                     @if(request('search') || request('kelas'))
-                        <a href="{{ route('santri.index') }}" class="btn ms-2 d-flex align-items-center justify-content-center" style="border: 1px solid var(--color-border); border-radius: 6px; color: var(--color-muted); padding: 0 0.7rem;" title="Reset Filter">
-                            <i class="bi bi-x-lg"></i>
+                        <a href="{{ route('santri.index') }}"
+                           class="d-flex align-items-center justify-content-center flex-shrink-0"
+                           style="width: 36px; height: 36px; border: 1px solid var(--color-border); border-radius: 6px; color: var(--color-muted); text-decoration: none; background: var(--color-surface); transition: all 0.15s ease;"
+                           title="Reset Filter"
+                           onmouseover="this.style.background='var(--color-accent-light)'; this.style.color='var(--color-accent)'"
+                           onmouseout="this.style.background='var(--color-surface)'; this.style.color='var(--color-muted)'">
+                            <i class="bi bi-x-lg" style="font-size: 0.75rem;"></i>
                         </a>
                     @endif
                 </div>
