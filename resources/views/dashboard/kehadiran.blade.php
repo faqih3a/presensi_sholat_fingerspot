@@ -124,94 +124,7 @@
         50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(25, 135, 84, 0); }
     }
 
-    /* ─── Toast Notification ──────────────────────────────── */
-    .scan-toast-container {
-        position: fixed;
-        top: 80px;
-        right: 20px;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        pointer-events: none;
-    }
-    .scan-toast {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1.25rem;
-        background: #fff;
-        border-radius: 1rem;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(25,135,84,0.15);
-        animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        pointer-events: auto;
-        max-width: 380px;
-        border-left: 4px solid #198754;
-    }
-    .scan-toast.toast-exit {
-        animation: toastSlideOut 0.3s ease-in forwards;
-    }
-    @keyframes toastSlideIn {
-        from { opacity: 0; transform: translateX(60px) scale(0.95); }
-        to { opacity: 1; transform: translateX(0) scale(1); }
-    }
-    @keyframes toastSlideOut {
-        from { opacity: 1; transform: translateX(0); }
-        to { opacity: 0; transform: translateX(60px); }
-    }
-    .scan-toast-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid #198754;
-        flex-shrink: 0;
-    }
-    .scan-toast-avatar-placeholder {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        flex-shrink: 0;
-    }
-    .scan-toast-body {
-        flex: 1;
-        min-width: 0;
-    }
-    .scan-toast-name {
-        font-weight: 700;
-        font-size: 0.85rem;
-        color: #333;
-        line-height: 1.2;
-    }
-    .scan-toast-detail {
-        font-size: 0.75rem;
-        color: #67748e;
-        line-height: 1.3;
-    }
-    .scan-toast-close {
-        background: none;
-        border: none;
-        color: #adb5bd;
-        font-size: 1rem;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-        flex-shrink: 0;
-    }
-    .scan-toast-close:hover { color: #333; }
 
-    body.dark-mode .scan-toast {
-        background: #2c2c2c;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(25,135,84,0.25);
-    }
-    body.dark-mode .scan-toast-name { color: #f8f9fa; }
-    body.dark-mode .scan-toast-detail { color: #adb5bd; }
 
     /* ─── New row highlight animation ────────────────────── */
     .row-new-entry {
@@ -475,8 +388,7 @@
     @endif
 </div>
 
-<!-- Toast Container -->
-<div class="scan-toast-container" id="scanToastContainer"></div>
+
 
 @endsection
 
@@ -485,7 +397,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // ─── Realtime Polling Configuration ────────────────────────
     const POLL_INTERVAL = 10000; // 10 detik
-    const TOAST_DURATION = 5000; // 5 detik
     let lastPollTime = new Date().toISOString();
     let knownIds = new Set();
 
@@ -495,46 +406,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (id) knownIds.add(parseInt(id));
     });
 
-    // ─── Toast Functions ───────────────────────────────────────
-    function showScanToast(scan) {
-        const container = document.getElementById('scanToastContainer');
-        
-        const toast = document.createElement('div');
-        toast.className = 'scan-toast';
-        
-        const avatarHtml = scan.foto
-            ? `<img src="${scan.foto}" class="scan-toast-avatar" alt="${scan.nama}">`
-            : `<div class="scan-toast-avatar-placeholder"><i class="bi bi-person-fill"></i></div>`;
-        
-        const sholatIcon = ['Dzuhur', 'Ashar'].includes(scan.waktu_sholat)
-            ? '<i class="bi bi-sun-fill text-warning"></i>'
-            : '<i class="bi bi-moon-stars-fill text-info"></i>';
-        
-        const waktu = scan.waktu_hadir ? scan.waktu_hadir.substring(0, 5) : '-';
-        
-        toast.innerHTML = `
-            ${avatarHtml}
-            <div class="scan-toast-body">
-                <div class="scan-toast-name">${scan.nama}</div>
-                <div class="scan-toast-detail">
-                    ${sholatIcon} ${scan.waktu_sholat} • ${waktu} WIB • Kelas ${scan.kelas}
-                </div>
-            </div>
-            <button class="scan-toast-close" onclick="this.parentElement.classList.add('toast-exit'); setTimeout(() => this.parentElement.remove(), 300);">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        `;
-        
-        container.appendChild(toast);
-        
-        // Auto-remove after duration
-        setTimeout(() => {
-            if (toast.parentElement) {
-                toast.classList.add('toast-exit');
-                setTimeout(() => toast.remove(), 300);
-            }
-        }, TOAST_DURATION);
-    }
 
     // ─── Insert New Row into Table / Card List ──────────────────
     function insertNewRow(scan) {
@@ -722,11 +593,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.data && data.data.length > 0) {
                 // Process newest first (data is already desc by updated_at)
                 const newScans = data.data.filter(scan => !knownIds.has(scan.id));
-                
-                // Show toast + insert row for each new scan
+
+                // Insert row for each new scan
                 newScans.reverse().forEach(scan => {
                     knownIds.add(scan.id);
-                    showScanToast(scan);
                     insertNewRow(scan);
                 });
 
