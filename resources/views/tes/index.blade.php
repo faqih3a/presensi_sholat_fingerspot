@@ -20,6 +20,17 @@
 body.dark-mode .table td,body.dark-mode .table th{border-bottom-color:#333}
 body.dark-mode .btn-white{background-color:#2c2c2c;border-color:#444;color:#adb5bd}
 body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
+@keyframes toastSlideIn {
+    from { opacity: 0; transform: translateX(60px) scale(0.95); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+}
+.row-new-entry {
+    animation: rowHighlight 2s ease-out;
+}
+@keyframes rowHighlight {
+    0% { background-color: rgba(25, 135, 84, 0.15); }
+    100% { background-color: transparent; }
+}
 </style>
 @endpush
 
@@ -68,6 +79,10 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
                 <div class="live-dot"></div>
                 <span>LIVE</span>
             </div>
+            <!-- Bulk Delete Button (Hidden by default) -->
+            <button type="button" id="bulkDeleteBtn" class="btn btn-danger btn-sm rounded-3 px-3 shadow-sm d-none" onclick="bulkDeletePresensi()">
+                <i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
+            </button>
         </div>
         <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center">
             <form id="filterForm" action="{{ route('tes.index') }}" method="GET" class="d-flex flex-wrap align-items-center gap-3 m-0 no-loader">
@@ -98,6 +113,11 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
             <table class="table table-hover align-middle mb-0 text-nowrap">
                 <thead class="bg-light">
                     <tr>
+                        <th class="text-center" width="40">
+                            <div class="form-check m-0 d-inline-block">
+                                <input class="form-check-input" type="checkbox" id="selectAllCheckbox">
+                            </div>
+                        </th>
                         <th>Nama Santri</th>
                         <th class="text-center" width="100">Foto Scan</th>
                         <th>Kelas</th>
@@ -109,7 +129,12 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
                 </thead>
                 <tbody>
                     @forelse($presensis as $presensi)
-                    <tr>
+                    <tr data-presensi-id="{{ $presensi->id ?? '' }}" data-santri-id="{{ $presensi->santri_id }}" data-tanggal="{{ $presensi->tanggal }}" data-sholat="{{ $presensi->waktu_sholat }}">
+                        <td class="text-center">
+                            <div class="form-check m-0 d-inline-block">
+                                <input class="form-check-input row-checkbox" type="checkbox" value="{{ $presensi->id ?? '' }}">
+                            </div>
+                        </td>
                         <td>
                             <div class="fw-bold text-dark">{{ $presensi->santri->nama ?? '-' }}</div>
                         </td>
@@ -149,17 +174,14 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
                             @endif
                         </td>
                         <td class="text-center">
-                            <form action="{{ route('tes.destroy', $presensi->id) }}" method="POST" onsubmit="return confirm('Hapus data ini?')" class="d-inline">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Hapus">
-                                    <i class="bi bi-trash text-danger"></i>
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Hapus" onclick="deletePresensi('{{ $presensi->santri_id }}', '{{ $presensi->tanggal }}', '{{ $presensi->waktu_sholat }}')">
+                                <i class="bi bi-trash text-danger"></i>
+                            </button>
                         </td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="7" class="text-center py-5">
+                    <tr id="emptyRow">
+                        <td colspan="8" class="text-center py-5">
                             <div class="py-4 text-muted">
                                 <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
                                 <h6 class="fw-bold">Belum Ada Data Presensi Tes</h6>
@@ -181,3 +203,221 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const tbody = document.querySelector('table tbody');
+
+    function updateBulkDeleteButtonState() {
+        const checkedBoxes = tbody.querySelectorAll('.row-checkbox:checked');
+        const count = checkedBoxes.length;
+        
+        if (count > 0) {
+            selectedCountSpan.textContent = count;
+            bulkDeleteBtn.classList.remove('d-none');
+        } else {
+            bulkDeleteBtn.classList.add('d-none');
+        }
+
+        // Sync selectAllCheckbox
+        const totalCheckboxes = tbody.querySelectorAll('.row-checkbox').length;
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = totalCheckboxes > 0 && count === totalCheckboxes;
+        }
+    }
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            tbody.querySelectorAll('.row-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateBulkDeleteButtonState();
+        });
+    }
+
+    if (tbody) {
+        tbody.addEventListener('change', function(e) {
+            if (e.target.classList.contains('row-checkbox')) {
+                updateBulkDeleteButtonState();
+            }
+        });
+    }
+
+    window.deletePresensi = function(santriId, tanggal, waktuSholat) {
+        if (!confirm('Apakah Anda yakin ingin menghapus data presensi ini?')) {
+            return;
+        }
+
+        const items = document.querySelectorAll(
+            `[data-santri-id="${santriId}"][data-tanggal="${tanggal}"][data-sholat="${waktuSholat}"]`
+        );
+        
+        items.forEach(item => {
+            const deleteBtn = item.querySelector('button[title="Hapus"]');
+            if (deleteBtn) {
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm text-danger"></span>';
+            }
+        });
+
+        fetch('/api_presensi.php?action=delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                santri_id: santriId,
+                tanggal: tanggal,
+                waktu_sholat: waktuSholat,
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                items.forEach(item => {
+                    item.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateX(30px)';
+                    setTimeout(() => {
+                        item.remove();
+                        checkEmptyState();
+                    }, 400);
+                });
+                showFlashMessage('success', data.message);
+            } else {
+                items.forEach(item => {
+                    const deleteBtn = item.querySelector('button[title="Hapus"]');
+                    if (deleteBtn) {
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = '<i class="bi bi-trash text-danger"></i>';
+                    }
+                });
+                showFlashMessage('danger', data.message || 'Gagal menghapus data.');
+            }
+        })
+        .catch(err => {
+            console.error('Delete error:', err);
+            items.forEach(item => {
+                const deleteBtn = item.querySelector('button[title="Hapus"]');
+                if (deleteBtn) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = '<i class="bi bi-trash text-danger"></i>';
+                }
+            });
+            showFlashMessage('danger', 'Terjadi kesalahan saat menghapus data.');
+        });
+    }
+
+    window.bulkDeletePresensi = function() {
+        const checkedBoxes = tbody.querySelectorAll('.row-checkbox:checked');
+        const ids = Array.from(checkedBoxes).map(cb => cb.value).filter(val => val !== '');
+
+        if (ids.length === 0) {
+            return;
+        }
+
+        if (!confirm(`Apakah Anda yakin ingin menghapus ${ids.length} data presensi yang terpilih?`)) {
+            return;
+        }
+
+        bulkDeleteBtn.disabled = true;
+        bulkDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menghapus...';
+
+        fetch('/api_presensi.php?action=bulk-delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(response => response.json())
+        .then(data => {
+            bulkDeleteBtn.disabled = false;
+            bulkDeleteBtn.innerHTML = `<i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)`;
+            
+            if (data.success) {
+                checkedBoxes.forEach(cb => {
+                    const row = cb.closest('tr');
+                    if (row) {
+                        row.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
+                        row.style.opacity = '0';
+                        row.style.transform = 'translateX(30px)';
+                        setTimeout(() => {
+                            row.remove();
+                            checkEmptyState();
+                            updateBulkDeleteButtonState();
+                        }, 400);
+                    }
+                });
+
+                if (selectAllCheckbox) selectAllCheckbox.checked = false;
+                showFlashMessage('success', data.message);
+            } else {
+                showFlashMessage('danger', data.message || 'Gagal menghapus data.');
+            }
+        })
+        .catch(err => {
+            bulkDeleteBtn.disabled = false;
+            bulkDeleteBtn.innerHTML = `<i class="bi bi-trash-fill me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)`;
+            console.error('Bulk delete error:', err);
+            showFlashMessage('danger', 'Terjadi kesalahan saat menghapus data.');
+        });
+    };
+
+    function checkEmptyState() {
+        const totalRows = tbody.querySelectorAll('tr[data-presensi-id]').length;
+        const countEl = document.querySelector('.card-footer .text-muted');
+        const footer = document.querySelector('.card-footer');
+        
+        if (totalRows === 0) {
+            tbody.innerHTML = `
+                <tr id="emptyRow">
+                    <td colspan="8" class="text-center py-5">
+                        <div class="py-4 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                            <h6 class="fw-bold">Belum Ada Data Presensi Tes</h6>
+                            <p class="small mb-0">Data presensi diluar waktu sholat akan muncul di sini setelah santri melakukan scan.</p>
+                        </div>
+                    </td>
+                </tr>`;
+            if (footer) footer.remove();
+        } else {
+            if (countEl) countEl.textContent = `Menampilkan ${totalRows} data presensi tes.`;
+        }
+    }
+
+    function showFlashMessage(type, message) {
+        const existing = document.getElementById('ajaxFlashMessage');
+        if (existing) existing.remove();
+
+        const alertDiv = document.createElement('div');
+        alertDiv.id = 'ajaxFlashMessage';
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show shadow-sm`;
+        alertDiv.style.cssText = 'position: fixed; top: 80px; right: 20px; z-index: 9999; min-width: 300px; max-width: 450px; animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);';
+        alertDiv.innerHTML = `
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi ${type === 'success' ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-danger'} fs-5"></i>
+                <span class="fw-semibold">${message}</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+            if (alertDiv.parentElement) {
+                alertDiv.style.transition = 'opacity 0.3s ease-out';
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 300);
+            }
+        }, 4000);
+    }
+});
+</script>
+@endpush
