@@ -361,14 +361,10 @@
                     </div>
 
                     <button type="submit" class="btn-primary-dark mb-2">Masuk</button>
-
-                    <div class="divider-or"><span>atau</span></div>
-
-                    <a href="{{ route('santri.create') }}" class="btn-secondary-outline">Daftar akun santri baru</a>
                 </form>
             </div>
 
-            <p class="login-footer">© 2026 Thursina IIBS. All rights reserved.</p>
+            <p class="login-footer">© 2026 Thursina. All rights reserved.</p>
         </div>
     </div>
 
