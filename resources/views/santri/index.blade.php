@@ -285,11 +285,7 @@
                 <div>
                     <span class="text-muted small fw-semibold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.06em;">Total Santri</span>
                     <span class="h3 fw-bold mb-0" style="color: var(--color-text);">
-                        @if(method_exists($santris, 'total'))
-                            {{ $santris->total() }}
-                        @else
-                            {{ count($santris) }}
-                        @endif
+                        {{ $totalSantri ?? (method_exists($santris, 'total') ? $santris->total() : count($santris)) }}
                     </span>
                 </div>
                 <div class="d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; border-radius: 8px; background: rgba(42,107,79,0.08); color: var(--color-accent);">
@@ -307,12 +303,11 @@
                     <i class="bi bi-people-fill me-2" style="color: var(--color-accent);"></i>Daftar Santri
                 </h6>
                 <div class="small mt-1" style="color: var(--color-muted); font-size: 0.78rem;">
-                    @if(method_exists($santris, 'total'))
-                        {{ $santris->total() }}
+                    @if(request('search') || request('kelas'))
+                        {{ method_exists($santris, 'total') ? $santris->total() : count($santris) }} dari {{ $totalSantri ?? '' }} Santri (terfilter)
                     @else
-                        {{ count($santris) }}
+                        {{ method_exists($santris, 'total') ? $santris->total() : count($santris) }} Santri Terdaftar
                     @endif
-                    Santri Terdaftar
                 </div>
             </div>
 
@@ -474,6 +469,9 @@
                     &ndash;
                     <strong style="color: var(--color-text);">{{ $santris->lastItem() }}</strong>
                     dari <strong style="color: var(--color-text);">{{ $santris->total() }}</strong> santri
+                    @if(request('search') || request('kelas'))
+                        <span class="fw-semibold">(terfilter)</span>
+                    @endif
                 @else
                     Menampilkan <strong style="color: var(--color-text);">{{ count($santris) }}</strong> santri
                 @endif

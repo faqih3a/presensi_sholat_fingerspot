@@ -165,6 +165,9 @@
                 <input type="hidden" name="ref_date" value="{{ $ref_date }}">
                 <input type="hidden" name="tanggal_mulai" value="{{ $tanggal_mulai }}">
                 <input type="hidden" name="tanggal_akhir" value="{{ $tanggal_akhir }}">
+                @if(request('search'))
+                    <input type="hidden" name="search" value="{{ request('search') }}">
+                @endif
                 
                 <!-- Custom Dropdown Sholat -->
                 <x-filter-dropdown 
@@ -196,12 +199,70 @@
                     form-id="filterForm"
                     button-style="border-radius: 0.75rem; min-width: 120px; background: #fff;"
                 />
+
+                <!-- Custom Dropdown Kelas -->
+                <x-filter-dropdown 
+                    label="Kelas" 
+                    name="kelas" 
+                    selected="{{ request('kelas') }}" 
+                    :options="[
+                        '' => 'Semua Kelas',
+                        '7 MTs' => '7 MTs',
+                        '8 MTs' => '8 MTs',
+                        '9 MTs' => '9 MTs',
+                        '10 MA' => '10 MA',
+                        '11 MA' => '11 MA',
+                        '12 MA' => '12 MA'
+                    ]"
+                    form-id="filterForm"
+                    button-style="border-radius: 0.75rem; min-width: 120px; background: #fff;"
+                />
+
+                @if(request('search') || request('waktu_sholat') || request('status') || request('kelas'))
+                    <a href="{{ route('dashboard.kehadiran', ['mode' => $mode, 'ref_date' => $ref_date]) }}"
+                       class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 d-flex align-items-center gap-1"
+                       title="Reset semua filter">
+                        <i class="bi bi-x-lg" style="font-size: 0.7rem;"></i>
+                        <span style="font-size: 0.75rem; font-weight: 600;">Reset</span>
+                    </a>
+                @endif
             </form>
             <a href="{{ route('dashboard.kehadiran.export', request()->query()) }}" class="btn btn-gradient-success btn-sm px-3 fw-bold" data-no-loader="true">
                 <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
             </a>
         </div>
     </div>
+
+    @if(request('search') || request('waktu_sholat') || request('status') || request('kelas'))
+    <div class="px-4 py-2 border-bottom d-flex flex-wrap align-items-center gap-2" style="background: var(--color-accent-light);">
+        <span class="small fw-bold" style="color: var(--color-accent); font-size: 0.75rem;"><i class="bi bi-funnel-fill me-1"></i>Filter aktif:</span>
+        @if(request('search'))
+            <span class="badge rounded-pill px-3 py-1 fw-semibold" style="background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); font-size: 0.72rem;">
+                <i class="bi bi-search me-1"></i>"{{ request('search') }}"
+                <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}" class="text-muted ms-1" style="text-decoration: none;">&times;</a>
+            </span>
+        @endif
+        @if(request('waktu_sholat'))
+            <span class="badge rounded-pill px-3 py-1 fw-semibold" style="background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); font-size: 0.72rem;">
+                <i class="bi bi-clock me-1"></i>{{ request('waktu_sholat') }}
+                <a href="{{ request()->fullUrlWithQuery(['waktu_sholat' => null]) }}" class="text-muted ms-1" style="text-decoration: none;">&times;</a>
+            </span>
+        @endif
+        @if(request('status'))
+            <span class="badge rounded-pill px-3 py-1 fw-semibold" style="background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); font-size: 0.72rem;">
+                <i class="bi bi-check-circle me-1"></i>{{ request('status') == 'Alfa' ? 'Alpha' : request('status') }}
+                <a href="{{ request()->fullUrlWithQuery(['status' => null]) }}" class="text-muted ms-1" style="text-decoration: none;">&times;</a>
+            </span>
+        @endif
+        @if(request('kelas'))
+            <span class="badge rounded-pill px-3 py-1 fw-semibold" style="background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); font-size: 0.72rem;">
+                <i class="bi bi-mortarboard me-1"></i>{{ request('kelas') }}
+                <a href="{{ request()->fullUrlWithQuery(['kelas' => null]) }}" class="text-muted ms-1" style="text-decoration: none;">&times;</a>
+            </span>
+        @endif
+    </div>
+    @endif
+
     <div class="card-body p-0">
         <div class="table-responsive d-none d-md-block">
             <table class="table table-hover align-middle mb-0 text-nowrap" id="kehadiranTable">
@@ -382,7 +443,10 @@
     @if(count($presensis) > 0)
     <div class="card-footer bg-white border-top py-3 text-center text-md-start">
         <div class="small text-muted" id="recordCount">
-            Menampilkan {{ count($presensis) }} data rekaman kehadiran terbaru.
+            Menampilkan {{ count($presensis) }} data rekaman kehadiran
+            @if(request('search') || request('waktu_sholat') || request('status') || request('kelas'))
+                <span class="fw-semibold">(terfilter)</span>
+            @endif
         </div>
     </div>
     @endif

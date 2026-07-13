@@ -734,6 +734,11 @@
                         
                         <!-- Search Bar -->
                         <form action="{{ route('dashboard.kehadiran') }}" method="GET" class="ms-md-3 me-auto d-none d-md-block no-loader" style="width: 320px;">
+                            @foreach(request()->except(['search', 'page']) as $key => $value)
+                                @if($value !== null && $value !== '')
+                                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @endif
+                            @endforeach
                             <div class="input-group bg-light rounded-3 border-0" style="height: 40px;">
                                 <span class="input-group-text bg-transparent border-0 text-muted ps-3">
                                     <i class="bi bi-search"></i>

@@ -103,8 +103,9 @@ class SantriController extends Controller
         });
 
         $santris = $query->orderBy('nama', 'asc')->paginate(15)->withQueryString();
+        $totalSantri = Santri::count();
 
-        return view('santri.index', compact('santris'));
+        return view('santri.index', compact('santris', 'totalSantri'));
     }
 
     /**

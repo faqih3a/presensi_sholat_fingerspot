@@ -51,6 +51,7 @@ class FetchPresensiDataAction
         $waktuSholat = $request->get('waktu_sholat');
         $status      = $request->get('status');
         $search      = $request->get('search');
+        $kelas       = $request->get('kelas');
 
         // Query presensi (exclude data "Tes")
         $query = Presensi::with('santri')
@@ -62,6 +63,11 @@ class FetchPresensiDataAction
         if ($search) {
             $query->whereHas('santri', function ($q) use ($search) {
                 $q->where('nama', 'like', '%' . $search . '%');
+            });
+        }
+        if ($kelas) {
+            $query->whereHas('santri', function ($q) use ($kelas) {
+                $q->where('kelas', $kelas);
             });
         }
 
