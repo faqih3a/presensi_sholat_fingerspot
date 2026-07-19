@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Aksi: Membuat Akun Staff Baru (Admin / Asatidz)
+ * Aksi: Membuat Akun Staff Baru (Admin / Ustadz)
  *
  * @see \App\Http\Controllers\AdminController::store()
- * @see \App\Http\Controllers\AsatidzController::store()
+ * @see \App\Http\Controllers\UstadzController::store()
  */
 class CreateAdminAction
 {
@@ -19,7 +19,7 @@ class CreateAdminAction
      * Menjalankan aksi pembuatan akun staff baru.
      *
      * @param  array   $validatedData  Data tervalidasi: 'name', 'email', 'wa_number', 'password', 'avatar'.
-     * @param  string  $role           Role: 'admin' atau 'asatidz'.
+     * @param  string  $role           Role: 'admin' atau 'ustadz'.
      * @return \App\Models\User
      */
     public function execute(array $validatedData, string $role = 'admin'): User

@@ -9,32 +9,40 @@ use App\Actions\Admin\UpdateAdminAction;
 use App\Actions\Admin\DeleteAdminAction;
 
 /**
- * Controller untuk manajemen akun Asatidz (Pengurus Masjid).
+ * Controller untuk manajemen akun Ustadz (Pengurus Masjid).
  *
  * Controller ini menggunakan Action Classes yang sama dengan AdminController
  * (CreateAdminAction, UpdateAdminAction, DeleteAdminAction) karena logika
- * CRUD-nya identik — hanya dibedakan oleh parameter role ('asatidz').
+ * CRUD-nya identik — hanya dibedakan oleh parameter role ('ustadz').
  *
  * @see \App\Actions\Admin\CreateAdminAction
  * @see \App\Actions\Admin\UpdateAdminAction
  * @see \App\Actions\Admin\DeleteAdminAction
  */
-class AsatidzController extends Controller
+class UstadzController extends Controller
 {
     /**
-     * Menampilkan daftar semua asatidz.
+     * Menampilkan daftar semua ustadz.
      *
      * @return \Illuminate\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
-        $asatidz = User::where('role', 'asatidz')->latest()->get();
-        $totalAsatidz = $asatidz->count();
-        return view('asatidz.index', compact('asatidz', 'totalAsatidz'));
+        $search = $request->input('search');
+
+        $ustadz = User::where('role', 'ustadz')
+            ->when($search, fn($q, $v) => $q->where('name', 'like', "%{$v}%"))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        $totalUstadz = User::where('role', 'ustadz')->count();
+
+        return view('ustadz.index', compact('ustadz', 'totalUstadz'));
     }
 
     /**
-     * Menyimpan akun asatidz baru.
+     * Menyimpan akun ustadz baru.
      *
      * @param  \Illuminate\Http\Request                  $request
      * @param  \App\Actions\Admin\CreateAdminAction       $action
@@ -54,30 +62,30 @@ class AsatidzController extends Controller
             $validated['avatar'] = $request->file('avatar');
         }
 
-        $action->execute($validated, 'asatidz');
+        $action->execute($validated, 'ustadz');
 
-        return redirect()->route('asatidz.index')->with('success', 'Akun Asatidz berhasil dibuat.');
+        return redirect()->route('ustadz.index')->with('success', 'Akun Ustadz berhasil dibuat.');
     }
 
 
 
     /**
-     * Memperbarui data asatidz.
+     * Memperbarui data ustadz.
      *
      * @param  \Illuminate\Http\Request                  $request
-     * @param  \App\Models\User                          $asatidz
+     * @param  \App\Models\User                          $ustadz
      * @param  \App\Actions\Admin\UpdateAdminAction       $action
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request, User $asatidz, UpdateAdminAction $action)
+    public function update(Request $request, User $ustadz, UpdateAdminAction $action)
     {
-        if ($asatidz->role !== 'asatidz') {
-            return redirect()->route('asatidz.index')->with('error', 'User bukan merupakan Asatidz.');
+        if ($ustadz->role !== 'ustadz') {
+            return redirect()->route('ustadz.index')->with('error', 'User bukan merupakan Ustadz.');
         }
 
         $validated = $request->validate([
             'name'      => 'required|string|max:255',
-            'email'     => 'required|string|email|max:255|unique:users,email,' . $asatidz->id,
+            'email'     => 'required|string|email|max:255|unique:users,email,' . $ustadz->id,
             'wa_number' => 'nullable|string|max:20',
             'password'  => 'nullable|string|min:5|confirmed',
             'avatar'    => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
@@ -87,23 +95,23 @@ class AsatidzController extends Controller
             $validated['avatar'] = $request->file('avatar');
         }
 
-        $action->execute($asatidz, $validated);
+        $action->execute($ustadz, $validated);
 
-        return redirect()->route('asatidz.index')->with('success', 'Data Asatidz berhasil diperbarui.');
+        return redirect()->route('ustadz.index')->with('success', 'Data Ustadz berhasil diperbarui.');
     }
 
     /**
-     * Menghapus akun asatidz dengan safeguard keamanan.
+     * Menghapus akun ustadz dengan safeguard keamanan.
      *
-     * @param  \App\Models\User                          $asatidz
+     * @param  \App\Models\User                          $ustadz
      * @param  \App\Actions\Admin\DeleteAdminAction       $action
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy(User $asatidz, DeleteAdminAction $action)
+    public function destroy(User $ustadz, DeleteAdminAction $action)
     {
-        $result = $action->execute($asatidz, 'asatidz');
+        $result = $action->execute($ustadz, 'ustadz');
 
         $type = $result['success'] ? 'success' : 'error';
-        return redirect()->route('asatidz.index')->with($type, $result['message']);
+        return redirect()->route('ustadz.index')->with($type, $result['message']);
     }
 }

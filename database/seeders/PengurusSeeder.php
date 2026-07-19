@@ -23,13 +23,13 @@ class PengurusSeeder extends Seeder
             ]
         );
 
-        // Seed Asatidz
+        // Seed Ustadz
         User::updateOrCreate(
-            ['email' => 'asatidz@thursina.id'],
+            ['email' => 'ustadz@thursina.id'],
             [
                 'name' => 'Ustadz Ahmad',
-                'password' => Hash::make('asatidz'),
-                'role' => 'asatidz',
+                'password' => Hash::make('ustadz'),
+                'role' => 'ustadz',
             ]
         );
     }

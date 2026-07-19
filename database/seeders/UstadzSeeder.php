@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class AsatidzSeeder extends Seeder
+class UstadzSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -13,10 +13,10 @@ class AsatidzSeeder extends Seeder
     public function run(): void
     {
         \App\Models\User::create([
-            'name' => 'Admin Asatidz',
+            'name' => 'Admin Ustadz',
             'email' => 'admin@thursina.id',
             'password' => \Illuminate\Support\Facades\Hash::make('admin'),
-            'role' => 'asatidz',
+            'role' => 'ustadz',
         ]);
     }
 }

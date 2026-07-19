@@ -21,6 +21,61 @@
             </div>
         @endif
 
+        {{-- Filter Form --}}
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body py-3 px-4">
+                <form id="izinFilterForm" action="{{ route('izin.manage') }}" method="GET" class="d-flex flex-wrap align-items-center gap-3 m-0 no-loader">
+                    <input type="hidden" name="mode" value="{{ $mode }}">
+                    <input type="hidden" name="ref_date" value="{{ $ref_date }}">
+
+                    {{-- Search --}}
+                    <div class="input-group" style="max-width: 220px;">
+                        <span class="input-group-text border-end-0" style="background: #fff; border-radius: 0.75rem 0 0 0.75rem; border-color: #edf2f9;"><i class="bi bi-search text-muted" style="font-size: 0.8rem;"></i></span>
+                        <input type="text" name="search" class="form-control border-start-0" placeholder="Cari nama..." value="{{ request('search') }}" style="border-radius: 0 0.75rem 0.75rem 0; border-color: #edf2f9; font-size: 0.85rem;">
+                    </div>
+
+                    {{-- Filter Status --}}
+                    <x-filter-dropdown
+                        label="Status"
+                        name="status"
+                        selected="{{ request('status') }}"
+                        :options="[
+                            '' => 'Semua Status',
+                            'Pending' => 'Pending',
+                            'Disetujui' => 'Disetujui',
+                            'Ditolak' => 'Ditolak',
+                        ]"
+                        form-id="izinFilterForm"
+                        button-style="border-radius: 0.75rem; min-width: 130px; background: #fff;"
+                    />
+
+                    {{-- Filter Jenis Izin --}}
+                    <x-filter-dropdown
+                        label="Jenis"
+                        name="jenis_izin"
+                        selected="{{ request('jenis_izin') }}"
+                        :options="[
+                            '' => 'Semua Jenis',
+                            'Sakit' => 'Sakit',
+                            'Izin' => 'Izin',
+                            'Kegiatan Luar' => 'Kegiatan Luar',
+                        ]"
+                        form-id="izinFilterForm"
+                        button-style="border-radius: 0.75rem; min-width: 140px; background: #fff;"
+                    />
+
+                    @if(request('search') || request('status') || request('jenis_izin'))
+                        <a href="{{ route('izin.manage', ['mode' => $mode, 'ref_date' => $ref_date]) }}"
+                           class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 d-flex align-items-center gap-1"
+                           title="Reset semua filter">
+                            <i class="bi bi-x-lg" style="font-size: 0.7rem;"></i>
+                            <span style="font-size: 0.75rem; font-weight: 600;">Reset</span>
+                        </a>
+                    @endif
+                </form>
+            </div>
+        </div>
+
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden d-none d-md-block">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -209,6 +264,30 @@
                 </div>
             @endforelse
         </div>
+
+        {{-- Pagination Footer --}}
+        @if(count($izins) > 0)
+        <div class="card border-0 shadow-sm rounded-4 mt-3">
+            <div class="card-body py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                <div class="small text-muted">
+                    @if(method_exists($izins, 'firstItem'))
+                        Menampilkan <strong>{{ $izins->firstItem() }}</strong>
+                        &ndash;
+                        <strong>{{ $izins->lastItem() }}</strong>
+                        dari <strong>{{ $izins->total() }}</strong> data izin
+                        @if(request('search') || request('status') || request('jenis_izin'))
+                            <span class="fw-semibold">(terfilter)</span>
+                        @endif
+                    @else
+                        Menampilkan <strong>{{ count($izins) }}</strong> data izin
+                    @endif
+                </div>
+                @if(method_exists($izins, 'links'))
+                    <div>{{ $izins->links() }}</div>
+                @endif
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 

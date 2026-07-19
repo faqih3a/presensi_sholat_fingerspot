@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Kelola Asatidz')
+@section('title', 'Kelola Ustadz')
 
 @push('styles')
 <style>
@@ -135,12 +135,12 @@
     <!-- Header Section -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
-            <h1 class="h3 mb-1 text-dark fw-bold">Kelola Asatidz</h1>
-            <p class="text-muted small mb-0">Daftar semua akun asatidz masjid yang terdaftar di sistem.</p>
+            <h1 class="h3 mb-1 text-dark fw-bold">Kelola Ustadz</h1>
+            <p class="text-muted small mb-0">Daftar semua akun ustadz masjid yang terdaftar di sistem.</p>
         </div>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-gradient-success px-4 py-2 fw-bold d-flex align-items-center gap-2" style="border-radius: 0.75rem;" data-bs-toggle="modal" data-bs-target="#tambahAsatidzModal">
-                <i class="bi bi-person-plus-fill"></i> Tambah Asatidz
+            <button type="button" class="btn btn-gradient-success px-4 py-2 fw-bold d-flex align-items-center gap-2" style="border-radius: 0.75rem;" data-bs-toggle="modal" data-bs-target="#tambahUstadzModal">
+                <i class="bi bi-person-plus-fill"></i> Tambah Ustadz
             </button>
         </div>
     </div>
@@ -171,8 +171,8 @@
         <div class="col-12">
             <div class="card card-stats p-3 bg-white border-0 d-flex flex-row align-items-center justify-content-between">
                 <div>
-                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Asatidz</span>
-                    <span class="h3 fw-bold text-dark mb-0">{{ $totalAsatidz }}</span>
+                    <span class="text-muted small fw-bold text-uppercase d-block mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em;">Total Ustadz</span>
+                    <span class="h3 fw-bold text-dark mb-0">{{ $totalUstadz }}</span>
                 </div>
                 <div class="rounded-circle d-flex align-items-center justify-content-center text-success" style="width: 48px; height: 48px; background-color: rgba(25, 135, 84, 0.1);">
                     <i class="bi bi-person-workspace fs-5"></i>
@@ -183,9 +183,35 @@
 
     <!-- Table Card -->
     <div class="card card-stats overflow-hidden border-0">
-        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
-            <h6 class="m-0 fw-bold text-dark"><i class="bi bi-person-badge-fill text-success me-2"></i>Daftar Asatidz</h6>
-            <div class="small text-muted">{{ $totalAsatidz }} Terdaftar</div>
+        <div class="card-header bg-white py-3 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <h6 class="m-0 fw-bold text-dark"><i class="bi bi-person-badge-fill text-success me-2"></i>Daftar Ustadz</h6>
+                <div class="small mt-1" style="color: #67748e; font-size: 0.78rem;">
+                    @if(request('search'))
+                        {{ method_exists($ustadz, 'total') ? $ustadz->total() : count($ustadz) }} dari {{ $totalUstadz }} Ustadz (terfilter)
+                    @else
+                        {{ $totalUstadz }} Terdaftar
+                    @endif
+                </div>
+            </div>
+            <form action="{{ route('ustadz.index') }}" method="GET" class="d-flex flex-wrap gap-2 align-items-center" style="min-width: 220px; max-width: 320px;">
+                <div class="input-group" style="height: 36px;">
+                    <span class="input-group-text" style="background: #fff; border: 1px solid #edf2f9; border-right: none; border-radius: 6px 0 0 6px; color: #67748e; padding: 0 0.6rem;">
+                        <i class="bi bi-search" style="font-size: 0.8rem;"></i>
+                    </span>
+                    <input type="text" name="search" class="form-control" placeholder="Cari nama ustadz..."
+                           value="{{ request('search') }}"
+                           style="border-left: none; border-radius: 0 6px 6px 0; font-size: 0.82rem; height: 36px; border-color: #edf2f9;">
+                </div>
+                @if(request('search'))
+                    <a href="{{ route('ustadz.index') }}"
+                       class="d-flex align-items-center justify-content-center flex-shrink-0"
+                       style="width: 36px; height: 36px; border: 1px solid #edf2f9; border-radius: 6px; color: #67748e; text-decoration: none; background: #fff;"
+                       title="Reset Filter">
+                        <i class="bi bi-x-lg" style="font-size: 0.75rem;"></i>
+                    </a>
+                @endif
+            </form>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -202,10 +228,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($asatidz as $index => $u)
+                        @forelse($ustadz as $index => $u)
                         <tr>
                             <td class="text-center">
-                                <span class="text-muted fw-bold small">{{ $index + 1 }}</span>
+                                <span class="text-muted fw-bold small">{{ method_exists($ustadz, 'currentPage') ? ($ustadz->currentPage() - 1) * $ustadz->perPage() + $loop->iteration : $loop->iteration }}</span>
                             </td>
                             <td>
                                 @if($u->avatar)
@@ -245,7 +271,7 @@
                             </td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
-                                    <button type="button" class="action-btn bg-info bg-opacity-10 text-info border-0 btn-edit-asatidz" title="Edit"
+                                    <button type="button" class="action-btn bg-info bg-opacity-10 text-info border-0 btn-edit-ustadz" title="Edit"
                                         data-id="{{ $u->id }}"
                                         data-name="{{ $u->name }}"
                                         data-email="{{ $u->email }}"
@@ -253,7 +279,7 @@
                                         data-avatar="{{ $u->avatar ? asset('storage/avatars/' . $u->avatar) : '' }}">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
-                                    <form action="{{ route('asatidz.destroy', $u->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus asatidz ini?')">
+                                    <form action="{{ route('ustadz.destroy', $u->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus ustadz ini?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="action-btn bg-danger bg-opacity-10 text-danger border-0" title="Hapus">
@@ -269,7 +295,7 @@
                                 <div class="py-4">
                                     <i class="bi bi-person-exclamation text-muted" style="font-size: 4rem;"></i>
                                     <h5 class="mt-3 fw-bold text-dark">Belum Ada Data</h5>
-                                    <p class="text-muted mb-4">Silakan daftarkan asatidz baru untuk mulai mengelola.</p>
+                                    <p class="text-muted mb-4">Silakan daftarkan ustadz baru untuk mulai mengelola.</p>
                                 </div>
                             </td>
                         </tr>
@@ -278,31 +304,44 @@
                 </table>
             </div>
         </div>
-        @if($totalAsatidz > 0)
-        <div class="card-footer bg-white border-top py-3">
+        @if(count($ustadz) > 0)
+        <div class="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <div class="small text-muted">
-                Menampilkan 1 sampai {{ $totalAsatidz }} dari {{ $totalAsatidz }} data Asatidz.
+                @if(method_exists($ustadz, 'firstItem'))
+                    Menampilkan <strong>{{ $ustadz->firstItem() }}</strong>
+                    &ndash;
+                    <strong>{{ $ustadz->lastItem() }}</strong>
+                    dari <strong>{{ $ustadz->total() }}</strong> data Ustadz
+                    @if(request('search'))
+                        <span class="fw-semibold">(terfilter)</span>
+                    @endif
+                @else
+                    Menampilkan <strong>{{ count($ustadz) }}</strong> data Ustadz
+                @endif
             </div>
+            @if(method_exists($ustadz, 'links'))
+                <div>{{ $ustadz->links() }}</div>
+            @endif
         </div>
         @endif
     </div>
 </div>
 
-<!-- Modal Tambah Asatidz -->
-<div class="modal fade" id="tambahAsatidzModal" tabindex="-1" aria-labelledby="tambahAsatidzModalLabel" aria-hidden="true">
+<!-- Modal Tambah Ustadz -->
+<div class="modal fade" id="tambahUstadzModal" tabindex="-1" aria-labelledby="tambahUstadzModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 1.25rem;">
             <div class="modal-header bg-white border-bottom-0 pb-0 pt-4 px-4">
                 <div class="text-center w-100">
-                    <h4 class="fw-bold text-dark mb-1" id="tambahAsatidzModalLabel">
-                        <i class="bi bi-person-plus-fill text-success me-2"></i>Tambah Asatidz Baru
+                    <h4 class="fw-bold text-dark mb-1" id="tambahUstadzModalLabel">
+                        <i class="bi bi-person-plus-fill text-success me-2"></i>Tambah Ustadz Baru
                     </h4>
-                    <p class="text-muted small">Buat akun untuk asatidz baru di sistem.</p>
+                    <p class="text-muted small">Buat akun untuk ustadz baru di sistem.</p>
                 </div>
                 <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form action="{{ route('asatidz.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('ustadz.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="row">
                         <div class="col-md-6">
@@ -364,7 +403,7 @@
                     
                     <div class="d-flex gap-2 mt-4">
                         <button type="submit" class="btn btn-gradient-success flex-grow-1 py-2 fw-bold">
-                            <i class="bi bi-check-circle-fill me-2"></i>Simpan Data Asatidz
+                            <i class="bi bi-check-circle-fill me-2"></i>Simpan Data Ustadz
                         </button>
                         <button type="button" class="btn btn-light px-4 py-2 fw-bold text-muted" data-bs-dismiss="modal">Batal</button>
                     </div>
@@ -374,21 +413,21 @@
     </div>
 </div>
 
-<!-- Modal Edit Asatidz (Single Reusable) -->
-<div class="modal fade" id="editAsatidzModal" tabindex="-1" aria-labelledby="editAsatidzModalLabel" aria-hidden="true">
+<!-- Modal Edit Ustadz (Single Reusable) -->
+<div class="modal fade" id="editUstadzModal" tabindex="-1" aria-labelledby="editUstadzModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 1.25rem;">
             <div class="modal-header bg-white border-bottom-0 pb-0 pt-4 px-4">
                 <div class="text-center w-100">
-                    <h4 class="fw-bold text-dark mb-1" id="editAsatidzModalLabel">
-                        <i class="bi bi-pencil-square text-info me-2"></i>Edit Data Asatidz
+                    <h4 class="fw-bold text-dark mb-1" id="editUstadzModalLabel">
+                        <i class="bi bi-pencil-square text-info me-2"></i>Edit Data Ustadz
                     </h4>
-                    <p class="text-muted small">Perbarui informasi akun Asatidz.</p>
+                    <p class="text-muted small">Perbarui informasi akun Ustadz.</p>
                 </div>
                 <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form id="editAsatidzForm" method="POST" enctype="multipart/form-data">
+                <form id="editUstadzForm" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="row">
@@ -494,15 +533,15 @@
         }
 
         // ─── Modal Edit: Populate & Open ───────────────────────────
-        const editForm = document.getElementById('editAsatidzForm');
-        const editModal = document.getElementById('editAsatidzModal');
+        const editForm = document.getElementById('editUstadzForm');
+        const editModal = document.getElementById('editUstadzModal');
         const editCurrentAvatarBox = document.getElementById('edit-current-avatar-box');
         const editCurrentAvatar = document.getElementById('edit-current-avatar');
         const editPreviewBox = document.getElementById('edit-preview-box');
         const editImagePreview = document.getElementById('edit-image-preview');
         const editAvatarInput = document.getElementById('edit_avatar');
 
-        document.querySelectorAll('.btn-edit-asatidz').forEach(function(btn) {
+        document.querySelectorAll('.btn-edit-ustadz').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 const id = this.dataset.id;
                 const name = this.dataset.name;
@@ -511,7 +550,7 @@
                 const avatar = this.dataset.avatar;
 
                 // Set form action dynamically
-                editForm.action = `/asatidz/${id}`;
+                editForm.action = `/ustadz/${id}`;
 
                 // Populate fields
                 document.getElementById('edit_name').value = name;

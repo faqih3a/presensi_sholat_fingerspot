@@ -37,26 +37,26 @@ class FetchTesDataAction
 
         $nav = $this->resolveNavigation($mode, $ref_date, $tanggal_mulai);
 
-        $search = $request->get('search');
-        $status = $request->get('status');
+        $search = $request->input('search');
+        $status = $request->input('status');
 
-        // Ambil data presensi Tes saja
-        $query = Presensi::with('santri')
+        // Build query: when() pattern
+        $presensis = Presensi::with('santri')
             ->where('waktu_sholat', 'Tes')
             ->whereBetween('tanggal', [$tanggal_mulai, $tanggal_akhir])
+
+            // Filter status: exact match
+            ->when($status, fn($q, $v) => $q->where('status', $v))
+
+            // Search nama santri: LIKE partial match
+            ->when($search, fn($q, $v) => $q->whereHas('santri',
+                fn($sq) => $sq->where('nama', 'like', "%{$v}%")
+            ))
+
             ->orderBy('tanggal', 'desc')
-            ->orderBy('waktu_hadir', 'desc');
-
-        if ($status) {
-            $query->where('status', $status);
-        }
-        if ($search) {
-            $query->whereHas('santri', function ($q) use ($search) {
-                $q->where('nama', 'like', '%' . $search . '%');
-            });
-        }
-
-        $presensis = $query->get();
+            ->orderBy('waktu_hadir', 'desc')
+            ->paginate(25)
+            ->withQueryString();
 
         $tesEnabled = Cache::get('tes_page_enabled', true);
 
@@ -66,12 +66,9 @@ class FetchTesDataAction
             'tanggal_akhir' => $tanggal_akhir,
             'mode'          => $mode,
             'ref_date'      => $ref_date,
-            'prev_date'     => $nav['prev_date'],
-            'next_date'     => $nav['next_date'],
-            'display_date'  => $nav['display_date'],
             'status'        => $status,
             'search'        => $search,
             'tesEnabled'    => $tesEnabled,
-        ];
+        ] + $nav;
     }
 }

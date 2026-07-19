@@ -441,13 +441,23 @@
         </div>
     </div>
     @if(count($presensis) > 0)
-    <div class="card-footer bg-white border-top py-3 text-center text-md-start">
+    <div class="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
         <div class="small text-muted" id="recordCount">
-            Menampilkan {{ count($presensis) }} data rekaman kehadiran
-            @if(request('search') || request('waktu_sholat') || request('status') || request('kelas'))
-                <span class="fw-semibold">(terfilter)</span>
+            @if(method_exists($presensis, 'firstItem'))
+                Menampilkan <strong>{{ $presensis->firstItem() }}</strong>
+                &ndash;
+                <strong>{{ $presensis->lastItem() }}</strong>
+                dari <strong>{{ $presensis->total() }}</strong> data
+                @if(request('search') || request('waktu_sholat') || request('status') || request('kelas'))
+                    <span class="fw-semibold">(terfilter)</span>
+                @endif
+            @else
+                Menampilkan <strong>{{ count($presensis) }}</strong> data rekaman kehadiran
             @endif
         </div>
+        @if(method_exists($presensis, 'links'))
+            <div>{{ $presensis->links() }}</div>
+        @endif
     </div>
     @endif
 </div>

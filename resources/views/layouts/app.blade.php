@@ -673,7 +673,7 @@
                         </a>
                     @endif
 
-                    @if(in_array(auth()->user()->role, ['admin', 'asatidz']))
+                    @if(in_array(auth()->user()->role, ['admin', 'ustadz']))
                         <a class="list-group-item list-group-item-action {{ request()->is('dashboard') ? 'active' : '' }}" href="/dashboard">
                             <i class="bi bi-grid-fill"></i>
                             <span class="sidebar-text">Dashboard Admin</span>
@@ -684,9 +684,9 @@
                                 <i class="bi bi-shield-lock-fill"></i>
                                 <span class="sidebar-text">Kelola Admin</span>
                             </a>
-                            <a class="list-group-item list-group-item-action {{ request()->is('asatidz*') ? 'active' : '' }}" href="{{ route('asatidz.index') }}">
+                            <a class="list-group-item list-group-item-action {{ request()->is('ustadz*') ? 'active' : '' }}" href="{{ route('ustadz.index') }}">
                                 <i class="bi bi-person-workspace"></i>
-                                <span class="sidebar-text">Kelola Asatidz</span>
+                                <span class="sidebar-text">Kelola Ustadz</span>
                             </a>
                         @endif
 

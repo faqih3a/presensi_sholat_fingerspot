@@ -25,60 +25,57 @@ class FetchPresensiDataAction
      * @param  \Illuminate\Http\Request  $request
      * @return array  Data presensi + navigasi tanggal untuk view.
      */
-    public function execute(Request $request): array
+    public function execute(Request $request, bool $forExport = false): array
     {
+        // ── Resolusi navigasi tanggal ──
         $resolvedDates = $this->resolveDateRange($request);
         $mode          = $resolvedDates['mode'];
         $ref_date      = $resolvedDates['ref_date'];
         $tanggal_mulai = $resolvedDates['tanggal_mulai'];
         $tanggal_akhir = $resolvedDates['tanggal_akhir'];
 
-        $refDate = Carbon::parse($ref_date, 'Asia/Jakarta');
-        if ($mode === 'week') {
-            $prev_date = $refDate->copy()->subWeek()->format('Y-m-d');
-            $next_date = $refDate->copy()->addWeek()->format('Y-m-d');
-            $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
-        } elseif ($mode === 'month') {
-            $prev_date = $refDate->copy()->subMonth()->format('Y-m-d');
-            $next_date = $refDate->copy()->addMonth()->format('Y-m-d');
-            $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
-        } else {
-            $prev_date = $refDate->copy()->subDay()->format('Y-m-d');
-            $next_date = $refDate->copy()->addDay()->format('Y-m-d');
-            $display_date = $this->formatIndonesianDate($tanggal_mulai, 'month');
-        }
+        $nav = $this->resolveNavigation($mode, $ref_date, $tanggal_mulai);
 
-        $waktuSholat = $request->get('waktu_sholat');
-        $status      = $request->get('status');
-        $search      = $request->get('search');
-        $kelas       = $request->get('kelas');
+        // ── Tangkap parameter filter dengan aman ──
+        $waktuSholat = $request->input('waktu_sholat');
+        $status      = $request->input('status');
+        $search      = $request->input('search');
+        $kelas       = $request->input('kelas');
 
+        // ── Build query: when() pattern ──
         // Query presensi (exclude data "Tes")
-        $query = Presensi::with('santri')
+        $presensis = Presensi::with('santri')
             ->whereBetween('tanggal', [$tanggal_mulai, $tanggal_akhir])
-            ->where('waktu_sholat', '!=', 'Tes');
+            ->where('waktu_sholat', '!=', 'Tes')
 
-        if ($waktuSholat) $query->where('waktu_sholat', $waktuSholat);
-        if ($status)      $query->where('status', $status);
-        if ($search) {
-            $query->whereHas('santri', function ($q) use ($search) {
-                $q->where('nama', 'like', '%' . $search . '%');
-            });
-        }
-        if ($kelas) {
-            $query->whereHas('santri', function ($q) use ($kelas) {
-                $q->where('kelas', $kelas);
-            });
-        }
+            // Filter waktu sholat: exact match
+            ->when($waktuSholat, fn($q, $v) => $q->where('waktu_sholat', $v))
 
-        $presensis = $query->orderBy('tanggal', 'desc')
+            // Filter status: exact match
+            ->when($status, fn($q, $v) => $q->where('status', $v))
+
+            // Search nama santri: LIKE partial match
+            ->when($search, fn($q, $v) => $q->whereHas('santri',
+                fn($sq) => $sq->where('nama', 'like', "%{$v}%")
+            ))
+
+            // Filter kelas santri: exact match
+            ->when($kelas, fn($q, $v) => $q->whereHas('santri',
+                fn($sq) => $sq->where('kelas', $v)
+            ))
+
+            ->orderBy('tanggal', 'desc')
             ->orderByRaw("FIELD(waktu_sholat, 'Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya') DESC")
-            ->orderBy('waktu_hadir', 'desc')
-            ->get();
+            ->orderBy('waktu_hadir', 'desc');
+
+        // Export mendapatkan semua data (tanpa pagination), tampilan normal pakai pagination
+        $presensis = $forExport
+            ? $presensis->get()
+            : $presensis->paginate(25)->withQueryString();
 
         return compact(
             'presensis', 'tanggal_mulai', 'tanggal_akhir', 'waktuSholat', 'status',
-            'mode', 'ref_date', 'prev_date', 'next_date', 'display_date'
-        );
+            'mode', 'ref_date', 'search', 'kelas'
+        ) + $nav;
     }
 }

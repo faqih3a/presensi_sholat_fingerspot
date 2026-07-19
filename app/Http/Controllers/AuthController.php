@@ -11,7 +11,7 @@ class AuthController extends Controller
     public function showLoginForm()
     {
         if (Auth::check()) {
-            if (in_array(Auth::user()->role, ['admin', 'asatidz'])) {
+            if (in_array(Auth::user()->role, ['admin', 'ustadz'])) {
                 return redirect()->intended('/dashboard');
             } elseif (Auth::user()->role === 'santri') {
                 return redirect()->intended('/santri/dashboard');
@@ -32,7 +32,7 @@ class AuthController extends Controller
         $user = User::where('email', $credentials['email'])->first();
 
         // Check if user is registered and has valid roles
-        if (!$user || !in_array($user->role, ['admin', 'asatidz', 'santri'])) {
+        if (!$user || !in_array($user->role, ['admin', 'ustadz', 'santri'])) {
             return back()->withErrors([
                 'email' => 'Anda belum terdaftar sebagai pengurus masjid.',
             ])->onlyInput('email');

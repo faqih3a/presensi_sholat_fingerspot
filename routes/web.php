@@ -7,7 +7,7 @@ use App\Http\Controllers\SantriController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\IzinController;
-use App\Http\Controllers\AsatidzController;
+use App\Http\Controllers\UstadzController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SantriDashboardController;
 use App\Http\Controllers\TesController;
@@ -34,8 +34,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/izin', [IzinController::class, 'store'])->name('izin.store');
     });
 
-    // Admin & Asatidz Routes (Mosque Staff)
-    Route::middleware(['role:admin,asatidz'])->group(function () {
+    // Admin & Ustadz Routes (Mosque Staff)
+    Route::middleware(['role:admin,ustadz'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/kehadiran-sholat', [DashboardController::class, 'kehadiran'])->name('dashboard.kehadiran');
         Route::get('/kehadiran-sholat/export', [DashboardController::class, 'exportKehadiran'])->name('dashboard.kehadiran.export');
@@ -67,15 +67,16 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin-only routes (Mosque Staff Management)
     Route::middleware(['role:admin'])->group(function () {
-        // Fallback redirect for old URL
-        Route::redirect('/pengurus', '/asatidz');
+        // Fallback redirect for old URLs
+        Route::redirect('/pengurus', '/ustadz');
+        Route::redirect('/asatidz', '/ustadz');
 
-        // Kelola Asatidz
-        Route::get('/asatidz', [AsatidzController::class, 'index'])->name('asatidz.index');
-        Route::get('/asatidz/create', [AsatidzController::class, 'create'])->name('asatidz.create');
-        Route::post('/asatidz', [AsatidzController::class, 'store'])->name('asatidz.store');
-        Route::put('/asatidz/{asatidz}', [AsatidzController::class, 'update'])->name('asatidz.update');
-        Route::delete('/asatidz/{asatidz}', [AsatidzController::class, 'destroy'])->name('asatidz.destroy');
+        // Kelola Ustadz
+        Route::get('/ustadz', [UstadzController::class, 'index'])->name('ustadz.index');
+        Route::get('/ustadz/create', [UstadzController::class, 'create'])->name('ustadz.create');
+        Route::post('/ustadz', [UstadzController::class, 'store'])->name('ustadz.store');
+        Route::put('/ustadz/{ustadz}', [UstadzController::class, 'update'])->name('ustadz.update');
+        Route::delete('/ustadz/{ustadz}', [UstadzController::class, 'destroy'])->name('ustadz.destroy');
 
         // Kelola Admin
         Route::get('/admin-manage', [AdminController::class, 'index'])->name('admin-manage.index');

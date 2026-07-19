@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Aksi: Memperbarui Profil Akun Staff (Admin / Asatidz)
+ * Aksi: Memperbarui Profil Akun Staff (Admin / Ustadz)
  *
  * @see \App\Http\Controllers\AdminController::update()
- * @see \App\Http\Controllers\AsatidzController::update()
+ * @see \App\Http\Controllers\UstadzController::update()
  */
 class UpdateAdminAction
 {

@@ -89,6 +89,12 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
                 <input type="hidden" name="mode" value="{{ $mode }}">
                 <input type="hidden" name="ref_date" value="{{ $ref_date }}">
 
+                {{-- Search input --}}
+                <div class="input-group" style="max-width: 220px;">
+                    <span class="input-group-text border-end-0" style="background: #fff; border-radius: 0.75rem 0 0 0.75rem; border-color: #edf2f9;"><i class="bi bi-search text-muted" style="font-size: 0.8rem;"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Cari nama..." value="{{ request('search') }}" style="border-radius: 0 0.75rem 0.75rem 0; border-color: #edf2f9; font-size: 0.85rem;">
+                </div>
+
                 <x-filter-dropdown
                     label="Status"
                     name="status"
@@ -102,6 +108,15 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
                     form-id="filterForm"
                     button-style="border-radius: 0.75rem; min-width: 120px; background: #fff;"
                 />
+
+                @if(request('search') || request('status'))
+                    <a href="{{ route('tes.index', ['mode' => $mode, 'ref_date' => $ref_date]) }}"
+                       class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 d-flex align-items-center gap-1"
+                       title="Reset semua filter">
+                        <i class="bi bi-x-lg" style="font-size: 0.7rem;"></i>
+                        <span style="font-size: 0.75rem; font-weight: 600;">Reset</span>
+                    </a>
+                @endif
             </form>
             <a href="{{ route('tes.export', request()->query()) }}" class="btn btn-gradient-success btn-sm px-3 fw-bold" data-no-loader="true">
                 <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
@@ -195,10 +210,23 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
         </div>
     </div>
     @if(count($presensis) > 0)
-    <div class="card-footer bg-white border-top py-3 text-center text-md-start">
+    <div class="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
         <div class="small text-muted">
-            Menampilkan {{ count($presensis) }} data presensi tes.
+            @if(method_exists($presensis, 'firstItem'))
+                Menampilkan <strong>{{ $presensis->firstItem() }}</strong>
+                &ndash;
+                <strong>{{ $presensis->lastItem() }}</strong>
+                dari <strong>{{ $presensis->total() }}</strong> data
+                @if(request('search') || request('status'))
+                    <span class="fw-semibold">(terfilter)</span>
+                @endif
+            @else
+                Menampilkan <strong>{{ count($presensis) }}</strong> data presensi tes.
+            @endif
         </div>
+        @if(method_exists($presensis, 'links'))
+            <div>{{ $presensis->links() }}</div>
+        @endif
     </div>
     @endif
 </div>

@@ -165,9 +165,35 @@
 
     <!-- Table Card -->
     <div class="card card-stats overflow-hidden border-0">
-        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
-            <h6 class="m-0 fw-bold text-dark"><i class="bi bi-person-badge-fill text-success me-2"></i>Daftar Admin</h6>
-            <div class="small text-muted">{{ $totalAdmins }} Terdaftar</div>
+        <div class="card-header bg-white py-3 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <h6 class="m-0 fw-bold text-dark"><i class="bi bi-person-badge-fill text-success me-2"></i>Daftar Admin</h6>
+                <div class="small mt-1" style="color: var(--color-muted); font-size: 0.78rem;">
+                    @if(request('search'))
+                        {{ method_exists($admins, 'total') ? $admins->total() : count($admins) }} dari {{ $totalAdmins }} Admin (terfilter)
+                    @else
+                        {{ $totalAdmins }} Terdaftar
+                    @endif
+                </div>
+            </div>
+            <form action="{{ route('admin-manage.index') }}" method="GET" class="d-flex flex-wrap gap-2 align-items-center" style="min-width: 220px; max-width: 320px;">
+                <div class="input-group" style="height: 36px;">
+                    <span class="input-group-text" style="background: var(--color-surface); border: 1px solid var(--color-border); border-right: none; border-radius: 6px 0 0 6px; color: var(--color-muted); padding: 0 0.6rem;">
+                        <i class="bi bi-search" style="font-size: 0.8rem;"></i>
+                    </span>
+                    <input type="text" name="search" class="form-control" placeholder="Cari nama admin..."
+                           value="{{ request('search') }}"
+                           style="border-left: none; border-radius: 0 6px 6px 0; font-size: 0.82rem; height: 36px; border-color: var(--color-border);">
+                </div>
+                @if(request('search'))
+                    <a href="{{ route('admin-manage.index') }}"
+                       class="d-flex align-items-center justify-content-center flex-shrink-0"
+                       style="width: 36px; height: 36px; border: 1px solid var(--color-border); border-radius: 6px; color: var(--color-muted); text-decoration: none; background: var(--color-surface);"
+                       title="Reset Filter">
+                        <i class="bi bi-x-lg" style="font-size: 0.75rem;"></i>
+                    </a>
+                @endif
+            </form>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -187,7 +213,7 @@
                         @forelse($admins as $index => $u)
                         <tr>
                             <td class="text-center">
-                                <span class="text-muted fw-bold small">{{ $index + 1 }}</span>
+                                <span class="text-muted fw-bold small">{{ method_exists($admins, 'currentPage') ? ($admins->currentPage() - 1) * $admins->perPage() + $loop->iteration : $loop->iteration }}</span>
                             </td>
                             <td>
                                 @if($u->avatar)
@@ -264,11 +290,24 @@
                 </table>
             </div>
         </div>
-        @if($totalAdmins > 0)
-        <div class="card-footer bg-white border-top py-3">
+        @if(count($admins) > 0)
+        <div class="card-footer bg-white border-top py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <div class="small text-muted">
-                Menampilkan 1 sampai {{ $totalAdmins }} dari {{ $totalAdmins }} data Admin.
+                @if(method_exists($admins, 'firstItem'))
+                    Menampilkan <strong>{{ $admins->firstItem() }}</strong>
+                    &ndash;
+                    <strong>{{ $admins->lastItem() }}</strong>
+                    dari <strong>{{ $admins->total() }}</strong> data Admin
+                    @if(request('search'))
+                        <span class="fw-semibold">(terfilter)</span>
+                    @endif
+                @else
+                    Menampilkan <strong>{{ count($admins) }}</strong> data Admin
+                @endif
             </div>
+            @if(method_exists($admins, 'links'))
+                <div>{{ $admins->links() }}</div>
+            @endif
         </div>
         @endif
     </div>

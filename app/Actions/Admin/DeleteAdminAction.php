@@ -8,12 +8,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Aksi: Menghapus Akun Staff (Admin / Asatidz)
+ * Aksi: Menghapus Akun Staff (Admin / Ustadz)
  *
  * Safeguard: validasi role + prevent self-deletion.
  *
  * @see \App\Http\Controllers\AdminController::destroy()
- * @see \App\Http\Controllers\AsatidzController::destroy()
+ * @see \App\Http\Controllers\UstadzController::destroy()
  */
 class DeleteAdminAction
 {
@@ -21,7 +21,7 @@ class DeleteAdminAction
      * Menjalankan aksi penghapusan akun staff.
      *
      * @param  \App\Models\User  $user           User yang akan dihapus.
-     * @param  string            $expectedRole   Role yang diharapkan ('admin' atau 'asatidz').
+     * @param  string            $expectedRole   Role yang diharapkan ('admin' atau 'ustadz').
      * @return array  ['success' => bool, 'message' => string]
      */
     public function execute(User $user, string $expectedRole = 'admin'): array

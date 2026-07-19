@@ -118,7 +118,7 @@ class DashboardController extends Controller
         FetchPresensiDataAction $presensiAction,
         ExportKehadiranCsvAction $exportAction
     ) {
-        $data    = $presensiAction->execute($request);
+        $data    = $presensiAction->execute($request, forExport: true);
         $export  = $exportAction->execute($data['presensis']);
 
         return response()->stream($export['callback'], 200, $export['headers']);

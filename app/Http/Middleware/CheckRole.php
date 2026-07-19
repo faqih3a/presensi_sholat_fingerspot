@@ -26,7 +26,7 @@ class CheckRole
             if ($request->user()->role === 'santri') {
                 return redirect()->route('santri.dashboard')->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
             }
-            if (in_array($request->user()->role, ['admin', 'asatidz'])) {
+            if (in_array($request->user()->role, ['admin', 'ustadz'])) {
                 return redirect()->route('dashboard')->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
             }
             Auth::logout();

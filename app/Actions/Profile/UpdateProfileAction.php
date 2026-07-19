@@ -10,11 +10,11 @@ use Illuminate\Http\UploadedFile;
  *
  * Class ini bertanggung jawab untuk memperbarui data profil user,
  * termasuk menangani upload avatar dengan logika berbeda untuk
- * santri (foto_referensi) dan admin/asatidz (avatar).
+ * santri (foto_referensi) dan admin/ustadz (avatar).
  *
  * Aturan Bisnis:
  * - Avatar santri disimpan di 'storage/santri_fotos/' dan diupdate di tabel santris.
- * - Avatar admin/asatidz disimpan di 'storage/avatars/' dan diupdate di tabel users.
+ * - Avatar admin/ustadz disimpan di 'storage/avatars/' dan diupdate di tabel users.
  * - Jika user adalah santri, nama dan kelas juga diupdate di tabel santris.
  *
  * @see \App\Http\Controllers\ProfileController::update()

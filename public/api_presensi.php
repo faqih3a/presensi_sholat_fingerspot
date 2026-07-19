@@ -27,7 +27,7 @@ use Carbon\Carbon;
 
 // ─── Auth Check ─────────────────────────────────────────────────────
 $user = auth()->user();
-if (!$user || !in_array($user->role, ['admin', 'asatidz'])) {
+if (!$user || !in_array($user->role, ['admin', 'ustadz'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;

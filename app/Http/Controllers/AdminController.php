@@ -17,7 +17,7 @@ use App\Actions\Admin\DeleteAdminAction;
  * 3. Mengembalikan HTTP Response (view atau redirect).
  *
  * Action Classes yang digunakan bersifat role-agnostic, sehingga
- * logika CRUD identik antara AdminController dan AsatidzController
+ * logika CRUD identik antara AdminController dan UstadzController
  * tanpa duplikasi kode.
  *
  * @see \App\Actions\Admin\CreateAdminAction
@@ -31,10 +31,18 @@ class AdminController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
-        $admins = User::where('role', 'admin')->latest()->get();
-        $totalAdmins = $admins->count();
+        $search = $request->input('search');
+
+        $admins = User::where('role', 'admin')
+            ->when($search, fn($q, $v) => $q->where('name', 'like', "%{$v}%"))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        $totalAdmins = User::where('role', 'admin')->count();
+
         return view('admin_manage.index', compact('admins', 'totalAdmins'));
     }
 

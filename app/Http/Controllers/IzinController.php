@@ -76,7 +76,7 @@ class IzinController extends Controller
     }
 
     /**
-     * Menampilkan halaman manajemen izin untuk Admin/Asatidz.
+     * Menampilkan halaman manajemen izin untuk Admin/Ustadz.
      *
      * Menampilkan daftar izin yang jatuh dalam rentang tanggal yang dipilih,
      * dengan navigasi prev/next berdasarkan mode (day/week/month).
@@ -97,6 +97,12 @@ class IzinController extends Controller
         $next_date    = $nav['next_date'];
         $display_date = $nav['display_date'];
 
+        // ── Tangkap parameter filter ──
+        $search    = $request->input('search');
+        $status    = $request->input('status');       // Pending / Disetujui / Ditolak
+        $jenisIzin = $request->input('jenis_izin');   // Sakit / Izin / Kegiatan Luar
+
+        // ── Build query: when() pattern ──
         $izins = Izin::with('user.santri')
             ->where(function ($query) use ($tanggal_mulai, $tanggal_akhir) {
                 $query->whereBetween('tanggal_mulai', [$tanggal_mulai, $tanggal_akhir])
@@ -106,8 +112,21 @@ class IzinController extends Controller
                             ->where('tanggal_selesai', '>=', $tanggal_akhir);
                     });
             })
+
+            // Search nama user: LIKE partial match
+            ->when($search, fn($q, $v) => $q->whereHas('user',
+                fn($uq) => $uq->where('name', 'like', "%{$v}%")
+            ))
+
+            // Filter status izin: exact match
+            ->when($status, fn($q, $v) => $q->where('status', $v))
+
+            // Filter jenis izin: exact match
+            ->when($jenisIzin, fn($q, $v) => $q->where('jenis_izin', $v))
+
             ->latest()
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         return view('izin.manage', compact(
             'izins', 'tanggal_mulai', 'tanggal_akhir',

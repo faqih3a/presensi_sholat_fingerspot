@@ -12,12 +12,12 @@ use Illuminate\Support\Facades\Log;
  *
  * Class ini bertanggung jawab untuk menyimpan permohonan izin baru
  * ke database, termasuk menangani upload file lampiran dan mengirim
- * notifikasi WhatsApp ke seluruh Asatidz yang terdaftar.
+ * notifikasi WhatsApp ke seluruh Ustadz yang terdaftar.
  *
  * Alur Proses:
  * 1. Menyimpan file lampiran ke storage (jika ada).
  * 2. Membuat record Izin di database.
- * 3. Mengirim notifikasi WA ke semua Asatidz yang punya nomor WA.
+ * 3. Mengirim notifikasi WA ke semua Ustadz yang punya nomor WA.
  *
  * @see \App\Http\Controllers\IzinController::store()
  */
@@ -56,14 +56,14 @@ class CreateIzinAction
         // 3. Buat record izin
         $izin = Izin::create($data);
 
-        // 4. Kirim notifikasi WA ke Asatidz
-        $this->notifyAsatidz($izin);
+        // 4. Kirim notifikasi WA ke Ustadz
+        $this->notifyUstadz($izin);
 
         return $izin;
     }
 
     /**
-     * Mengirim notifikasi WhatsApp ke semua Asatidz yang terdaftar.
+     * Mengirim notifikasi WhatsApp ke semua Ustadz yang terdaftar.
      *
      * Proses ini bersifat fire-and-forget — kegagalan pengiriman WA
      * tidak akan menggagalkan proses pembuatan izin.
@@ -71,17 +71,17 @@ class CreateIzinAction
      * @param  \App\Models\Izin  $izin  Record izin yang baru dibuat.
      * @return void
      */
-    private function notifyAsatidz(Izin $izin): void
+    private function notifyUstadz(Izin $izin): void
     {
         try {
-            $asatidz = User::where('role', 'asatidz')
+            $ustadz = User::where('role', 'ustadz')
                 ->whereNotNull('wa_number')
                 ->get();
 
-            if ($asatidz->count() > 0) {
+            if ($ustadz->count() > 0) {
                 $message = WhatsAppService::formatIzinNotification($izin);
-                foreach ($asatidz as $ustadz) {
-                    WhatsAppService::sendMessage($ustadz->wa_number, $message);
+                foreach ($ustadz as $pengurus) {
+                    WhatsAppService::sendMessage($pengurus->wa_number, $message);
                 }
             }
         } catch (\Exception $e) {

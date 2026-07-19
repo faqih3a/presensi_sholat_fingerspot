@@ -168,7 +168,7 @@ class FetchRecentActivitiesAction
      */
     private function fetchNewStaffActivities()
     {
-        return User::whereIn('role', ['asatidz', 'admin'])
+        return User::whereIn('role', ['ustadz', 'admin'])
             ->latest('created_at')
             ->take(15)
             ->get()
