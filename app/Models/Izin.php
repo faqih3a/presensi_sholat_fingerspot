@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 
 class Izin extends Model
 {
+    use MassPrunable;
     protected $fillable = [
         'user_id',
         'jenis_izin',
@@ -17,6 +19,20 @@ class Izin extends Model
         'status',
         'keterangan_admin',
     ];
+
+    /**
+     * Jumlah hari data izin disimpan sebelum dihapus otomatis.
+     */
+    const RETENTION_DAYS = 90;
+
+    /**
+     * Tentukan query untuk menentukan data mana yang boleh di-prune.
+     * Menghapus data izin yang sudah lebih dari 90 hari sejak dibuat.
+     */
+    public function prunable()
+    {
+        return static::where('created_at', '<=', now()->subDays(self::RETENTION_DAYS));
+    }
 
     protected $casts = [
         'tanggal_mulai' => 'date',
