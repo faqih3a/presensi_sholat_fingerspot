@@ -88,6 +88,10 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
             <form id="filterForm" action="{{ route('tes.index') }}" method="GET" class="d-flex flex-wrap align-items-center gap-3 m-0 no-loader">
                 <input type="hidden" name="mode" value="{{ $mode }}">
                 <input type="hidden" name="ref_date" value="{{ $ref_date }}">
+                @if($mode === 'custom')
+                    <input type="hidden" name="start_date" value="{{ request('start_date', $tanggal_mulai) }}">
+                    <input type="hidden" name="end_date" value="{{ request('end_date', $tanggal_akhir) }}">
+                @endif
 
                 {{-- Search input --}}
                 <div class="input-group" style="max-width: 220px;">
@@ -110,7 +114,7 @@ body.dark-mode .btn-white:hover{background-color:#333;color:#fff}
                 />
 
                 @if(request('search') || request('status'))
-                    <a href="{{ route('tes.index', ['mode' => $mode, 'ref_date' => $ref_date]) }}"
+                    <a href="{{ route('tes.index', array_filter(['mode' => $mode, 'ref_date' => $ref_date, 'start_date' => $mode === 'custom' ? request('start_date') : null, 'end_date' => $mode === 'custom' ? request('end_date') : null])) }}"
                        class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 d-flex align-items-center gap-1"
                        title="Reset semua filter">
                         <i class="bi bi-x-lg" style="font-size: 0.7rem;"></i>

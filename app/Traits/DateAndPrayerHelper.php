@@ -22,6 +22,34 @@ trait DateAndPrayerHelper
             } catch (\Exception $e) {
                 $refDate = Carbon::now('Asia/Jakarta');
             }
+
+            // ── Mode Custom: Gunakan start_date & end_date dari request ──
+            if ($mode === 'custom') {
+                $startDate = $request->get('start_date');
+                $endDate   = $request->get('end_date');
+
+                // Validasi: jika salah satu kosong, fallback ke hari ini
+                if (!$startDate || !$endDate) {
+                    $tanggal_mulai = $startDate ?: $today;
+                    $tanggal_akhir = $endDate ?: $tanggal_mulai;
+                } else {
+                    // Pastikan start <= end, swap jika terbalik
+                    $parsedStart = Carbon::parse($startDate);
+                    $parsedEnd   = Carbon::parse($endDate);
+                    if ($parsedStart->gt($parsedEnd)) {
+                        [$startDate, $endDate] = [$endDate, $startDate];
+                    }
+                    $tanggal_mulai = $startDate;
+                    $tanggal_akhir = $endDate;
+                }
+
+                return [
+                    'mode'          => 'custom',
+                    'ref_date'      => $refDateStr,
+                    'tanggal_mulai' => $tanggal_mulai,
+                    'tanggal_akhir' => $tanggal_akhir,
+                ];
+            }
             
             if ($mode === 'week') {
                 $tanggal_mulai = $refDate->copy()->startOfWeek()->format('Y-m-d');
@@ -70,6 +98,10 @@ trait DateAndPrayerHelper
         
         if ($format === 'month') {
             return "$month $year";
+        }
+
+        if ($format === 'short') {
+            return "$day " . substr($month, 0, 3);
         }
         
         return "$day $month $year";
@@ -129,16 +161,24 @@ trait DateAndPrayerHelper
      * Mengeliminasi duplikasi kode navigasi tanggal yang sebelumnya
      * di-copy-paste di DashboardController, IzinController, dan TesController.
      *
-     * @param  string  $mode           Mode navigasi: 'day', 'week', atau 'month'.
+     * @param  string  $mode           Mode navigasi: 'day', 'week', 'month', atau 'custom'.
      * @param  string  $refDateStr     Tanggal referensi (Y-m-d).
      * @param  string  $tanggalMulai   Tanggal awal range (Y-m-d), untuk display.
+     * @param  string|null  $tanggalAkhir  Tanggal akhir range (Y-m-d), untuk display mode custom.
      * @return array   ['prev_date', 'next_date', 'display_date']
      */
-    protected function resolveNavigation(string $mode, string $refDateStr, string $tanggalMulai): array
+    protected function resolveNavigation(string $mode, string $refDateStr, string $tanggalMulai, ?string $tanggalAkhir = null): array
     {
         $refDate = Carbon::parse($refDateStr, 'Asia/Jakarta');
 
         return match ($mode) {
+            'custom' => [
+                'prev_date'    => null,
+                'next_date'    => null,
+                'display_date' => $this->formatIndonesianDate($tanggalMulai, 'short')
+                                . ' — '
+                                . $this->formatIndonesianDate($tanggalAkhir ?? $tanggalMulai, 'short'),
+            ],
             'week' => [
                 'prev_date'    => $refDate->copy()->subWeek()->format('Y-m-d'),
                 'next_date'    => $refDate->copy()->addWeek()->format('Y-m-d'),

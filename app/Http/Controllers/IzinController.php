@@ -92,7 +92,7 @@ class IzinController extends Controller
         $tanggal_mulai = $resolvedDates['tanggal_mulai'];
         $tanggal_akhir = $resolvedDates['tanggal_akhir'];
 
-        $nav = $this->resolveNavigation($mode, $ref_date, $tanggal_mulai);
+        $nav = $this->resolveNavigation($mode, $ref_date, $tanggal_mulai, $tanggal_akhir);
         $prev_date    = $nav['prev_date'];
         $next_date    = $nav['next_date'];
         $display_date = $nav['display_date'];

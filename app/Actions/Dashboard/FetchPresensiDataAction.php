@@ -34,7 +34,7 @@ class FetchPresensiDataAction
         $tanggal_mulai = $resolvedDates['tanggal_mulai'];
         $tanggal_akhir = $resolvedDates['tanggal_akhir'];
 
-        $nav = $this->resolveNavigation($mode, $ref_date, $tanggal_mulai);
+        $nav = $this->resolveNavigation($mode, $ref_date, $tanggal_mulai, $tanggal_akhir);
 
         // ── Tangkap parameter filter dengan aman ──
         $waktuSholat = $request->input('waktu_sholat');
