@@ -3,6 +3,7 @@
 namespace App\Actions\Dashboard;
 
 use App\Models\Presensi;
+use App\Models\Santri;
 use App\Traits\DateAndPrayerHelper;
 use Carbon\Carbon;
 
@@ -33,11 +34,13 @@ class FetchPrayerChartDataAction
     ];
 
     /**
-     * @return array  Berisi: prayerLabels, prayerData, jadwal, nextPrayer.
+     * @param  string|null  $waktuSholat  Filter waktu sholat opsional (Subuh/Dzuhur/Ashar/Maghrib/Isya).
+     * @return array  Berisi: prayerLabels, prayerData, jadwal, nextPrayer, statusData, todayInsight.
      */
-    public function execute(): array
+    public function execute(?string $waktuSholat = null): array
     {
         $today = Carbon::now('Asia/Jakarta')->format('Y-m-d');
+        $totalSantri = Santri::count();
 
         // Satu query agregat: jumlah hadir per waktu sholat hari ini
         $prayerCounts = Presensi::where('tanggal', $today)
@@ -53,13 +56,30 @@ class FetchPrayerChartDataAction
             $prayerData[] = $prayerCounts[$p] ?? 0;
         }
 
+        // --- Donut chart: status data hari ini (filtered by waktu_sholat) ---
+        $statusQuery = Presensi::where('tanggal', $today)
+            ->when($waktuSholat, fn($q) => $q->where('waktu_sholat', $waktuSholat));
+
+        $statusCounts = (clone $statusQuery)
+            ->selectRaw('status, COUNT(DISTINCT santri_id) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
+
+        $hadir = $statusCounts['Hadir'] ?? 0;
+        $izin  = $statusCounts['Izin'] ?? 0;
+        $alfa  = $statusCounts['Alfa'] ?? 0;
+        $statusData = [$hadir, $izin, $alfa];
+
+        $todayInsight = $this->generateTodayInsight($hadir, $izin, $alfa);
+
         // Jadwal sholat hari ini (dari API / cache)
         $jadwal = $this->getJadwalSholat(Carbon::now('Asia/Jakarta'));
 
         // Tentukan waktu sholat berikutnya
         $nextPrayer = $this->determineNextPrayer($jadwal, $today);
 
-        return compact('prayerLabels', 'prayerData', 'jadwal', 'nextPrayer');
+        return compact('prayerLabels', 'prayerData', 'jadwal', 'nextPrayer', 'statusData', 'todayInsight');
     }
 
     /**
@@ -84,4 +104,29 @@ class FetchPrayerChartDataAction
         }
         return null;
     }
+
+    /**
+     * Membuat teks insight ringkasan kehadiran hari ini.
+     *
+     * @param  int  $hadir  Jumlah hadir.
+     * @param  int  $izin   Jumlah izin.
+     * @param  int  $alfa   Jumlah alfa.
+     * @return string  Kalimat insight untuk ditampilkan di dashboard.
+     */
+    private function generateTodayInsight(int $hadir, int $izin, int $alfa): string
+    {
+        $totalPresensi = $hadir + $izin + $alfa;
+
+        if ($totalPresensi > 0) {
+            $attendanceRate = round(($hadir / $totalPresensi) * 100);
+            $insight = "Tingkat kehadiran hari ini mencapai {$attendanceRate}% ({$hadir} dari {$totalPresensi} santri).";
+            $insight .= $alfa > 0
+                ? " Ada {$alfa} santri alfa yang belum melakukan scan."
+                : " Seluruh santri yang terdaftar hari ini hadir/izin.";
+            return $insight;
+        }
+
+        return "Belum ada data presensi yang tercatat untuk periode hari ini.";
+    }
 }
+

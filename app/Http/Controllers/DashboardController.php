@@ -73,8 +73,8 @@ class DashboardController extends Controller
         // --- Delegasi ke Action Classes ---
         $stats      = $statsAction->execute($tanggal_mulai, $tanggal_akhir, $waktuSholat);
         $recentActivities = $activitiesAction->execute();
-        $chartData  = $weeklyChartAction->execute($tanggal_mulai, $tanggal_akhir);
-        $prayerData = $prayerChartAction->execute();
+        $chartData  = $weeklyChartAction->execute($tanggal_mulai, $tanggal_akhir, $waktuSholat);
+        $prayerData = $prayerChartAction->execute($waktuSholat);
 
         // --- Gabungkan semua data untuk view ---
         $viewData = array_merge($stats, $chartData, $prayerData, [
@@ -90,6 +90,48 @@ class DashboardController extends Controller
         ]);
 
         return view('dashboard.index', $viewData);
+    }
+
+    /**
+     * Endpoint AJAX: Mengambil data grafik berdasarkan filter waktu sholat.
+     *
+     * Mengembalikan JSON berisi data untuk kedua grafik (Weekly Trend &
+     * Today's Proportion) yang sudah difilter berdasarkan waktu sholat.
+     *
+     * @param  \Illuminate\Http\Request                           $request
+     * @param  \App\Actions\Dashboard\FetchWeeklyChartDataAction  $weeklyChartAction
+     * @param  \App\Actions\Dashboard\FetchPrayerChartDataAction  $prayerChartAction
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getChartData(
+        Request $request,
+        FetchWeeklyChartDataAction $weeklyChartAction,
+        FetchPrayerChartDataAction $prayerChartAction
+    ) {
+        $waktuSholat = $request->waktu_sholat;
+
+        // Resolusi tanggal dari request (untuk weekly chart range)
+        $resolvedDates = $this->resolveDateRange($request);
+        $tanggal_mulai = $resolvedDates['tanggal_mulai'];
+        $tanggal_akhir = $resolvedDates['tanggal_akhir'];
+
+        // Ambil data grafik dengan filter waktu sholat
+        $chartData  = $weeklyChartAction->execute($tanggal_mulai, $tanggal_akhir, $waktuSholat);
+        $prayerData = $prayerChartAction->execute($waktuSholat);
+
+        return response()->json([
+            'weekly' => [
+                'labels' => $chartData['weeklyLabels'],
+                'hadir'  => $chartData['weeklyHadir'],
+                'izin'   => $chartData['weeklyIzin'],
+                'alfa'   => $chartData['weeklyAlfa'],
+                'insight' => $chartData['weeklyInsight'],
+            ],
+            'today' => [
+                'statusData'   => $prayerData['statusData'],
+                'todayInsight' => $prayerData['todayInsight'],
+            ],
+        ]);
     }
 
     /**
@@ -124,3 +166,4 @@ class DashboardController extends Controller
         return response()->stream($export['callback'], 200, $export['headers']);
     }
 }
+

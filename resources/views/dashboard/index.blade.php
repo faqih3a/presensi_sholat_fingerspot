@@ -27,6 +27,14 @@ body.dark-mode .prayer-card{border-color:var(--color-border)}
 body.dark-mode .prayer-card.next-prayer{border-color:var(--color-accent);background:var(--color-accent-light)}
 body.dark-mode .prayer-meta{background:var(--color-bg);border-color:var(--color-border)}
 body.dark-mode .refresh-btn{background:var(--color-surface);border-color:var(--color-border);color:var(--color-muted)}
+.prayer-filter-btn{border:1px solid var(--color-border);border-radius:6px;background:var(--color-surface);color:var(--color-muted);font-size:.75rem;font-weight:600;padding:.4rem .85rem;cursor:pointer;transition:all .2s ease;letter-spacing:.02em}
+.prayer-filter-btn:hover{border-color:var(--color-accent);color:var(--color-accent);background:var(--color-accent-light)}
+.prayer-filter-btn.active{background:var(--color-accent);color:#fff;border-color:var(--color-accent);box-shadow:0 2px 8px rgba(42,107,79,.18)}
+.chart-loading-overlay{position:absolute;inset:0;background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;z-index:10;border-radius:8px;transition:opacity .2s ease}
+body.dark-mode .chart-loading-overlay{background:rgba(30,30,30,.7)}
+body.dark-mode .prayer-filter-btn{background:var(--color-surface);border-color:var(--color-border);color:var(--color-muted)}
+body.dark-mode .prayer-filter-btn:hover{border-color:var(--color-accent);color:var(--color-accent)}
+body.dark-mode .prayer-filter-btn.active{background:var(--color-accent);color:#fff;border-color:var(--color-accent)}
 </style>
 @endpush
 @section('content')
@@ -125,10 +133,36 @@ body.dark-mode .refresh-btn{background:var(--color-surface);border-color:var(--c
     @endif
 </div>
 
+{{-- Prayer Time Filter for Charts --}}
+<div class="chart-card mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <div>
+            <div class="chart-title d-flex align-items-center gap-2">
+                <i class="bi bi-funnel" style="font-size:.9rem"></i> Filter Waktu Sholat
+            </div>
+            <div class="chart-sub">Pilih waktu sholat untuk memfilter data grafik</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2" id="prayerFilterGroup">
+            @php $filters = ['' => 'Semua Waktu', 'Subuh' => 'Subuh', 'Dzuhur' => 'Dzuhur', 'Ashar' => 'Ashar', 'Maghrib' => 'Maghrib', 'Isya' => 'Isya']; @endphp
+            @foreach($filters as $value => $label)
+            <button type="button"
+                class="prayer-filter-btn {{ ($waktuSholat ?? '') === $value ? 'active' : '' }}"
+                data-value="{{ $value }}"
+                id="filter-btn-{{ $value ?: 'all' }}">
+                {{ $label }}
+            </button>
+            @endforeach
+        </div>
+    </div>
+</div>
+
 {{-- Charts Section --}}
 <div class="row g-4 mb-4">
     <div class="col-lg-7 d-flex flex-column">
-        <div class="chart-card w-100 flex-grow-1 d-flex flex-column">
+        <div class="chart-card w-100 flex-grow-1 d-flex flex-column position-relative">
+            <div class="chart-loading-overlay" id="weeklyChartLoading" style="display:none">
+                <div class="spinner-border spinner-border-sm text-muted" role="status"><span class="visually-hidden">Loading...</span></div>
+            </div>
             <div class="mb-3">
                 <div class="chart-title">Tren Kehadiran Mingguan</div>
                 <div class="chart-sub">Perbandingan Hadir, Izin, dan Alfa 7 hari terakhir</div>
@@ -136,12 +170,15 @@ body.dark-mode .refresh-btn{background:var(--color-surface);border-color:var(--c
             <div style="height:280px" class="flex-grow-1"><canvas id="weeklyChart"></canvas></div>
             <div class="mt-3 p-2 rounded-3 d-flex align-items-start gap-2" style="background: rgba(25, 135, 84, 0.05); border: 1px dashed rgba(25, 135, 84, 0.2);">
                 <i class="bi bi-info-circle-fill text-success" style="font-size: 0.85rem; margin-top: 1px;"></i>
-                <span class="text-muted" style="font-size: 0.72rem; line-height: 1.4;">{{ $weeklyInsight }}</span>
+                <span class="text-muted" style="font-size: 0.72rem; line-height: 1.4;" id="weeklyInsightText">{{ $weeklyInsight }}</span>
             </div>
         </div>
     </div>
     <div class="col-lg-5 d-flex flex-column">
-        <div class="chart-card w-100 flex-grow-1 d-flex flex-column">
+        <div class="chart-card w-100 flex-grow-1 d-flex flex-column position-relative">
+            <div class="chart-loading-overlay" id="statusChartLoading" style="display:none">
+                <div class="spinner-border spinner-border-sm text-muted" role="status"><span class="visually-hidden">Loading...</span></div>
+            </div>
             <div class="mb-3">
                 <div class="chart-title">Proporsi Kehadiran Hari Ini</div>
                 <div class="chart-sub">Persentase status kehadiran santri</div>
@@ -149,7 +186,7 @@ body.dark-mode .refresh-btn{background:var(--color-surface);border-color:var(--c
             <div style="height:280px" class="position-relative flex-grow-1"><canvas id="statusChart"></canvas></div>
             <div class="mt-3 p-2 rounded-3 d-flex align-items-start gap-2" style="background: rgba(255, 193, 7, 0.05); border: 1px dashed rgba(255, 193, 7, 0.2);">
                 <i class="bi bi-lightbulb-fill text-warning" style="font-size: 0.85rem; margin-top: 1px;"></i>
-                <span class="text-muted" style="font-size: 0.72rem; line-height: 1.4;">{{ $todayInsight }}</span>
+                <span class="text-muted" style="font-size: 0.72rem; line-height: 1.4;" id="todayInsightText">{{ $todayInsight }}</span>
             </div>
         </div>
     </div>
@@ -255,24 +292,19 @@ document.addEventListener("DOMContentLoaded",function(){
     const gridColor=isDark?'rgba(255,255,255,.06)':'#f0f0f0';
     const tickColor=isDark?'#adb5bd':'#8898aa';
 
-    // Center text plugin for Doughnut chart
+    // ── Center text plugin for Doughnut chart ──
     const centerTextPlugin = {
         id: 'centerText',
         afterDraw(chart, args, options) {
             const { ctx, chartArea: { top, bottom, left, right, width, height } } = chart;
             ctx.save();
-            
             const textVal = options.textValue || '0';
             const textLabel = options.textLabel || 'Total';
-            
-            // Value Text
             ctx.font = 'bold 2rem "Outfit", sans-serif';
             ctx.fillStyle = isDark ? '#f8f9fa' : '#333';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(textVal, left + width / 2, top + height / 2 - 8);
-            
-            // Label Text
             ctx.font = '600 0.8rem "Outfit", sans-serif';
             ctx.fillStyle = '#8898aa';
             ctx.fillText(textLabel, left + width / 2, top + height / 2 + 18);
@@ -280,153 +312,174 @@ document.addEventListener("DOMContentLoaded",function(){
         }
     };
 
-    // Weekly Attendance Chart (Hadir, Izin, Alfa)
-    const wCtx=document.getElementById('weeklyChart').getContext('2d');
-    
-    const hadirGrad=wCtx.createLinearGradient(0,0,0,250);
-    hadirGrad.addColorStop(0,'rgba(25,135,84,.2)');
-    hadirGrad.addColorStop(1,'rgba(25,135,84,0)');
+    // ── Shared chart config helpers ──
+    const tooltipConfig = {
+        backgroundColor:isDark?'#2c2c2c':'#fff',
+        titleColor:isDark?'#f8f9fa':'#333',
+        bodyColor:isDark?'#adb5bd':'#666',
+        borderColor:isDark?'#444':'#ddd',
+        borderWidth:1, padding:10
+    };
 
-    const izinGrad=wCtx.createLinearGradient(0,0,0,250);
-    izinGrad.addColorStop(0,'rgba(255,193,7,.2)');
-    izinGrad.addColorStop(1,'rgba(255,193,7,0)');
+    function createGradient(ctx, r, g, b) {
+        const grad = ctx.createLinearGradient(0,0,0,250);
+        grad.addColorStop(0, `rgba(${r},${g},${b},.2)`);
+        grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+        return grad;
+    }
 
-    const alfaGrad=wCtx.createLinearGradient(0,0,0,250);
-    alfaGrad.addColorStop(0,'rgba(220,53,69,.2)');
-    alfaGrad.addColorStop(1,'rgba(220,53,69,0)');
+    // ── Create Weekly Chart ──
+    let weeklyChartInstance = null;
+    function renderWeeklyChart(labels, hadir, izin, alfa) {
+        const canvas = document.getElementById('weeklyChart');
+        if (weeklyChartInstance) { weeklyChartInstance.destroy(); weeklyChartInstance = null; }
+        const wCtx = canvas.getContext('2d');
 
-    new Chart(wCtx,{
-        type:'line',
-        data:{
-            labels:{!! json_encode($weeklyLabels) !!},
-            datasets:[
-                {
-                    label:'Hadir',
-                    data:{!! json_encode($weeklyHadir) !!},
-                    borderColor:'#198754',
-                    backgroundColor:hadirGrad,
-                    borderWidth:3,
-                    pointBackgroundColor:'#198754',
-                    pointBorderColor:isDark?'#1e1e1e':'#fff',
-                    pointBorderWidth:2,
-                    pointRadius:3,
-                    pointHoverRadius:5,
-                    fill:true,
-                    tension:.35
-                },
-                {
-                    label:'Izin',
-                    data:{!! json_encode($weeklyIzin) !!},
-                    borderColor:'#ffc107',
-                    backgroundColor:izinGrad,
-                    borderWidth:3,
-                    pointBackgroundColor:'#ffc107',
-                    pointBorderColor:isDark?'#1e1e1e':'#fff',
-                    pointBorderWidth:2,
-                    pointRadius:3,
-                    pointHoverRadius:5,
-                    fill:true,
-                    tension:.35
-                },
-                {
-                    label:'Alfa',
-                    data:{!! json_encode($weeklyAlfa) !!},
-                    borderColor:'#dc3545',
-                    backgroundColor:alfaGrad,
-                    borderWidth:3,
-                    pointBackgroundColor:'#dc3545',
-                    pointBorderColor:isDark?'#1e1e1e':'#fff',
-                    pointBorderWidth:2,
-                    pointRadius:3,
-                    pointHoverRadius:5,
-                    fill:true,
-                    tension:.35
-                }
-            ]
-        },
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            plugins:{
-                legend:{
-                    display:true,
-                    position:'top',
-                    labels:{
-                        color:tickColor,
-                        font:{family:'Outfit, sans-serif',size:11}
+        weeklyChartInstance = new Chart(wCtx, {
+            type:'line',
+            data:{
+                labels: labels,
+                datasets:[
+                    {
+                        label:'Hadir', data: hadir,
+                        borderColor:'#198754', backgroundColor: createGradient(wCtx,25,135,84),
+                        borderWidth:3, pointBackgroundColor:'#198754',
+                        pointBorderColor:isDark?'#1e1e1e':'#fff', pointBorderWidth:2,
+                        pointRadius:3, pointHoverRadius:5, fill:true, tension:.35
+                    },
+                    {
+                        label:'Izin', data: izin,
+                        borderColor:'#ffc107', backgroundColor: createGradient(wCtx,255,193,7),
+                        borderWidth:3, pointBackgroundColor:'#ffc107',
+                        pointBorderColor:isDark?'#1e1e1e':'#fff', pointBorderWidth:2,
+                        pointRadius:3, pointHoverRadius:5, fill:true, tension:.35
+                    },
+                    {
+                        label:'Alfa', data: alfa,
+                        borderColor:'#dc3545', backgroundColor: createGradient(wCtx,220,53,69),
+                        borderWidth:3, pointBackgroundColor:'#dc3545',
+                        pointBorderColor:isDark?'#1e1e1e':'#fff', pointBorderWidth:2,
+                        pointRadius:3, pointHoverRadius:5, fill:true, tension:.35
                     }
-                },
-                tooltip:{
-                    backgroundColor:isDark?'#2c2c2c':'#fff',
-                    titleColor:isDark?'#f8f9fa':'#333',
-                    bodyColor:isDark?'#adb5bd':'#666',
-                    borderColor:isDark?'#444':'#ddd',
-                    borderWidth:1,
-                    padding:10,
-                    displayColors:true
-                }
+                ]
             },
-            scales:{
-                x:{grid:{display:false},ticks:{color:tickColor,font:{family:'Outfit, sans-serif',size:11}}},
-                y:{grid:{color:gridColor,drawBorder:false},ticks:{color:tickColor,stepSize:5},min:0}
-            }
-        }
-    });
-
-    // Today status doughnut chart
-    const sCtx=document.getElementById('statusChart').getContext('2d');
-    const statusData={!! json_encode($statusData) !!};
-    const totalSantri={{ $totalSantri }};
-
-    new Chart(sCtx,{
-        type:'doughnut',
-        data:{
-            labels:['Hadir','Izin','Alfa'],
-            datasets:[{
-                data:statusData,
-                backgroundColor:['#198754','#ffc107','#dc3545'],
-                borderWidth:isDark?2:1,
-                borderColor:isDark?'#1e1e1e':'#fff',
-                hoverOffset:4
-            }]
-        },
-        plugins:[centerTextPlugin],
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            cutout:'70%',
-            plugins:{
-                legend:{
-                    display:true,
-                    position:'right',
-                    labels:{
-                        color:tickColor,
-                        font:{family:'Outfit, sans-serif',size:11}
-                    }
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                plugins:{
+                    legend:{display:true, position:'top', labels:{color:tickColor, font:{family:'Outfit, sans-serif',size:11}}},
+                    tooltip: Object.assign({displayColors:true}, tooltipConfig)
                 },
-                centerText:{
-                    textValue:totalSantri.toString(),
-                    textLabel:'Total Santri'
-                },
-                tooltip:{
-                    backgroundColor:isDark?'#2c2c2c':'#fff',
-                    titleColor:isDark?'#f8f9fa':'#333',
-                    bodyColor:isDark?'#adb5bd':'#666',
-                    borderColor:isDark?'#444':'#ddd',
-                    borderWidth:1,
-                    padding:10,
-                    callbacks:{
-                        label:function(context){
-                            const val=context.raw;
-                            const total=context.dataset.data.reduce((a,b)=>a+b,0);
-                            const pct=total>0?Math.round((val/total)*100):0;
-                            return ` ${context.label}: ${val} (${pct}%)`;
-                        }
-                    }
+                scales:{
+                    x:{grid:{display:false},ticks:{color:tickColor,font:{family:'Outfit, sans-serif',size:11}}},
+                    y:{grid:{color:gridColor,drawBorder:false},ticks:{color:tickColor,stepSize:5},min:0}
                 }
             }
+        });
+    }
+
+    // ── Create Status Doughnut Chart ──
+    let statusChartInstance = null;
+    function renderStatusChart(statusData, centerValue, centerLabel) {
+        const canvas = document.getElementById('statusChart');
+        if (statusChartInstance) { statusChartInstance.destroy(); statusChartInstance = null; }
+        const sCtx = canvas.getContext('2d');
+
+        statusChartInstance = new Chart(sCtx, {
+            type:'doughnut',
+            data:{
+                labels:['Hadir','Izin','Alfa'],
+                datasets:[{
+                    data: statusData,
+                    backgroundColor:['#198754','#ffc107','#dc3545'],
+                    borderWidth:isDark?2:1, borderColor:isDark?'#1e1e1e':'#fff', hoverOffset:4
+                }]
+            },
+            plugins:[centerTextPlugin],
+            options:{
+                responsive:true, maintainAspectRatio:false, cutout:'70%',
+                plugins:{
+                    legend:{display:true, position:'right', labels:{color:tickColor, font:{family:'Outfit, sans-serif',size:11}}},
+                    centerText:{ textValue: centerValue, textLabel: centerLabel },
+                    tooltip: Object.assign({
+                        callbacks:{
+                            label:function(context){
+                                const val=context.raw;
+                                const total=context.dataset.data.reduce((a,b)=>a+b,0);
+                                const pct=total>0?Math.round((val/total)*100):0;
+                                return ` ${context.label}: ${val} (${pct}%)`;
+                            }
+                        }
+                    }, tooltipConfig)
+                }
+            }
+        });
+    }
+
+    // ── Initial render with server-side data ──
+    const initLabels = {!! json_encode($weeklyLabels) !!};
+    const initHadir = {!! json_encode($weeklyHadir) !!};
+    const initIzin = {!! json_encode($weeklyIzin) !!};
+    const initAlfa = {!! json_encode($weeklyAlfa) !!};
+    const initStatus = {!! json_encode($statusData) !!};
+    const totalSantri = {{ $totalSantri }};
+
+    renderWeeklyChart(initLabels, initHadir, initIzin, initAlfa);
+    renderStatusChart(initStatus, totalSantri.toString(), 'Total Santri');
+
+    // ── AJAX Filter: Prayer Time Buttons ──
+    const chartDataUrl = "{{ route('dashboard.chart-data') }}";
+    const currentParams = new URLSearchParams(window.location.search);
+    let isLoading = false;
+
+    document.getElementById('prayerFilterGroup').addEventListener('click', function(e) {
+        const btn = e.target.closest('.prayer-filter-btn');
+        if (!btn || isLoading) return;
+
+        // Update active state
+        this.querySelectorAll('.prayer-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const waktuSholat = btn.dataset.value;
+        isLoading = true;
+
+        // Show loading overlays
+        document.getElementById('weeklyChartLoading').style.display = 'flex';
+        document.getElementById('statusChartLoading').style.display = 'flex';
+
+        // Build query params (preserve date filters)
+        const params = new URLSearchParams(currentParams);
+        if (waktuSholat) {
+            params.set('waktu_sholat', waktuSholat);
+        } else {
+            params.delete('waktu_sholat');
         }
+
+        fetch(chartDataUrl + '?' + params.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            // Destroy old charts and re-render with new data
+            renderWeeklyChart(data.weekly.labels, data.weekly.hadir, data.weekly.izin, data.weekly.alfa);
+
+            const statusTotal = data.today.statusData.reduce((a,b) => a+b, 0);
+            const centerVal = statusTotal > 0 ? statusTotal.toString() : '0';
+            renderStatusChart(data.today.statusData, centerVal, waktuSholat || 'Total Santri');
+
+            // Update insight texts
+            document.getElementById('weeklyInsightText').textContent = data.weekly.insight;
+            document.getElementById('todayInsightText').textContent = data.today.todayInsight;
+        })
+        .catch(err => {
+            console.error('Failed to fetch chart data:', err);
+        })
+        .finally(() => {
+            isLoading = false;
+            document.getElementById('weeklyChartLoading').style.display = 'none';
+            document.getElementById('statusChartLoading').style.display = 'none';
+        });
     });
 });
 </script>
 @endpush
+

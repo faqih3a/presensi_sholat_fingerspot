@@ -81,9 +81,6 @@ class FetchDashboardStatsAction
                 });
         })->pluck('id')->toArray();
 
-        // --- Donut chart status data ---
-
-        $statusData = [$hadirHariIni, $totalIzin, $totalAlfa];
 
         // --- Statistik scan hari ini ---
 
@@ -102,15 +99,10 @@ class FetchDashboardStatsAction
         $totalExpectedToday = $totalSantri * 5;
         $ketepatanWaktu = $totalExpectedToday > 0 ? round(($hadirToday / $totalExpectedToday) * 100, 0) : 0;
 
-        // --- Generate insight teks ---
-
-        $todayInsight = $this->generateTodayInsight($hadirHariIni, $totalIzin, $totalAlfa);
-
         return compact(
             'totalSantri', 'hadirHariIni', 'tidakHadir', 'persentase',
             'absentSantris', 'izinTodayRecords', 'alfaTodayRecords', 'fullDayIzinSantriIds',
-            'statusData', 'totalScanHariIni', 'jamaahHadirHariIni', 'ketepatanWaktu',
-            'todayInsight'
+            'totalScanHariIni', 'jamaahHadirHariIni', 'ketepatanWaktu'
         );
     }
 
@@ -168,27 +160,4 @@ class FetchDashboardStatsAction
         })->filter()->unique('id');
     }
 
-    /**
-     * Membuat teks insight ringkasan kehadiran hari ini.
-     *
-     * @param  int  $hadir  Jumlah hadir.
-     * @param  int  $izin   Jumlah izin.
-     * @param  int  $alfa   Jumlah alfa.
-     * @return string  Kalimat insight untuk ditampilkan di dashboard.
-     */
-    private function generateTodayInsight(int $hadir, int $izin, int $alfa): string
-    {
-        $totalPresensi = $hadir + $izin + $alfa;
-
-        if ($totalPresensi > 0) {
-            $attendanceRate = round(($hadir / $totalPresensi) * 100);
-            $insight = "Tingkat kehadiran hari ini mencapai {$attendanceRate}% ({$hadir} dari {$totalPresensi} santri).";
-            $insight .= $alfa > 0
-                ? " Ada {$alfa} santri alfa yang belum melakukan scan."
-                : " Seluruh santri yang terdaftar hari ini hadir/izin.";
-            return $insight;
-        }
-
-        return "Belum ada data presensi yang tercatat untuk periode hari ini.";
-    }
 }

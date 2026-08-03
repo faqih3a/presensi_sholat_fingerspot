@@ -37,6 +37,7 @@ Route::middleware(['auth'])->group(function () {
     // Admin & Ustadz Routes (Mosque Staff)
     Route::middleware(['role:admin,ustadz'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard/chart-data', [DashboardController::class, 'getChartData'])->name('dashboard.chart-data');
         Route::get('/kehadiran-sholat', [DashboardController::class, 'kehadiran'])->name('dashboard.kehadiran');
         Route::get('/kehadiran-sholat/export', [DashboardController::class, 'exportKehadiran'])->name('dashboard.kehadiran.export');
         

@@ -20,25 +20,27 @@ class FetchWeeklyChartDataAction
     private const DAY_NAMES = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
     /**
-     * @param  string  $startDate  Tanggal awal periode (Y-m-d).
-     * @param  string  $endDate    Tanggal akhir periode (Y-m-d).
+     * @param  string       $startDate    Tanggal awal periode (Y-m-d).
+     * @param  string       $endDate      Tanggal akhir periode (Y-m-d).
+     * @param  string|null  $waktuSholat  Filter waktu sholat opsional (Subuh/Dzuhur/Ashar/Maghrib/Isya).
      * @return array
      */
-    public function execute(string $startDate, string $endDate): array
+    public function execute(string $startDate, string $endDate, ?string $waktuSholat = null): array
     {
         return array_merge(
-            $this->buildWeeklyData(),
-            $this->buildRangeChartData($startDate, $endDate)
+            $this->buildWeeklyData($waktuSholat),
+            $this->buildRangeChartData($startDate, $endDate, $waktuSholat)
         );
     }
 
-    private function buildWeeklyData(): array
+    private function buildWeeklyData(?string $waktuSholat = null): array
     {
         $now = Carbon::now('Asia/Jakarta');
         $startWeekly = $now->copy()->subDays(6)->format('Y-m-d');
         $endWeekly = $now->format('Y-m-d');
 
         $weeklyCounts = Presensi::whereBetween('tanggal', [$startWeekly, $endWeekly])
+            ->when($waktuSholat, fn($q) => $q->where('waktu_sholat', $waktuSholat))
             ->selectRaw('tanggal, status, COUNT(DISTINCT santri_id) as total')
             ->groupBy('tanggal', 'status')->get()->groupBy('tanggal');
 
@@ -65,13 +67,14 @@ class FetchWeeklyChartDataAction
         return compact('weeklyLabels', 'weeklyHadir', 'weeklyIzin', 'weeklyAlfa', 'weeklyInsight');
     }
 
-    private function buildRangeChartData(string $startDate, string $endDate): array
+    private function buildRangeChartData(string $startDate, string $endDate, ?string $waktuSholat = null): array
     {
         $start = Carbon::parse($startDate, 'Asia/Jakarta');
         $end = Carbon::parse($endDate, 'Asia/Jakarta');
         if ($start->diffInDays($end) > 31) $start = $end->copy()->subDays(30);
 
         $dailyCounts = Presensi::whereBetween('tanggal', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+            ->when($waktuSholat, fn($q) => $q->where('waktu_sholat', $waktuSholat))
             ->selectRaw('tanggal, COUNT(DISTINCT santri_id) as total')
             ->groupBy('tanggal')->pluck('total', 'tanggal')->toArray();
 
