@@ -92,7 +92,7 @@ class SantriController extends Controller
         $search = $request->input('search');
         $kelas = $request->input('kelas');
 
-        $query = Santri::query();
+        $query = Santri::with('latestPresensiPhoto');
 
         $query->when($search, function ($q) use ($search) {
             return $q->where('nama', 'like', '%' . $search . '%');
@@ -118,7 +118,7 @@ class SantriController extends Controller
         $kelas = $request->input('kelas');
         $page = $request->input('page', 1);
 
-        $query = Santri::with('user');
+        $query = Santri::with(['user', 'latestPresensiPhoto']);
 
         $query->when($search, function ($q) use ($search) {
             return $q->where('nama', 'like', '%' . $search . '%');

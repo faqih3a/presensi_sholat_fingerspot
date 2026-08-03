@@ -248,7 +248,7 @@
     {{-- Row 2: Custom date range inputs (only visible when mode = custom) --}}
     @if($mode === 'custom')
     <div class="custom-date-panel">
-        <form method="GET" action="{{ url()->current() }}" class="d-flex align-items-center gap-2 flex-wrap no-loader">
+        <form method="GET" action="{{ url()->current() }}" class="d-flex align-items-center gap-2 flex-wrap" id="customDateForm">
             {{-- Preserve existing query params (search, status, kelas, etc.) --}}
             @foreach(request()->except(['mode', 'start_date', 'end_date', 'ref_date', 'page', 'tanggal_mulai', 'tanggal_akhir']) as $key => $value)
                 @if(is_string($value))
@@ -279,11 +279,32 @@
                        required>
             </div>
 
-            <button type="submit" class="custom-date-apply-btn">
+            <button type="submit" class="custom-date-apply-btn" id="customDateApplyBtn">
                 <i class="bi bi-funnel-fill" style="font-size: 0.75rem;"></i>
-                Terapkan
+                <span>Terapkan</span>
             </button>
         </form>
     </div>
     @endif
 </div>
+
+@once
+@push('scripts')
+<script>
+// Loading state for custom date filter button
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('customDateForm');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const btn = document.getElementById('customDateApplyBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.querySelector('i').className = 'spinner-border spinner-border-sm';
+                btn.querySelector('span').textContent = 'Memuat...';
+            }
+        });
+    }
+});
+</script>
+@endpush
+@endonce

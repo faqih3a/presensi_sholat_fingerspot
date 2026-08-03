@@ -103,7 +103,7 @@ class IzinController extends Controller
         $jenisIzin = $request->input('jenis_izin');   // Sakit / Izin / Kegiatan Luar
 
         // ── Build query: when() pattern ──
-        $izins = Izin::with('user.santri')
+        $izins = Izin::with('user.santri.latestPresensiPhoto')
             ->where(function ($query) use ($tanggal_mulai, $tanggal_akhir) {
                 $query->whereBetween('tanggal_mulai', [$tanggal_mulai, $tanggal_akhir])
                     ->orWhereBetween('tanggal_selesai', [$tanggal_mulai, $tanggal_akhir])

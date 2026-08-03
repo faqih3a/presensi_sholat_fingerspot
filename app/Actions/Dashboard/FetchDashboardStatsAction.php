@@ -38,35 +38,34 @@ class FetchDashboardStatsAction
         $totalSantri = Santri::count();
         $today = Carbon::now('Asia/Jakarta')->format('Y-m-d');
 
-        // --- Statistik kehadiran dalam periode ---
+        // --- Statistik kehadiran: 1 query aggregate instead of 3 separate COUNT ---
+        $statusCounts = Presensi::whereBetween('tanggal', [$startDate, $endDate])
+            ->when($waktuSholat, fn($q) => $q->where('waktu_sholat', $waktuSholat))
+            ->selectRaw('status, COUNT(DISTINCT santri_id) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
 
-        $hadirHariIni = $this->countByStatus($startDate, $endDate, 'Hadir', $waktuSholat);
-        $totalAlfa    = $this->countByStatus($startDate, $endDate, 'Alfa', $waktuSholat);
-        $totalIzin    = $this->countByStatus($startDate, $endDate, 'Izin', $waktuSholat);
+        $hadirHariIni = $statusCounts['Hadir'] ?? 0;
+        $totalAlfa    = $statusCounts['Alfa'] ?? 0;
+        $totalIzin    = $statusCounts['Izin'] ?? 0;
 
         $tidakHadir = $totalAlfa + $totalIzin;
         $persentase = $totalSantri > 0 ? round(($hadirHariIni / $totalSantri) * 100, 1) : 0;
 
         // --- Daftar santri yang tidak hadir (Alfa/Izin) ---
-
         $absentSantris = $this->fetchAbsentSantris($startDate, $endDate, $waktuSholat);
 
-        // --- Record Izin & Alfa untuk detail lists di view ---
-
-        $izinTodayRecords = Presensi::whereBetween('tanggal', [$startDate, $endDate])
-            ->where('status', 'Izin')
+        // --- Record Izin & Alfa: 1 query instead of 2 ---
+        $allAbsentRecords = Presensi::whereBetween('tanggal', [$startDate, $endDate])
+            ->whereIn('status', ['Izin', 'Alfa'])
             ->with('santri')
-            ->get()
-            ->groupBy('santri_id');
+            ->get();
 
-        $alfaTodayRecords = Presensi::whereBetween('tanggal', [$startDate, $endDate])
-            ->where('status', 'Alfa')
-            ->with('santri')
-            ->get()
-            ->groupBy('santri_id');
+        $izinTodayRecords = $allAbsentRecords->where('status', 'Izin')->groupBy('santri_id');
+        $alfaTodayRecords = $allAbsentRecords->where('status', 'Alfa')->groupBy('santri_id');
 
         // --- Santri dengan izin yang disetujui dalam periode ---
-
         $fullDayIzinSantriIds = Santri::whereIn('user_id', function ($query) use ($startDate, $endDate) {
             $query->select('user_id')
                 ->from('izins')
@@ -81,21 +80,19 @@ class FetchDashboardStatsAction
                 });
         })->pluck('id')->toArray();
 
+        // --- Statistik scan & ketepatan waktu: 1 query instead of 3 ---
+        $todayStats = Presensi::where('tanggal', $today)
+            ->selectRaw("
+                COUNT(CASE WHEN waktu_hadir IS NOT NULL THEN 1 END) as total_scan,
+                COUNT(DISTINCT CASE WHEN status = 'Hadir' THEN santri_id END) as jamaah_hadir,
+                COUNT(CASE WHEN status = 'Hadir' THEN 1 END) as hadir_count
+            ")
+            ->first();
 
-        // --- Statistik scan hari ini ---
+        $totalScanHariIni   = (int) $todayStats->total_scan;
+        $jamaahHadirHariIni = (int) $todayStats->jamaah_hadir;
+        $hadirToday         = (int) $todayStats->hadir_count;
 
-        $totalScanHariIni = Presensi::where('tanggal', $today)
-            ->whereNotNull('waktu_hadir')
-            ->count();
-
-        $jamaahHadirHariIni = Presensi::where('tanggal', $today)
-            ->where('status', 'Hadir')
-            ->distinct('santri_id')
-            ->count('santri_id');
-
-        // --- Ketepatan waktu (persentase hadir hari ini vs ekspektasi 5 waktu sholat) ---
-
-        $hadirToday = Presensi::where('tanggal', $today)->where('status', 'Hadir')->count();
         $totalExpectedToday = $totalSantri * 5;
         $ketepatanWaktu = $totalExpectedToday > 0 ? round(($hadirToday / $totalExpectedToday) * 100, 0) : 0;
 
@@ -106,26 +103,6 @@ class FetchDashboardStatsAction
         );
     }
 
-    /**
-     * Menghitung jumlah santri unik berdasarkan status dalam periode tertentu.
-     *
-     * @param  string       $startDate    Tanggal awal (Y-m-d).
-     * @param  string       $endDate      Tanggal akhir (Y-m-d).
-     * @param  string       $status       Status presensi (Hadir/Alfa/Izin).
-     * @param  string|null  $waktuSholat  Filter waktu sholat opsional.
-     * @return int  Jumlah santri unik dengan status tersebut.
-     */
-    private function countByStatus(string $startDate, string $endDate, string $status, ?string $waktuSholat): int
-    {
-        $query = Presensi::whereBetween('tanggal', [$startDate, $endDate])
-            ->where('status', $status);
-
-        if ($waktuSholat) {
-            $query->where('waktu_sholat', $waktuSholat);
-        }
-
-        return $query->distinct('santri_id')->count('santri_id');
-    }
 
     /**
      * Mengambil daftar santri yang tidak hadir (Alfa atau Izin) dalam periode.

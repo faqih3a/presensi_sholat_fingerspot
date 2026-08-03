@@ -60,7 +60,7 @@ class FetchRecentActivitiesAction
      */
     private function fetchIzinActivities()
     {
-        return Izin::with('user.santri')
+        return Izin::with('user.santri.latestPresensiPhoto')
             ->latest('updated_at')
             ->take(15)
             ->get()
