@@ -425,6 +425,11 @@
                             </td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
+                                    <button type="button" class="action-btn bg-warning bg-opacity-10 text-warning border-0 btn-refresh-mesin" title="Refresh data dari mesin"
+                                        data-pin="{{ $santri->id }}"
+                                        onclick="refreshFromMesin(this)">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    </button>
                                     <button type="button" class="action-btn bg-info bg-opacity-10 text-info border-0 btn-edit-santri" title="Edit"
                                         data-id="{{ $santri->id }}"
                                         data-nama="{{ $santri->nama }}"
@@ -609,16 +614,20 @@
 
         <div class="sync-stats" id="syncStats" style="display: none;">
             <div class="sync-stat">
-                <div class="sync-stat-value text-success" id="statSuccess">0</div>
-                <div class="sync-stat-label">Berhasil</div>
+                <div class="sync-stat-value text-success" id="statMachine">0</div>
+                <div class="sync-stat-label">Di Mesin</div>
             </div>
             <div class="sync-stat">
-                <div class="sync-stat-value text-danger" id="statFailed">0</div>
-                <div class="sync-stat-label">Gagal</div>
+                <div class="sync-stat-value text-primary" id="statBoth">0</div>
+                <div class="sync-stat-label">Cocok</div>
             </div>
             <div class="sync-stat">
-                <div class="sync-stat-value text-primary" id="statTotal">0</div>
-                <div class="sync-stat-label">Total DB</div>
+                <div class="sync-stat-value text-info" id="statNewFromMachine">0</div>
+                <div class="sync-stat-label">Baru</div>
+            </div>
+            <div class="sync-stat">
+                <div class="sync-stat-value text-warning" id="statNotOnMachine">0</div>
+                <div class="sync-stat-label">Tidak di Mesin</div>
             </div>
         </div>
 
@@ -861,6 +870,70 @@
         }
     }
 
+    // ─── Refresh Single User dari Mesin ─────────────────────────────────
+    async function refreshFromMesin(btnEl) {
+        const pin = btnEl.dataset.pin;
+        const icon = btnEl.querySelector('i');
+        const originalClass = icon.className;
+
+        // Loading state
+        btnEl.disabled = true;
+        icon.className = 'bi bi-arrow-repeat';
+        icon.style.animation = 'syncSpin 1s linear infinite';
+
+        try {
+            const response = await fetch('{{ route("santri.fetch-userinfo") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ pin: pin })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // Tampilkan feedback sukses
+                icon.className = 'bi bi-check-circle-fill';
+                icon.style.animation = '';
+                btnEl.classList.remove('bg-warning', 'text-warning');
+                btnEl.classList.add('bg-success', 'bg-opacity-10', 'text-success');
+                btnEl.title = 'Perintah terkirim! Data akan diperbarui dari mesin.';
+
+                // Auto-refresh tabel setelah 3 detik (tunggu webhook)
+                setTimeout(() => {
+                    refreshSantriTable();
+                    // Reset tombol
+                    icon.className = originalClass;
+                    btnEl.classList.remove('bg-success', 'text-success');
+                    btnEl.classList.add('bg-warning', 'bg-opacity-10', 'text-warning');
+                    btnEl.title = 'Refresh data dari mesin';
+                    btnEl.disabled = false;
+                }, 3000);
+            } else {
+                icon.className = 'bi bi-exclamation-triangle-fill';
+                icon.style.animation = '';
+                btnEl.title = result.message || 'Gagal mengirim perintah';
+                setTimeout(() => {
+                    icon.className = originalClass;
+                    icon.style.animation = '';
+                    btnEl.title = 'Refresh data dari mesin';
+                    btnEl.disabled = false;
+                }, 3000);
+            }
+        } catch (error) {
+            console.error('Fetch userinfo error:', error);
+            icon.className = 'bi bi-exclamation-triangle-fill';
+            icon.style.animation = '';
+            setTimeout(() => {
+                icon.className = originalClass;
+                icon.style.animation = '';
+                btnEl.disabled = false;
+            }, 3000);
+        }
+    }
+
     function showSyncOverlay() {
         // Reset ke state awal
         syncIcon.className = 'sync-icon spinning';
@@ -889,6 +962,16 @@
         syncPhaseText.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Selesai';
         syncMessage.textContent = result.message;
 
+        // Tampilkan statistik perbandingan mesin vs database
+        if (result.comparison) {
+            const c = result.comparison;
+            document.getElementById('statMachine').textContent = c.on_machine_total || 0;
+            document.getElementById('statBoth').textContent = (c.in_both || []).length;
+            document.getElementById('statNewFromMachine').textContent = (c.only_on_machine || []).length;
+            document.getElementById('statNotOnMachine').textContent = (c.only_in_db || []).length;
+            syncStats.style.display = 'flex';
+        }
+
         // Ganti tombol jadi tombol tutup
         syncActions.innerHTML = `
             <button type="button" class="btn btn-sm btn-gradient-success px-4 rounded-pill fw-bold" onclick="closeSyncOverlay()">
@@ -896,8 +979,9 @@
             </button>
         `;
 
-        // Refresh tabel data di background
-        refreshSantriTable();
+        // Refresh tabel data di background setelah sedikit delay
+        // (tunggu webhook dari mesin mulai masuk)
+        setTimeout(() => refreshSantriTable(), 3000);
 
         // Reset tombol sync
         const btn = document.getElementById('btn-sync-mesin');
@@ -1016,6 +1100,11 @@
                     </td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="action-btn bg-warning bg-opacity-10 text-warning border-0 btn-refresh-mesin" title="Refresh data dari mesin"
+                                data-pin="${s.id}"
+                                onclick="refreshFromMesin(this)">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
                             <a href="${s.edit_url}" class="action-btn bg-info bg-opacity-10 text-info" title="Edit">
                                 <i class="bi bi-pencil-square"></i>
                             </a>

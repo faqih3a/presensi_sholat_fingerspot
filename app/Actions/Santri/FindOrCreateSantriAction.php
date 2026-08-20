@@ -11,13 +11,21 @@ use Illuminate\Support\Facades\Log;
 /**
  * Aksi: Temukan atau Buat Santri dari PIN Mesin (Atomic)
  *
- * Class ini adalah SATU-SATUNYA pintu masuk untuk membuat Santri dari PIN mesin.
- * Digunakan oleh dua jalur pendaftaran:
+ * PRINSIP: Data mesin = Data REAL (sumber kebenaran).
+ *
+ * Class ini adalah SATU-SATUNYA pintu masuk untuk membuat/memperbarui
+ * Santri dari data mesin Fingerspot. Data biometrik dari mesin SELALU
+ * menimpa data lokal di database, karena mesin adalah sumber kebenaran
+ * untuk: sidik jari, wajah, dan template biometrik.
+ *
+ * Digunakan oleh tiga jalur:
  *
  * 1. **Metode 1 (Sync/Pull)**: Dipanggil saat webhook `get_userinfo` diterima
  *    setelah admin menekan tombol "Sinkronisasi".
  * 2. **Metode 2 (First Scan/Push)**: Dipanggil saat webhook `attlog` diterima
  *    dan PIN belum dikenal di database.
+ * 3. **Metode 3 (Single Refresh)**: Dipanggil saat admin menekan tombol
+ *    "Refresh dari Mesin" untuk santri tertentu.
  *
  * Pencegahan Bentrok (Concurrency Safety):
  * - Menggunakan `firstOrCreate()` untuk User → atomic, no duplicate email.
@@ -26,6 +34,7 @@ use Illuminate\Support\Facades\Log;
  *
  * @see \App\Actions\Presensi\StorePresensiAction  (Metode 2 - consumer)
  * @see public/store.php handleGetUserinfo()       (Metode 1 - consumer)
+ * @see \App\Actions\Santri\FetchUserInfoFromMesinAction (Metode 3 - trigger)
  */
 class FindOrCreateSantriAction
 {
@@ -152,19 +161,27 @@ class FindOrCreateSantriAction
     }
 
     /**
-     * Bangun payload update hanya untuk field yang benar-benar berubah.
+     * Bangun payload update berdasarkan data dari mesin (source of truth).
      *
-     * Aturan penting:
-     * - Nama hanya di-update jika data mesin memberikan nama BARU yang valid
-     *   (bukan placeholder "Nama Belum Diatur").
-     * - Foto hanya di-update jika santri belum punya foto.
-     * - Kelas TIDAK pernah di-overwrite oleh mesin (hanya admin yang bisa ubah).
+     * PRINSIP UTAMA: Data mesin = Data REAL.
+     * Semua data biometrik dari mesin SELALU menimpa data lokal,
+     * karena mesin adalah satu-satunya sumber kebenaran untuk:
+     * - Jumlah sidik jari terdaftar (finger_count)
+     * - Jumlah wajah terdaftar (face_count)
+     * - Template biometrik
+     *
+     * Aturan:
+     * - Nama: di-update jika mesin memberikan nama valid (bukan placeholder).
+     * - Foto: di-update jika santri belum punya foto.
+     * - Biometrik: SELALU di-update dari mesin (termasuk jika nilai 0,
+     *   artinya data dihapus dari mesin).
+     * - Kelas: TIDAK pernah di-overwrite oleh mesin (hanya admin yang bisa ubah).
      *
      * @param  Santri       $existing   Santri yang sudah ada.
      * @param  string       $newName    Nama display yang di-resolve.
      * @param  string|null  $rawName    Nama mentah dari mesin.
      * @param  string|null  $photoUrl   URL foto baru.
-     * @param  array        $biometric  Data biometrik.
+     * @param  array        $biometric  Data biometrik dari mesin.
      * @return array  Field yang perlu di-update (bisa kosong).
      */
     private function buildUpdatePayload(
@@ -192,15 +209,28 @@ class FindOrCreateSantriAction
             $updates['foto_referensi'] = $photoUrl;
         }
 
-        // Update biometric counts jika ada
-        if (isset($biometric['face']) && (int) $biometric['face'] > 0) {
-            $updates['face_count'] = (int) $biometric['face'];
+        // ─── BIOMETRIK: Mesin = Sumber Kebenaran ───────────────────
+        // Data biometrik dari mesin SELALU menimpa data lokal.
+        // Jika mesin mengirim face=0, artinya wajah sudah dihapus dari mesin.
+        // Jika mesin mengirim finger=0, artinya sidik jari sudah dihapus.
+        // Sistem HARUS mencerminkan kondisi aktual mesin.
+        if (isset($biometric['face'])) {
+            $faceCount = (int) $biometric['face'];
+            if ($existing->face_count !== $faceCount) {
+                $updates['face_count'] = $faceCount;
+            }
         }
-        if (isset($biometric['finger']) && (int) $biometric['finger'] > 0) {
-            $updates['finger_count'] = (int) $biometric['finger'];
+        if (isset($biometric['finger'])) {
+            $fingerCount = (int) $biometric['finger'];
+            if ($existing->finger_count !== $fingerCount) {
+                $updates['finger_count'] = $fingerCount;
+            }
         }
-        if (!empty($biometric['template'])) {
-            $updates['template'] = $biometric['template'];
+        if (array_key_exists('template', $biometric)) {
+            $template = $biometric['template'] ?? null;
+            if ($existing->template !== $template) {
+                $updates['template'] = $template;
+            }
         }
 
         return $updates;

@@ -8,6 +8,7 @@ use App\Actions\Santri\CreateSantriAction;
 use App\Actions\Santri\UpdateSantriAction;
 use App\Actions\Santri\DeleteSantriAction;
 use App\Actions\Santri\SyncSantriFromMesinAction;
+use App\Actions\Santri\FetchUserInfoFromMesinAction;
 
 /**
  * Controller untuk manajemen data Santri.
@@ -24,6 +25,7 @@ use App\Actions\Santri\SyncSantriFromMesinAction;
  * @see \App\Actions\Santri\UpdateSantriAction
  * @see \App\Actions\Santri\DeleteSantriAction
  * @see \App\Actions\Santri\SyncSantriFromMesinAction
+ * @see \App\Actions\Santri\FetchUserInfoFromMesinAction
  */
 class SantriController extends Controller
 {
@@ -234,6 +236,37 @@ class SantriController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat sinkronisasi: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Ambil info pengguna dari mesin Fingerspot untuk PIN tertentu.
+     *
+     * Mengirim perintah ke Fingerspot Cloud API untuk meminta mesin
+     * mengirimkan data pengguna. Data aktual akan diterima via webhook
+     * secara asinkron dan diproses oleh FindOrCreateSantriAction.
+     *
+     * PRINSIP: Data mesin = Data REAL.
+     *
+     * @param  \Illuminate\Http\Request                           $request
+     * @param  \App\Actions\Santri\FetchUserInfoFromMesinAction   $action
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function fetchUserInfo(Request $request, FetchUserInfoFromMesinAction $action)
+    {
+        $request->validate([
+            'pin' => 'required|string',
+        ]);
+
+        try {
+            $result = $action->fetchSingle($request->input('pin'));
+
+            return response()->json($result, $result['success'] ? 200 : 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
             ], 500);
         }
     }

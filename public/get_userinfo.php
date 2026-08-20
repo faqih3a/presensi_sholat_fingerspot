@@ -7,6 +7,9 @@
  * 
  * Mengirimkan perintah ke mesin untuk mengambil data userinfo.
  * Hasilnya akan dikirim oleh mesin via Webhook ke store.php
+ *
+ * PRINSIP: Data mesin = Data REAL (sumber kebenaran).
+ * Data yang dikirim mesin via webhook akan SELALU menimpa data lokal.
  * 
  * Usage:
  *   GET  /get_userinfo.php?pin=1           → ambil userinfo pin 1
@@ -15,11 +18,18 @@
  * ====================================================================
  */
 
-// ─── Config ─────────────────────────────────────────────────────────
-set_time_limit(180); // Mencegah PHP timeout karena mengambil 150 pin membutuhkan waktu sekitar 30-45 detik
-$apiUrl        = 'https://developer.fingerspot.io/api/get_userinfo';
-$apiToken      = 'DWJ7LY8ZJQ6CD5NN';
-$cloudId       = 'S118001290';
+// ─── Bootstrap Laravel ──────────────────────────────────────────────
+require __DIR__ . '/../vendor/autoload.php';
+$app = require_once __DIR__ . '/../bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+$kernel->handle(
+    $request = Illuminate\Http\Request::capture()
+);
+
+// ─── Config dari Laravel services ───────────────────────────────────
+$apiUrl   = 'https://developer.fingerspot.io/api/get_userinfo';
+$apiToken = config('services.fingerspot.token');
+$cloudId  = config('services.fingerspot.cloud_id');
 
 // ─── Parse Parameters ───────────────────────────────────────────────
 $pin      = $_GET['pin'] ?? null;
@@ -86,6 +96,8 @@ function requestUserinfo(string $apiUrl, string $apiToken, string $cloudId, stri
 }
 
 // ─── Execute ────────────────────────────────────────────────────────
+set_time_limit(180); // Mencegah PHP timeout karena mengambil banyak pin
+
 $results = [];
 
 if ($pin === 'all') {
@@ -113,8 +125,12 @@ $successCount = count(array_filter($results, fn($r) => $r['success']));
 
 echo json_encode([
     'status'        => 'ok',
-    'message'       => "Sent $successCount/" . count($results) . " get_userinfo commands. Data akan dikirim mesin via webhook ke store.php",
+    'message'       => "Sent $successCount/" . count($results) . " get_userinfo commands. Data akan dikirim mesin via webhook ke store.php (data mesin = data real)",
     'total_sent'    => count($results),
     'total_success' => $successCount,
+    'note'          => 'Data mesin adalah sumber kebenaran. Saat webhook diterima, data sistem akan disesuaikan dengan data mesin.',
     'results'       => $results,
 ], JSON_PRETTY_PRINT);
+
+// Terminate the kernel
+$kernel->terminate($request, new Illuminate\Http\Response());
